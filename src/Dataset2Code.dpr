@@ -2,7 +2,7 @@ program Dataset2Code;
 
 uses
   Vcl.Forms,
-  Form.Main in 'Form.Main.pas' {Form1},
+  Form.Main in 'Form.Main.pas' {FormMain},
   Action.CreateMemTable in 'Action.CreateMemTable.pas';
 
 {$R *.res}
@@ -10,6 +10,6 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TFormMain, FormMain);
   Application.Run;
 end.

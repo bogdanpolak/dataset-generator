@@ -18,7 +18,7 @@ uses
   Action.CreateMemTable;
 
 type
-  TForm1 = class(TForm)
+  TFormMain = class(TForm)
     DataSource1: TDataSource;
     Timer1: TTimer;
     DBGrid1: TDBGrid;
@@ -50,13 +50,13 @@ type
   end;
 
 var
-  Form1: TForm1;
+  FormMain: TFormMain;
 
 implementation
 
 {$R *.dfm}
 
-function TForm1.CreateSimpleMemTable: TFDMemTable;
+function TFormMain.CreateSimpleMemTable: TFDMemTable;
 var
   ds: TFDMemTable;
 begin
@@ -77,7 +77,7 @@ begin
   Result := ds;
 end;
 
-function TForm1.CreateSqlQuery: TFDQuery;
+function TFormMain.CreateSqlQuery: TFDQuery;
 begin
   Result := TFDQuery.Create(Self);
   Result.Connection := FDConnection1;
@@ -93,19 +93,19 @@ begin
     ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
 end;
 
-procedure TForm1.GenerateDataAndCodeFromDataSet(ds: TDataSet);
+procedure TFormMain.GenerateDataAndCodeFromDataSet(ds: TDataSet);
 begin
   DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(ds);
   actCreateMemTable.GenerateCode(ds);
   Memo1.Lines := actCreateMemTable.Code;
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TFormMain.FormCreate(Sender: TObject);
 begin
   actCreateMemTable := TCreateMemTableAction.Create(Self);
 end;
 
-procedure TForm1.Timer1Timer(Sender: TObject);
+procedure TFormMain.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
   // GenerateDataAndCodeFromDataSet(CreateSimpleMemTable);
