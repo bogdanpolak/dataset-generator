@@ -11,7 +11,8 @@ uses
   FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids, FireDAC.UI.Intf,
   FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys,
   FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
-  FireDAC.VCLUI.Wait, FireDAC.DApt, Vcl.StdCtrls, Vcl.DBCtrls, Vcl.ComCtrls;
+  FireDAC.VCLUI.Wait, FireDAC.DApt, Vcl.StdCtrls, Vcl.DBCtrls, Vcl.ComCtrls,
+  Action.CreateMemTable;
 
 type
   TForm1 = class(TForm)
@@ -37,11 +38,12 @@ type
     FDQuery1ShipVia: TIntegerField;
     FDQuery1Freight: TCurrencyField;
     PageControl1: TPageControl;
-    TabSheet1: TTabSheet;
-    TabSheet2: TTabSheet;
+    tshData: TTabSheet;
+    tshCode: TTabSheet;
     Memo1: TMemo;
     procedure Timer1Timer(Sender: TObject);
   private
+    actCreateMemTable: TCreateMemTableAction;
     procedure GenerateData1;
     procedure GenerateData2;
   public
@@ -84,7 +86,10 @@ end;
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
-  GenerateData2;
+  actCreateMemTable := TCreateMemTableAction.Create(Self);
+  DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(FDQuery1);
+  actCreateMemTable.GenerateCode(FDQuery1);
+  Memo1.Lines := actCreateMemTable.Code;
 end;
 
 end.

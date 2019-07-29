@@ -19,18 +19,11 @@ object Form1: TForm1
     Top = 3
     Width = 628
     Height = 264
-    ActivePage = TabSheet1
+    ActivePage = tshData
     Align = alClient
     TabOrder = 0
-    ExplicitLeft = 8
-    ExplicitTop = 56
-    ExplicitWidth = 618
-    ExplicitHeight = 206
-    object TabSheet1: TTabSheet
-      Caption = 'TabSheet1'
-      ExplicitLeft = 0
-      ExplicitWidth = 281
-      ExplicitHeight = 165
+    object tshData: TTabSheet
+      Caption = 'Data'
       object DBGrid1: TDBGrid
         AlignWithMargins = True
         Left = 3
@@ -47,11 +40,9 @@ object Form1: TForm1
         TitleFont.Style = []
       end
     end
-    object TabSheet2: TTabSheet
-      Caption = 'TabSheet2'
+    object tshCode: TTabSheet
+      Caption = 'Code'
       ImageIndex = 1
-      ExplicitWidth = 281
-      ExplicitHeight = 165
       object Memo1: TMemo
         AlignWithMargins = True
         Left = 3
@@ -62,10 +53,6 @@ object Form1: TForm1
         Lines.Strings = (
           'Memo1')
         TabOrder = 0
-        ExplicitLeft = 48
-        ExplicitTop = 40
-        ExplicitWidth = 185
-        ExplicitHeight = 89
       end
     end
   end
@@ -136,6 +123,7 @@ object Form1: TForm1
       FieldName = 'OrderID'
       Origin = 'OrderID'
       ProviderFlags = [pfInWhere, pfInKey]
+      ReadOnly = True
     end
     object FDQuery1CustomerID: TStringField
       FieldName = 'CustomerID'
