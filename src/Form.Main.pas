@@ -19,15 +19,9 @@ uses
 
 type
   TForm1 = class(TForm)
-    FDMemTable1: TFDMemTable;
     DataSource1: TDataSource;
     Timer1: TTimer;
     DBGrid1: TDBGrid;
-    FDMemTable1ID: TIntegerField;
-    FDMemTable1Text: TWideStringField;
-    FDMemTable1Date1: TDateField;
-    FDMemTable1Float1: TFloatField;
-    FDMemTable1Currency1: TCurrencyField;
     FDConnection1: TFDConnection;
     FDQuery1: TFDQuery;
     FDQuery1OrderID: TFDAutoIncField;
@@ -48,8 +42,7 @@ type
     procedure FormCreate(Sender: TObject);
   private
     actCreateMemTable: TCreateMemTableAction;
-    procedure GenerateData1;
-    procedure GenerateData2;
+    function CreateSimpleMemTable: TFDMemTable;
     procedure GenerateDataAndCodeFromDataSet (ds:TDataSet);
   public
     { Public declarations }
@@ -62,14 +55,7 @@ implementation
 
 {$R *.dfm}
 
-procedure TForm1.GenerateData1;
-begin
-  FDMemTable1.CreateDataSet;
-  FDMemTable1.InsertRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16),
-    1.2, 1200]);
-end;
-
-procedure TForm1.GenerateData2;
+function TForm1.CreateSimpleMemTable: TFDMemTable;
 var
   ds: TFDMemTable;
 begin
@@ -83,10 +69,11 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    InsertRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    InsertRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
+    AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
+    AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
   end;
-  DataSource1.DataSet := ds;
+  ds.First;
+  Result := ds;
 end;
 
 procedure TForm1.GenerateDataAndCodeFromDataSet(ds: TDataSet);
@@ -104,7 +91,8 @@ end;
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
-  GenerateDataAndCodeFromDataSet (FDQuery1);
+  // DataSource1.DataSet := CreateSimpleMemTable;
+  GenerateDataAndCodeFromDataSet ( CreateSimpleMemTable );
 end;
 
 end.

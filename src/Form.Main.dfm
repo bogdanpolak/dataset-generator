@@ -57,37 +57,9 @@ object Form1: TForm1
       end
     end
   end
-  object FDMemTable1: TFDMemTable
-    FetchOptions.AssignedValues = [evMode]
-    FetchOptions.Mode = fmAll
-    ResourceOptions.AssignedValues = [rvSilentMode]
-    ResourceOptions.SilentMode = True
-    UpdateOptions.AssignedValues = [uvCheckRequired, uvAutoCommitUpdates]
-    UpdateOptions.CheckRequired = False
-    UpdateOptions.AutoCommitUpdates = True
-    Left = 64
-    Top = 120
-    object FDMemTable1ID: TIntegerField
-      FieldName = 'ID'
-    end
-    object FDMemTable1Text: TWideStringField
-      FieldName = 'Text'
-      Size = 50
-    end
-    object FDMemTable1Date1: TDateField
-      FieldName = 'Date1'
-    end
-    object FDMemTable1Float1: TFloatField
-      FieldName = 'Float1'
-    end
-    object FDMemTable1Currency1: TCurrencyField
-      FieldName = 'Currency1'
-    end
-  end
   object DataSource1: TDataSource
-    DataSet = FDMemTable1
-    Left = 64
-    Top = 168
+    Left = 72
+    Top = 120
   end
   object Timer1: TTimer
     Interval = 1
