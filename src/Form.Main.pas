@@ -3,15 +3,18 @@ unit Form.Main;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  Winapi.Windows, Winapi.Messages,
+  System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Grids,
+  Vcl.DBGrids, Vcl.StdCtrls, Vcl.DBCtrls, Vcl.ComCtrls,
+  Data.DB,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
-  FireDAC.DApt.Intf, Vcl.ExtCtrls, Data.DB, FireDAC.Comp.DataSet,
-  FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids, FireDAC.UI.Intf,
-  FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys,
-  FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef, FireDAC.Stan.ExprFuncs,
-  FireDAC.VCLUI.Wait, FireDAC.DApt, Vcl.StdCtrls, Vcl.DBCtrls, Vcl.ComCtrls,
+  FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
+  FireDAC.Stan.ExprFuncs, FireDAC.VCLUI.Wait, FireDAC.DApt,
+
   Action.CreateMemTable;
 
 type
@@ -42,10 +45,12 @@ type
     tshCode: TTabSheet;
     Memo1: TMemo;
     procedure Timer1Timer(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     actCreateMemTable: TCreateMemTableAction;
     procedure GenerateData1;
     procedure GenerateData2;
+    procedure GenerateDataAndCodeFromDataSet (ds:TDataSet);
   public
     { Public declarations }
   end;
@@ -79,17 +84,27 @@ begin
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
     InsertRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
+    InsertRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
   end;
   DataSource1.DataSet := ds;
+end;
+
+procedure TForm1.GenerateDataAndCodeFromDataSet(ds: TDataSet);
+begin
+  DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(ds);
+  actCreateMemTable.GenerateCode(ds);
+  Memo1.Lines := actCreateMemTable.Code;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  actCreateMemTable := TCreateMemTableAction.Create(Self);
 end;
 
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
-  actCreateMemTable := TCreateMemTableAction.Create(Self);
-  DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(FDQuery1);
-  actCreateMemTable.GenerateCode(FDQuery1);
-  Memo1.Lines := actCreateMemTable.Code;
+  GenerateDataAndCodeFromDataSet (FDQuery1);
 end;
 
 end.

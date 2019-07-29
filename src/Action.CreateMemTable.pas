@@ -13,7 +13,7 @@ type
     FCode: TStrings;
   public
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy;
+    destructor Destroy; override;
     function CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
     procedure GenerateCode(dataSet: TDataSet);
     property Code: TStrings read FCode write FCode;
@@ -30,6 +30,7 @@ end;
 destructor TCreateMemTableAction.Destroy;
 begin
   FCode.Free;
+  inherited;
 end;
 
 function TCreateMemTableAction.CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
@@ -47,7 +48,7 @@ begin
     then
       Result.FieldDefs.Add(fld.FieldName, fld.DataType, 100)
     else if (fld.DataType in [ftString, ftWideString]) then
-      Result.FieldDefs.Add(fld.FieldName, fld.DataType, fld.DataSize)
+      Result.FieldDefs.Add(fld.FieldName, fld.DataType, fld.Size)
     else
       Result.FieldDefs.Add(fld.FieldName, fld.DataType, fld.DataSize);
   end;
@@ -70,8 +71,6 @@ begin
 end;
 
 procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
-var
-  sl: TStringList;
 begin
   With Code do
   begin
