@@ -43,7 +43,8 @@ type
   private
     actCreateMemTable: TCreateMemTableAction;
     function CreateSimpleMemTable: TFDMemTable;
-    procedure GenerateDataAndCodeFromDataSet (ds:TDataSet);
+    function CreateSqlQuery: TFDQuery;
+    procedure GenerateDataAndCodeFromDataSet(ds: TDataSet);
   public
     { Public declarations }
   end;
@@ -76,6 +77,22 @@ begin
   Result := ds;
 end;
 
+function TForm1.CreateSqlQuery: TFDQuery;
+begin
+  Result := TFDQuery.Create(Self);
+  Result.Connection := FDConnection1;
+  Result.Open('SELECT Orders.OrderID,  Orders.CustomerID,' +
+    '   Customers.CompanyName, Orders.EmployeeID, ' +
+    '   Employees.FirstName||'' ''||Employees.LastName EmployeeName,' +
+    '   Orders.OrderDate, Orders.RequiredDate, Orders.ShippedDate,' +
+    '   Orders.ShipVia, Orders.Freight' + ' FROM {id Orders} Orders ' +
+    '   INNER JOIN {id Employees} Employees' +
+    '     ON Orders.EmployeeID = Employees.EmployeeID ' +
+    '   INNER JOIN {id Customers} Customers' +
+    '     ON Orders.CustomerID = Customers.CustomerID ' +
+    ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
+end;
+
 procedure TForm1.GenerateDataAndCodeFromDataSet(ds: TDataSet);
 begin
   DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(ds);
@@ -91,8 +108,8 @@ end;
 procedure TForm1.Timer1Timer(Sender: TObject);
 begin
   Timer1.Enabled := False;
-  // DataSource1.DataSet := CreateSimpleMemTable;
-  GenerateDataAndCodeFromDataSet ( CreateSimpleMemTable );
+  // GenerateDataAndCodeFromDataSet(CreateSimpleMemTable);
+  GenerateDataAndCodeFromDataSet(CreateSqlQuery);
 end;
 
 end.
