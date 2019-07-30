@@ -1,4 +1,4 @@
-unit Action.CreateMemTable;
+unit Action.GenerateDataSetCode;
 
 interface
 
@@ -8,7 +8,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TCreateMemTableAction = class(TComponent)
+  TGenDataSetCodeAction = class(TComponent)
   private
     FCode: TStrings;
     function GenCodeLineFieldDefAdd(fld: TField): string;
@@ -18,8 +18,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    function CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
-    procedure GenerateCode(dataSet: TDataSet);
+    procedure Execute(dataSet: TDataSet);
     property Code: TStrings read FCode write FCode;
   end;
 
@@ -28,54 +27,16 @@ implementation
 uses
   System.Rtti;
 
-constructor TCreateMemTableAction.Create(AOwner: TComponent);
+constructor TGenDataSetCodeAction.Create(AOwner: TComponent);
 begin
   inherited;
   FCode := TStringList.Create;
 end;
 
-destructor TCreateMemTableAction.Destroy;
+destructor TGenDataSetCodeAction.Destroy;
 begin
   FCode.Free;
   inherited;
-end;
-
-function TCreateMemTableAction.CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
-var
-  fld: TField;
-begin
-  dataSet.Open;
-  Result := TFDMemTable.Create(Self);
-  for fld in dataSet.Fields do
-  begin
-    if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
-      ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
-      Result.FieldDefs.Add(fld.FieldName, fld.DataType)
-    else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999)
-    then
-      Result.FieldDefs.Add(fld.FieldName, fld.DataType, 100)
-    else if (fld.DataType in [ftString, ftWideString]) then
-      Result.FieldDefs.Add(fld.FieldName, fld.DataType, fld.Size)
-    else
-      Result.FieldDefs.Add(fld.FieldName, fld.DataType, fld.DataSize);
-  end;
-  Result.CreateDataSet;
-  dataSet.DisableControls;
-  dataSet.Open;
-  dataSet.First;
-  while not dataSet.Eof do
-  begin
-    Result.Insert;
-    for fld in dataSet.Fields do
-    begin
-      Result.FieldByName(fld.FieldName).Value :=
-        dataSet.FieldByName(fld.FieldName).Value;
-    end;
-    Result.Post;
-    dataSet.Next;
-  end;
-  Result.First;
-  dataSet.EnableControls;
 end;
 
 function FieldTypeToString(ft: TFieldType): string;
@@ -83,9 +44,23 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TCreateMemTableAction.GenCodeLineFieldDefAdd(fld: TField): string;
+function TGenDataSetCodeAction.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
-  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
+   (*
+  ---------------------------------------------------------------------------
+  [Doc]
+  TFieldType = (ftUnknown, ftString, ftSmallint, ftInteger, ftWord, // 0..4
+    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime, // 5..11
+    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo, // 12..18
+    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString, // 19..24
+    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob, // 25..31
+    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd, // 32..37
+    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval, // 38..41
+    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream, //42..48
+    ftTimeStampOffset, ftObject, ftSingle); //49..51
+  ---------------------------------------------------------------------------
+  *)
+ if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ');'
@@ -123,15 +98,13 @@ begin
 end;
 
 function DateTimeToCode(dt: TDateTime): string;
-var
-  h, min, s, ms: word;
 begin
   Result := DateToCode(dt);
   if Frac(dt) > 0 then
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TCreateMemTableAction.GenCodeLineSetFieldValue(fld: TField): string;
+function TGenDataSetCodeAction.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -158,7 +131,7 @@ begin
   end;
 end;
 
-procedure TCreateMemTableAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
   s1: string;
@@ -187,7 +160,7 @@ begin
   dataSet.EnableControls;
 end;
 
-procedure TCreateMemTableAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
@@ -204,7 +177,7 @@ begin
   end;
 end;
 
-procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.Execute(dataSet: TDataSet);
 begin
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
