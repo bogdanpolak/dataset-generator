@@ -1,4 +1,4 @@
-unit Action.CreateMemTable;
+﻿unit Action.CreateMemTable;
 
 interface
 
@@ -11,7 +11,7 @@ type
   TCreateMemTableAction = class(TComponent)
   private
     FCode: TStrings;
-    function GenerateCodeFieldDefAdd(fld: TField): string;
+    function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenerateCodeSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
@@ -83,7 +83,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TCreateMemTableAction.GenerateCodeFieldDefAdd(fld: TField): string;
+function TCreateMemTableAction.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
   if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
@@ -204,7 +204,7 @@ begin
     Add('with ds do');
     Add('begin');
     for fld1 in dataSet.Fields do
-      Add('  ' + GenerateCodeFieldDefAdd(fld1));
+      Add('  ' + GenCodeLineFieldDefAdd(fld1));
     Add('  CreateDataSet;');
     Add('end;');
   end;
