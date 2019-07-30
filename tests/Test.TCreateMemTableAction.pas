@@ -18,6 +18,8 @@ type
     mockDataSet: TFDMemTable;
     function ReplaceArrowsToEndOfLines(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
+    procedure AssertAreEqualOneFieldTemplateToMock(const fldType: string;
+      fldSize: integer; const fldValue: string);
   public
     [Setup]
     procedure Setup;
@@ -39,6 +41,38 @@ uses
 // -----------------------------------------------------------------------
 // Utils section
 // -----------------------------------------------------------------------
+
+const
+  CodeTemplateOneField =
+  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  FieldDefs.Add(''f1'', %s);→' +
+  (* *) '  CreateDataSet;→' +
+  (* *) 'end;→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  Append;→' +
+  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  Post;→' +
+  (* *) 'end;→';
+
+procedure TGenCodeDataSetMock.AssertAreEqualOneFieldTemplateToMock
+  (const fldType: string; fldSize: integer; const fldValue: string);
+var
+  ft: string;
+  sExpected: string;
+  aActual: string;
+begin
+  if fldSize > 0 then
+    ft := fldType + ', ' + fldSize.ToString
+  else
+    ft := fldType;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [ft, fldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
 
 function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
 begin
@@ -73,6 +107,14 @@ end;
 
 procedure TGenCodeDataSetMock.TestOneIntegerField;
 begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  AssertAreEqualOneFieldTemplateToMock('ftInteger', 0, '1');
 end;
 
 procedure TGenCodeDataSetMock.TestOneWideStringField;
