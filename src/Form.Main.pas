@@ -19,23 +19,9 @@ uses
 
 type
   TFormMain = class(TForm)
-    DataSource1: TDataSource;
     Timer1: TTimer;
-    DBGrid1: TDBGrid;
     FDConnection1: TFDConnection;
-    FDQuery1: TFDQuery;
-    FDQuery1OrderID: TFDAutoIncField;
-    FDQuery1CustomerID: TStringField;
-    FDQuery1CompanyName: TStringField;
-    FDQuery1EmployeeID: TIntegerField;
-    FDQuery1EmployeeName: TWideStringField;
-    FDQuery1OrderDate: TDateTimeField;
-    FDQuery1RequiredDate: TDateTimeField;
-    FDQuery1ShippedDate: TDateTimeField;
-    FDQuery1ShipVia: TIntegerField;
-    FDQuery1Freight: TCurrencyField;
     PageControl1: TPageControl;
-    tshData: TTabSheet;
     tshCode: TTabSheet;
     Memo1: TMemo;
     procedure Timer1Timer(Sender: TObject);
@@ -44,7 +30,6 @@ type
     actGenDataSetCode: TGenDataSetCodeAction;
     function CreateSimpleMemTable: TFDMemTable;
     function CreateSqlQuery: TFDQuery;
-    procedure GenerateDataAndCodeFromDataSet(ds: TDataSet);
   public
     { Public declarations }
   end;
@@ -60,24 +45,9 @@ function TFormMain.CreateSimpleMemTable: TFDMemTable;
 var
   ds: TFDMemTable;
 begin
-  (*
-  ---------------------------------------------------------------------------
-  [Doc]
-  TFieldType = (ftUnknown, ftString, ftSmallint, ftInteger, ftWord, // 0..4
-    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime, // 5..11
-    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo, // 12..18
-    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString, // 19..24
-    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob, // 25..31
-    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd, // 32..37
-    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval, // 38..41
-    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream, //42..48
-    ftTimeStampOffset, ftObject, ftSingle); //49..51
-  ---------------------------------------------------------------------------
-  *)
   ds := TFDMemTable.Create(Self);
   with ds do
   begin
-    // FieldDefs.Add('bDelete', ftBoolean);
     FieldDefs.Add('id', ftInteger);
     FieldDefs.Add('text1', ftWideString, 30);
     FieldDefs.Add('date1', ftDate);
@@ -107,23 +77,20 @@ begin
     ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
 end;
 
-procedure TFormMain.GenerateDataAndCodeFromDataSet(ds: TDataSet);
-begin
-  DataSource1.DataSet := actGenDataSetCode.CreateFDMemTable(ds);
-  actGenDataSetCode.GenerateCode(ds);
-  Memo1.Lines := actGenDataSetCode.Code;
-end;
-
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
   actGenDataSetCode := TGenDataSetCodeAction.Create(Self);
 end;
 
 procedure TFormMain.Timer1Timer(Sender: TObject);
+var
+  ds: TFDQuery;
 begin
   Timer1.Enabled := False;
-  // GenerateDataAndCodeFromDataSet(CreateSimpleMemTable);
-  GenerateDataAndCodeFromDataSet(CreateSqlQuery);
+  // ----------------------------------
+  ds := CreateSqlQuery;
+  actGenDataSetCode.GenerateCode(ds);
+  Memo1.Lines := actGenDataSetCode.Code;
 end;
 
 end.
