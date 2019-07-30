@@ -14,7 +14,7 @@ type
   [TestFixture]
   TGenCodeDataSetMock = class(TObject)
   private
-    actCreateMemTable: TGenDataSetCodeAction;
+    actGenDataSetCode: TGenDataSetCodeAction;
     mockDataSet: TFDMemTable;
     function ReplaceArrowsToEndOfLines(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
@@ -80,8 +80,8 @@ end;
 
 function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
 begin
-  actCreateMemTable.GenerateCode(ds);
-  Result := actCreateMemTable.Code.Text;
+  actGenDataSetCode.GenerateCode(ds);
+  Result := actGenDataSetCode.Code.Text;
 end;
 
 function TGenCodeDataSetMock.ReplaceArrowsToEndOfLines(const s: String): string;
@@ -95,13 +95,13 @@ end;
 
 procedure TGenCodeDataSetMock.Setup;
 begin
-  actCreateMemTable := TGenDataSetCodeAction.Create(nil);
+  actGenDataSetCode := TGenDataSetCodeAction.Create(nil);
   mockDataSet := TFDMemTable.Create(nil);
 end;
 
 procedure TGenCodeDataSetMock.TearDown;
 begin
-  FreeAndNil(actCreateMemTable);
+  FreeAndNil(actGenDataSetCode);
   FreeAndNil(mockDataSet);
 end;
 
