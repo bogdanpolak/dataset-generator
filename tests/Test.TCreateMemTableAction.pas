@@ -119,6 +119,15 @@ end;
 
 procedure TGenCodeDataSetMock.TestOneWideStringField;
 begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftWideString, 20);
+    CreateDataSet;
+    AppendRecord(['Alice has a cat']);
+    First;
+  end;
+  AssertAreEqualOneFieldTemplateToMock('ftWideString', 20,
+    QuotedStr('Alice has a cat'));
 end;
 
 procedure TGenCodeDataSetMock.TestSample1;
