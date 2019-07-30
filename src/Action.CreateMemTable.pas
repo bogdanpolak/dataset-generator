@@ -11,7 +11,8 @@ type
   TCreateMemTableAction = class(TComponent)
   private
     FCode: TStrings;
-    function DatasetFieldToFieldDefCode(fld: TField): string;
+    function GenerateCodeFieldDefAdd(fld: TField): string;
+    function GenerateCodeSetFieldValue(fld: TField): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -58,6 +59,7 @@ begin
   end;
   Result.CreateDataSet;
   dataSet.DisableControls;
+  dataSet.Open;
   dataSet.First;
   while not dataSet.Eof do
   begin
@@ -79,7 +81,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TCreateMemTableAction.DatasetFieldToFieldDefCode(fld: TField): string;
+function TCreateMemTableAction.GenerateCodeFieldDefAdd(fld: TField): string;
 begin
   if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
@@ -87,7 +89,7 @@ begin
       FieldTypeToString(fld.DataType) + ');'
   else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', 100)'
+      FieldTypeToString(fld.DataType) + ', 100);'
   else if (fld.DataType in [ftString, ftWideString]) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
@@ -96,10 +98,72 @@ begin
       FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
 end;
 
+function FloatToCode(val: Extended): string;
+begin
+  Result := FloatToStr(val);
+  Result := StringReplace(Result, ',', '.', []);
+end;
+
+function DateToCode(dt: TDateTime): string;
+var
+  y, m, d: word;
+begin
+  DecodeDate(dt, y, m, d);
+  Result := Format('EncodeDate(%d,%d,%d)', [y, m, d]);
+end;
+
+function TimeToCode(dt: TDateTime): string;
+var
+  h, min, s, ms: word;
+begin
+  DecodeTime(dt, h, min, s, ms);
+  Result := Format('EncodeTime(%d,%d,%d,%d)', [h, min, s, ms]);
+end;
+
+function DateTimeToCode(dt: TDateTime): string;
+var
+  h, min, s, ms: word;
+begin
+  Result := DateToCode(dt);
+  if Frac(dt) > 0 then
+    Result := Result + '+' + DateToCode(dt);
+end;
+
+function TCreateMemTableAction.GenerateCodeSetFieldValue(fld: TField): string;
+var
+  sByNameValue: string;
+begin
+  Result := '';
+  if not(fld.IsNull) then
+  begin
+    sByNameValue := 'FieldByName(' + QuotedStr(fld.FieldName) + ').Value';
+    case fld.DataType of
+      ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+        Result := sByNameValue + ' := ' + fld.AsString + ';';
+      ftBoolean:
+        Result := sByNameValue + ' := ' + BoolToStr(fld.AsBoolean, true) + ';';
+      ftFloat, ftCurrency:
+        Result := sByNameValue + ' := ' + FloatToCode(fld.AsExtended) + ';';
+      ftDate:
+        Result := sByNameValue + ' := ' + DateToCode(fld.AsDateTime) + ';';
+      ftTime:
+        Result := sByNameValue + ' := ' + TimeToCode(fld.AsDateTime) + ';';
+      ftDateTime:
+        Result := sByNameValue + ' := ' + DateTimeToCode(fld.AsDateTime) + ';';
+      ftString, ftWideString:
+        Result := sByNameValue + ' := ' + QuotedStr(fld.Value) + ';';
+    end;
+  end;
+end;
+
 procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
 var
   fld: TField;
+  s1: string;
 begin
+  // --------------------------------------------
+  // GenCode: Create Mock Table Structure
+  // -
   With Code do
   begin
     Clear;
@@ -107,10 +171,36 @@ begin
     Add('with ds do');
     Add('begin');
     for fld in dataSet.Fields do
-      Code.Add('  ' + DatasetFieldToFieldDefCode(fld));
+      Add('  ' + GenerateCodeFieldDefAdd(fld));
     Add('  CreateDataSet;');
     Add('end;');
   end;
+  // --------------------------------------------
+  // GenCode: Append Data to Mock Table
+  // -
+  dataSet.DisableControls;
+  dataSet.Open;
+  dataSet.First;
+  Code.Add('with ds do');
+  Code.Add('begin');
+  while not dataSet.Eof do
+  begin
+    With Code do
+    begin
+      Add('  Append;');
+      for fld in dataSet.Fields do
+      begin
+        s1 := GenerateCodeSetFieldValue(fld);
+        if s1 <> '' then
+          Add('    ' + s1);
+      end;
+      Add('  Post;');
+    end;
+    dataSet.Next;
+  end;
+  Code.Add('end;');
+  dataSet.EnableControls;
+  // --------------------------------------------
 end;
 
 end.
