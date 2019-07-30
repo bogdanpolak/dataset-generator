@@ -1,4 +1,4 @@
-﻿unit Action.CreateMemTable;
+unit Action.CreateMemTable;
 
 interface
 
@@ -12,7 +12,7 @@ type
   private
     FCode: TStrings;
     function GenCodeLineFieldDefAdd(fld: TField): string;
-    function GenerateCodeSetFieldValue(fld: TField): string;
+    function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
   public
@@ -131,7 +131,7 @@ begin
     Result := Result + '+' + DateToCode(dt);
 end;
 
-function TCreateMemTableAction.GenerateCodeSetFieldValue(fld: TField): string;
+function TCreateMemTableAction.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -160,12 +160,9 @@ end;
 
 procedure TCreateMemTableAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
-  fld2: TField;
+  fld: TField;
   s1: string;
 begin
-  // --------------------------------------------
-  // GenCode: Append Data to Mock Table
-  // -
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
@@ -176,9 +173,9 @@ begin
     with Code do
     begin
       Add('  Append;');
-      for fld2 in dataSet.Fields do
+      for fld in dataSet.Fields do
       begin
-        s1 := GenerateCodeSetFieldValue(fld2);
+        s1 := GenCodeLineSetFieldValue(fld);
         if s1 <> '' then
           Add('    ' + s1);
       end;
@@ -192,19 +189,16 @@ end;
 
 procedure TCreateMemTableAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
-  fld1: TField;
+  fld: TField;
 begin
-  // --------------------------------------------
-  // GenCode: Create Mock Table Structure
-  // -
   with Code do
   begin
     Clear;
     Add('ds := TFDMemTable.Create(AOwner);');
     Add('with ds do');
     Add('begin');
-    for fld1 in dataSet.Fields do
-      Add('  ' + GenCodeLineFieldDefAdd(fld1));
+    for fld in dataSet.Fields do
+      Add('  ' + GenCodeLineFieldDefAdd(fld));
     Add('  CreateDataSet;');
     Add('end;');
   end;
