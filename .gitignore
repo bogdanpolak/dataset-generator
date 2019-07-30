@@ -1,7 +1,3 @@
-# ########## Open Console File
-
-TestInsightSettings.ini
-
 # ########## OS X hidden file index data
 
 .DS_Store
@@ -100,3 +96,8 @@ __recovery/
 # (*.pch) C++ Precompiled Header File
 # (*.o) C++ object file or compiled translation unit.
 # (*.pch) C++ precompiled header file.
+
+# ########## Misc Files
+
+TestInsightSettings.ini
+*.groupproj
