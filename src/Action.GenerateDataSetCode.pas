@@ -84,8 +84,6 @@ begin
 end;
 
 function DateTimeToCode(dt: TDateTime): string;
-var
-  h, min, s, ms: word;
 begin
   Result := DateToCode(dt);
   if Frac(dt) > 0 then
