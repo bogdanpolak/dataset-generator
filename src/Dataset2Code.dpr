@@ -3,7 +3,7 @@ program Dataset2Code;
 uses
   Vcl.Forms,
   Form.Main in 'Form.Main.pas' {FormMain},
-  Action.CreateMemTable in 'Action.CreateMemTable.pas';
+  Action.GenerateDataSetCode in 'Action.GenerateDataSetCode.pas';
 
 {$R *.res}
 

@@ -7,7 +7,7 @@ uses
   System.Classes, System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Action.CreateMemTable;
+  Action.GenerateDataSetCode;
 
 type
 

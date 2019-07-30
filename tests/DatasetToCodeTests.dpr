@@ -12,7 +12,7 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
   Test.TCreateMemTableAction in 'Test.TCreateMemTableAction.pas',
-  Action.CreateMemTable in '..\src\Action.CreateMemTable.pas';
+  Action.GenerateDataSetCode in '..\src\Action.GenerateDataSetCode.pas';
 
 var
   runner : ITestRunner;
