@@ -32,6 +32,8 @@ type
     [Test]
     procedure TestOneDateTimeField_DateOnly;
     [Test]
+    procedure TestOneDateTimeField_DateTime;
+    [Test]
     procedure TestSample1;
   end;
 
@@ -117,6 +119,19 @@ begin
     First;
   end;
   AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0, 'EncodeDate(2019,7,1)');
+end;
+
+procedure TGenCodeDataSetMock.TestOneDateTimeField_DateTime;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftDateTime);
+    CreateDataSet;
+    AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
+    First;
+  end;
+  AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0,
+    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)');
 end;
 
 procedure TGenCodeDataSetMock.TestOneIntegerField;
