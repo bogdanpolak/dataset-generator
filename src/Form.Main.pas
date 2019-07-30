@@ -41,7 +41,7 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    actCreateMemTable: TGenDataSetCodeAction;
+    actGenDataSetCode: TGenDataSetCodeAction;
     function CreateSimpleMemTable: TFDMemTable;
     function CreateSqlQuery: TFDQuery;
     procedure GenerateDataAndCodeFromDataSet(ds: TDataSet);
@@ -109,14 +109,14 @@ end;
 
 procedure TFormMain.GenerateDataAndCodeFromDataSet(ds: TDataSet);
 begin
-  DataSource1.DataSet := actCreateMemTable.CreateFDMemTable(ds);
-  actCreateMemTable.GenerateCode(ds);
-  Memo1.Lines := actCreateMemTable.Code;
+  DataSource1.DataSet := actGenDataSetCode.CreateFDMemTable(ds);
+  actGenDataSetCode.GenerateCode(ds);
+  Memo1.Lines := actGenDataSetCode.Code;
 end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
-  actCreateMemTable := TGenDataSetCodeAction.Create(Self);
+  actGenDataSetCode := TGenDataSetCodeAction.Create(Self);
 end;
 
 procedure TFormMain.Timer1Timer(Sender: TObject);
