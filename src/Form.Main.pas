@@ -88,7 +88,7 @@ begin
   Timer1.Enabled := False;
   // ----------------------------------
   ds := CreateSqlQuery;
-  actGenDataSetCode.GenerateCode(ds);
+  actGenDataSetCode.Execute(ds);
   Memo1.Lines := actGenDataSetCode.Code;
 end;
 

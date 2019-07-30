@@ -18,7 +18,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure GenerateCode(dataSet: TDataSet);
+    procedure Execute(dataSet: TDataSet);
     property Code: TStrings read FCode write FCode;
   end;
 
@@ -165,7 +165,7 @@ begin
   end;
 end;
 
-procedure TGenDataSetCodeAction.GenerateCode(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.Execute(dataSet: TDataSet);
 begin
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
