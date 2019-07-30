@@ -80,7 +80,50 @@ begin
 end;
 
 procedure TGenCodeDataSetMock.TestSample1;
+var
+  expectedCode: string;
+  actualCode: string;
 begin
+  expectedCode := ReplaceArrowsToEndOfLines(
+    (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+    (* *) 'with ds do→' +
+    (* *) 'begin→' +
+    (* *) '  FieldDefs.Add(''id'', ftInteger);→' +
+    (* *) '  FieldDefs.Add(''text1'', ftWideString, 30);→' +
+    (* *) '  FieldDefs.Add(''date1'', ftDate);→' +
+    (* *) '  FieldDefs.Add(''float1'', ftFloat);→' +
+    (* *) '  FieldDefs.Add(''currency1'', ftCurrency);→' +
+    (* *) '  CreateDataSet;→' +
+    (* *) 'end;→' +
+    (* *) 'with ds do→' +
+    (* *) 'begin→' +
+    (* *) '  Append;→' +
+    (* *) '    FieldByName(''id'').Value := 1;→' +
+    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
+    (* *) '    FieldByName(''float1'').Value := 1.2;→' +
+    (* *) '    FieldByName(''currency1'').Value := 1200;→' +
+    (* *) '  Post;→' +
+    (* *) '  Append;→' +
+    (* *) '    FieldByName(''id'').Value := 2;→' +
+    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '    FieldByName(''currency1'').Value := 950;→' +
+    (* *) '  Post;→' +
+    (* *) 'end;→');
+  with mockDataSet do
+  begin
+    FieldDefs.Add('id', ftInteger);
+    FieldDefs.Add('text1', ftWideString, 30);
+    FieldDefs.Add('date1', ftDate);
+    FieldDefs.Add('float1', ftFloat);
+    FieldDefs.Add('currency1', ftCurrency);
+    CreateDataSet;
+    AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
+    AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
+    First;
+  end;
+  actualCode := GenerateCode(mockDataSet);
+  Assert.AreEqual(expectedCode, actualCode);
 end;
 
 initialization
