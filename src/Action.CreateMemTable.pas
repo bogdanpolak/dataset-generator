@@ -13,6 +13,8 @@ type
     FCode: TStrings;
     function GenerateCodeFieldDefAdd(fld: TField): string;
     function GenerateCodeSetFieldValue(fld: TField): string;
+    procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+    procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -156,25 +158,11 @@ begin
   end;
 end;
 
-procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
+procedure TCreateMemTableAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
-  fld: TField;
+  fld2: TField;
   s1: string;
 begin
-  // --------------------------------------------
-  // GenCode: Create Mock Table Structure
-  // -
-  With Code do
-  begin
-    Clear;
-    Add('ds := TFDMemTable.Create(AOwner);');
-    Add('with ds do');
-    Add('begin');
-    for fld in dataSet.Fields do
-      Add('  ' + GenerateCodeFieldDefAdd(fld));
-    Add('  CreateDataSet;');
-    Add('end;');
-  end;
   // --------------------------------------------
   // GenCode: Append Data to Mock Table
   // -
@@ -185,12 +173,12 @@ begin
   Code.Add('begin');
   while not dataSet.Eof do
   begin
-    With Code do
+    with Code do
     begin
       Add('  Append;');
-      for fld in dataSet.Fields do
+      for fld2 in dataSet.Fields do
       begin
-        s1 := GenerateCodeSetFieldValue(fld);
+        s1 := GenerateCodeSetFieldValue(fld2);
         if s1 <> '' then
           Add('    ' + s1);
       end;
@@ -200,7 +188,32 @@ begin
   end;
   Code.Add('end;');
   dataSet.EnableControls;
+end;
+
+procedure TCreateMemTableAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+var
+  fld1: TField;
+begin
   // --------------------------------------------
+  // GenCode: Create Mock Table Structure
+  // -
+  with Code do
+  begin
+    Clear;
+    Add('ds := TFDMemTable.Create(AOwner);');
+    Add('with ds do');
+    Add('begin');
+    for fld1 in dataSet.Fields do
+      Add('  ' + GenerateCodeFieldDefAdd(fld1));
+    Add('  CreateDataSet;');
+    Add('end;');
+  end;
+end;
+
+procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
+begin
+  GenCodeCreateMockTableWithStructure(dataSet);
+  GenCodeAppendDataToMockTable(dataSet);
 end;
 
 end.
