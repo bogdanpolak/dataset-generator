@@ -8,7 +8,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TCreateMemTableAction = class(TComponent)
+  TGenDataSetCodeAction = class(TComponent)
   private
     FCode: TStrings;
     function GenCodeLineFieldDefAdd(fld: TField): string;
@@ -28,19 +28,19 @@ implementation
 uses
   System.Rtti;
 
-constructor TCreateMemTableAction.Create(AOwner: TComponent);
+constructor TGenDataSetCodeAction.Create(AOwner: TComponent);
 begin
   inherited;
   FCode := TStringList.Create;
 end;
 
-destructor TCreateMemTableAction.Destroy;
+destructor TGenDataSetCodeAction.Destroy;
 begin
   FCode.Free;
   inherited;
 end;
 
-function TCreateMemTableAction.CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
+function TGenDataSetCodeAction.CreateFDMemTable(dataSet: TDataSet): TFDMemTable;
 var
   fld: TField;
 begin
@@ -83,7 +83,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TCreateMemTableAction.GenCodeLineFieldDefAdd(fld: TField): string;
+function TGenDataSetCodeAction.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
   if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
@@ -131,7 +131,7 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TCreateMemTableAction.GenCodeLineSetFieldValue(fld: TField): string;
+function TGenDataSetCodeAction.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -158,7 +158,7 @@ begin
   end;
 end;
 
-procedure TCreateMemTableAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
   s1: string;
@@ -187,7 +187,7 @@ begin
   dataSet.EnableControls;
 end;
 
-procedure TCreateMemTableAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
@@ -204,7 +204,7 @@ begin
   end;
 end;
 
-procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
+procedure TGenDataSetCodeAction.GenerateCode(dataSet: TDataSet);
 begin
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
