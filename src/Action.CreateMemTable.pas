@@ -128,7 +128,7 @@ var
 begin
   Result := DateToCode(dt);
   if Frac(dt) > 0 then
-    Result := Result + '+' + DateToCode(dt);
+    Result := Result + '+' + TimeToCode(dt);
 end;
 
 function TCreateMemTableAction.GenCodeLineSetFieldValue(fld: TField): string;
