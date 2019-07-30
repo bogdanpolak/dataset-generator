@@ -11,6 +11,7 @@ type
   TCreateMemTableAction = class(TComponent)
   private
     FCode: TStrings;
+    function DatasetFieldToFieldDefCode(fld: TField): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -20,6 +21,9 @@ type
   end;
 
 implementation
+
+uses
+  System.Rtti;
 
 constructor TCreateMemTableAction.Create(AOwner: TComponent);
 begin
@@ -70,7 +74,31 @@ begin
   dataSet.EnableControls;
 end;
 
+function FieldTypeToString(ft: TFieldType): string;
+begin
+  Result := System.Rtti.TRttiEnumerationType.GetName(ft);
+end;
+
+function TCreateMemTableAction.DatasetFieldToFieldDefCode(fld: TField): string;
+begin
+  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
+    ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ');'
+  else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', 100)'
+  else if (fld.DataType in [ftString, ftWideString]) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
+  else
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
+end;
+
 procedure TCreateMemTableAction.GenerateCode(dataSet: TDataSet);
+var
+  fld: TField;
 begin
   With Code do
   begin
@@ -78,8 +106,8 @@ begin
     Add('ds := TFDMemTable.Create(AOwner);');
     Add('with ds do');
     Add('begin');
-    Add('  FieldDefs.Add(''id'', ftInteger);');
-    Add('  FieldDefs.Add(''text1'', ftWideString, 30);');
+    for fld in dataSet.Fields do
+      Code.Add('  ' + DatasetFieldToFieldDefCode(fld));
     Add('  CreateDataSet;');
     Add('end;');
   end;
