@@ -51,8 +51,15 @@ object FormMain: TFormMain
         Width = 614
         Height = 230
         Align = alClient
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Consolas'
+        Font.Style = []
         Lines.Strings = (
           'Memo1')
+        ParentFont = False
+        ScrollBars = ssVertical
         TabOrder = 0
       end
     end
