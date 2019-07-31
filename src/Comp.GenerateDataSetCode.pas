@@ -23,6 +23,8 @@ type
     procedure Execute;
     property DataSet: TDataSet read FDataSet write FDataSet;
     property Code: TStrings read FCode;
+    class function GenerateAsString (ds: TDataSet): string;
+    class function GenerateAsArray (ds: TDataSet): TStringDynArray;
   end;
 
 implementation
@@ -131,6 +133,35 @@ begin
       ftString, ftWideString:
         Result := sByNameValue + ' := ' + QuotedStr(fld.Value) + ';';
     end;
+  end;
+end;
+
+class function TGenerateDataSetCode.GenerateAsString(ds: TDataSet): string;
+var
+  gen: TGenerateDataSetCode;
+begin
+  gen := TGenerateDataSetCode.Create(nil);
+  try
+    gen.DataSet := ds;
+    gen.Execute;
+    Result := gen.Code.Text;
+  finally
+    gen.Free;
+  end;
+end;
+
+class function TGenerateDataSetCode.GenerateAsArray(
+  ds: TDataSet): TStringDynArray;
+var
+  gen: TGenerateDataSetCode;
+begin
+  gen := TGenerateDataSetCode.Create(nil);
+  try
+    gen.DataSet := ds;
+    gen.Execute;
+    Result := gen.Code.ToStringArray;
+  finally
+    gen.Free;
   end;
 end;
 
