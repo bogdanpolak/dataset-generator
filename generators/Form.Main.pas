@@ -18,17 +18,19 @@ uses
 
 type
   TFormMain = class(TForm)
-    Timer1: TTimer;
     FDConnection1: TFDConnection;
     PageControl1: TPageControl;
     tshCode: TTabSheet;
     Memo1: TMemo;
-    procedure Timer1Timer(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
+    GroupBox1: TGroupBox;
+    Splitter1: TSplitter;
+    Button1: TButton;
+    Button2: TButton;
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
   private
-    GenerateDataSetCode: TGenerateDataSetCode;
-    function CreateSimpleMemTable: TFDMemTable;
-    function CreateSqlQuery: TFDQuery;
+    function CreateSimpleMemTable: TDataSet;
+    function CreateSqlQuery: TDataSet;
   public
     { Public declarations }
   end;
@@ -40,7 +42,7 @@ implementation
 
 {$R *.dfm}
 
-function TFormMain.CreateSimpleMemTable: TFDMemTable;
+function TFormMain.CreateSimpleMemTable: TDataSet;
 var
   ds: TFDMemTable;
 begin
@@ -60,11 +62,13 @@ begin
   Result := ds;
 end;
 
-function TFormMain.CreateSqlQuery: TFDQuery;
+function TFormMain.CreateSqlQuery: TDataSet;
+var
+  ds: TFDQuery;
 begin
-  Result := TFDQuery.Create(Self);
-  Result.Connection := FDConnection1;
-  Result.Open('SELECT Orders.OrderID,  Orders.CustomerID,' +
+  ds := TFDQuery.Create(Self);
+  ds.Connection := FDConnection1;
+  ds.Open('SELECT Orders.OrderID,  Orders.CustomerID,' +
     '   Customers.CompanyName, Orders.EmployeeID, ' +
     '   Employees.FirstName||'' ''||Employees.LastName EmployeeName,' +
     '   Orders.OrderDate, Orders.RequiredDate, Orders.ShippedDate,' +
@@ -74,20 +78,23 @@ begin
     '   INNER JOIN {id Customers} Customers' +
     '     ON Orders.CustomerID = Customers.CustomerID ' +
     ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
+  Result := ds;
 end;
 
-procedure TFormMain.FormCreate(Sender: TObject);
+procedure TFormMain.Button1Click(Sender: TObject);
+var
+  ADataSet: TDataSet;
 begin
-  GenerateDataSetCode := TGenerateDataSetCode.Create(Self);
+  ADataSet := CreateSimpleMemTable;
+  Memo1.Lines.Text := TGenerateDataSetCode.GenerateAsString (ADataSet);
 end;
 
-procedure TFormMain.Timer1Timer(Sender: TObject);
+procedure TFormMain.Button2Click(Sender: TObject);
+var
+  ADataSet: TDataSet;
 begin
-  Timer1.Enabled := False;
-  // ----------------------------------
-  GenerateDataSetCode.DataSet := CreateSqlQuery;
-  GenerateDataSetCode.Execute;
-  Memo1.Lines := GenerateDataSetCode.Code;
+  ADataSet := CreateSqlQuery;
+  Memo1.Lines.Text := TGenerateDataSetCode.GenerateAsString(ADataSet);
 end;
 
 end.
