@@ -11,6 +11,8 @@ type
   TGenerateDataSetCode = class(TComponent)
   private
     FCode: TStrings;
+    FDataSet: TDataSet;
+    procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
@@ -18,8 +20,9 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Execute(dataSet: TDataSet);
-    property Code: TStrings read FCode write FCode;
+    procedure Execute;
+    property DataSet: TDataSet read FDataSet write FDataSet;
+    property Code: TStrings read FCode;
   end;
 
 implementation
@@ -131,6 +134,11 @@ begin
   end;
 end;
 
+procedure TGenerateDataSetCode.Guard;
+begin
+  Assert( DataSet<>nil, 'Property DataSet not assigned!');
+end;
+
 procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
@@ -177,8 +185,9 @@ begin
   end;
 end;
 
-procedure TGenerateDataSetCode.Execute(dataSet: TDataSet);
+procedure TGenerateDataSetCode.Execute;
 begin
+  Guard;
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
 end;

@@ -82,13 +82,11 @@ begin
 end;
 
 procedure TFormMain.Timer1Timer(Sender: TObject);
-var
-  ds: TFDQuery;
 begin
   Timer1.Enabled := False;
   // ----------------------------------
-  ds := CreateSqlQuery;
-  actGenDataSetCode.Execute(ds);
+  actGenDataSetCode.DataSet := CreateSqlQuery;
+  actGenDataSetCode.Execute;
   Memo1.Lines := actGenDataSetCode.Code;
 end;
 

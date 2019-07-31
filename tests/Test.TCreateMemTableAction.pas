@@ -80,7 +80,8 @@ end;
 
 function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
 begin
-  actGenDataSetCode.Execute(ds);
+  actGenDataSetCode.DataSet := ds;
+  actGenDataSetCode.Execute;
   Result := actGenDataSetCode.Code.Text;
 end;
 
