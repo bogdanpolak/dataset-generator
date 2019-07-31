@@ -7,14 +7,14 @@ uses
   System.Classes, System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Action.GenerateDataSetCode;
+  Comp.GenerateDataSetCode;
 
 type
 
   [TestFixture]
   TGenCodeDataSetMock = class(TObject)
   private
-    actGenDataSetCode: TGenDataSetCodeAction;
+    actGenDataSetCode: TGenerateDataSetCode;
     mockDataSet: TFDMemTable;
     function ReplaceArrowsToEndOfLines(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
@@ -95,7 +95,7 @@ end;
 
 procedure TGenCodeDataSetMock.Setup;
 begin
-  actGenDataSetCode := TGenDataSetCodeAction.Create(nil);
+  actGenDataSetCode := TGenerateDataSetCode.Create(nil);
   mockDataSet := TFDMemTable.Create(nil);
 end;
 

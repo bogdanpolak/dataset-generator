@@ -14,7 +14,7 @@ uses
   FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
   FireDAC.Stan.ExprFuncs, FireDAC.VCLUI.Wait, FireDAC.DApt,
-  Action.GenerateDataSetCode;
+  Comp.GenerateDataSetCode;
 
 type
   TFormMain = class(TForm)
@@ -26,7 +26,7 @@ type
     procedure Timer1Timer(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    actGenDataSetCode: TGenDataSetCodeAction;
+    actGenDataSetCode: TGenerateDataSetCode;
     function CreateSimpleMemTable: TFDMemTable;
     function CreateSqlQuery: TFDQuery;
   public
@@ -78,7 +78,7 @@ end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
-  actGenDataSetCode := TGenDataSetCodeAction.Create(Self);
+  actGenDataSetCode := TGenerateDataSetCode.Create(Self);
 end;
 
 procedure TFormMain.Timer1Timer(Sender: TObject);

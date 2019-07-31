@@ -1,4 +1,4 @@
-unit Action.GenerateDataSetCode;
+unit Comp.GenerateDataSetCode;
 
 interface
 
@@ -8,7 +8,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGenDataSetCodeAction = class(TComponent)
+  TGenerateDataSetCode = class(TComponent)
   private
     FCode: TStrings;
     function GenCodeLineFieldDefAdd(fld: TField): string;
@@ -27,13 +27,13 @@ implementation
 uses
   System.Rtti;
 
-constructor TGenDataSetCodeAction.Create(AOwner: TComponent);
+constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
   inherited;
   FCode := TStringList.Create;
 end;
 
-destructor TGenDataSetCodeAction.Destroy;
+destructor TGenerateDataSetCode.Destroy;
 begin
   FCode.Free;
   inherited;
@@ -44,7 +44,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TGenDataSetCodeAction.GenCodeLineFieldDefAdd(fld: TField): string;
+function TGenerateDataSetCode.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
    (*
   ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TGenDataSetCodeAction.GenCodeLineSetFieldValue(fld: TField): string;
+function TGenerateDataSetCode.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -131,7 +131,7 @@ begin
   end;
 end;
 
-procedure TGenDataSetCodeAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
+procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
   s1: string;
@@ -160,7 +160,7 @@ begin
   dataSet.EnableControls;
 end;
 
-procedure TGenDataSetCodeAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
@@ -177,7 +177,7 @@ begin
   end;
 end;
 
-procedure TGenDataSetCodeAction.Execute(dataSet: TDataSet);
+procedure TGenerateDataSetCode.Execute(dataSet: TDataSet);
 begin
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);

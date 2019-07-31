@@ -2,8 +2,8 @@ program Dataset2Code;
 
 uses
   Vcl.Forms,
-  Form.Main in '..\src\Form.Main.pas' {FormMain},
-  Action.GenerateDataSetCode in '..\src\Action.GenerateDataSetCode.pas';
+  Form.Main in 'Form.Main.pas' {FormMain},
+  Comp.GenerateDataSetCode in '..\src\Comp.GenerateDataSetCode.pas';
 
 {$R *.res}
 
