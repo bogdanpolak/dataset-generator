@@ -1,4 +1,4 @@
-unit Action.GenerateDataSetCode;
+unit Comp.GenerateDataSetCode;
 
 interface
 
@@ -8,9 +8,11 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGenDataSetCodeAction = class(TComponent)
+  TGenerateDataSetCode = class(TComponent)
   private
     FCode: TStrings;
+    FDataSet: TDataSet;
+    procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
@@ -18,8 +20,11 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    procedure Execute(dataSet: TDataSet);
-    property Code: TStrings read FCode write FCode;
+    procedure Execute;
+    property DataSet: TDataSet read FDataSet write FDataSet;
+    property Code: TStrings read FCode;
+    class function GenerateAsString (ds: TDataSet): string;
+    class function GenerateAsArray (ds: TDataSet): TStringDynArray;
   end;
 
 implementation
@@ -27,13 +32,13 @@ implementation
 uses
   System.Rtti;
 
-constructor TGenDataSetCodeAction.Create(AOwner: TComponent);
+constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
   inherited;
   FCode := TStringList.Create;
 end;
 
-destructor TGenDataSetCodeAction.Destroy;
+destructor TGenerateDataSetCode.Destroy;
 begin
   FCode.Free;
   inherited;
@@ -44,7 +49,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TGenDataSetCodeAction.GenCodeLineFieldDefAdd(fld: TField): string;
+function TGenerateDataSetCode.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
    (*
   ---------------------------------------------------------------------------
@@ -104,7 +109,7 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TGenDataSetCodeAction.GenCodeLineSetFieldValue(fld: TField): string;
+function TGenerateDataSetCode.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -131,7 +136,41 @@ begin
   end;
 end;
 
-procedure TGenDataSetCodeAction.GenCodeAppendDataToMockTable(dataSet: TDataSet);
+class function TGenerateDataSetCode.GenerateAsString(ds: TDataSet): string;
+var
+  gen: TGenerateDataSetCode;
+begin
+  gen := TGenerateDataSetCode.Create(nil);
+  try
+    gen.DataSet := ds;
+    gen.Execute;
+    Result := gen.Code.Text;
+  finally
+    gen.Free;
+  end;
+end;
+
+class function TGenerateDataSetCode.GenerateAsArray(
+  ds: TDataSet): TStringDynArray;
+var
+  gen: TGenerateDataSetCode;
+begin
+  gen := TGenerateDataSetCode.Create(nil);
+  try
+    gen.DataSet := ds;
+    gen.Execute;
+    Result := gen.Code.ToStringArray;
+  finally
+    gen.Free;
+  end;
+end;
+
+procedure TGenerateDataSetCode.Guard;
+begin
+  Assert( DataSet<>nil, 'Property DataSet not assigned!');
+end;
+
+procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
   s1: string;
@@ -160,7 +199,7 @@ begin
   dataSet.EnableControls;
 end;
 
-procedure TGenDataSetCodeAction.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
+procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
@@ -177,8 +216,9 @@ begin
   end;
 end;
 
-procedure TGenDataSetCodeAction.Execute(dataSet: TDataSet);
+procedure TGenerateDataSetCode.Execute;
 begin
+  Guard;
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
 end;
