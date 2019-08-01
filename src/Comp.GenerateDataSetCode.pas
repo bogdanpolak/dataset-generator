@@ -147,13 +147,16 @@ begin
     s2 := sLineBreak;
     while s1 <> '' do
     begin
-      if Length(s1)<MaxLiteralLenght then begin
-        s2 := s2 +  '      '+s1;
+      if Length(s1) < MaxLiteralLenght then
+      begin
+        s2 := s2 + '      ' + s1;
         s1 := '';
       end
-      else begin
-        s2 := s2 + '      '+s1.Substring(0,MaxLiteralLenght-1)+'''+'+sLineBreak;
-        s1 := ''''+s1.Substring(MaxLiteralLenght-1);
+      else
+      begin
+        s2 := s2 + '      ' + s1.Substring(0, MaxLiteralLenght - 1) + '''+' +
+          sLineBreak;
+        s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
       end;
     end;
     Result := s2;
