@@ -36,6 +36,8 @@ type
     [Test]
     procedure TestOneBCDField_iss001;
     [Test]
+    procedure TestOneBCDField_DifferentFieldName;
+    [Test]
     procedure TestLongStringLiterals_iss002;
     [Test]
     procedure TestSample1;
@@ -89,14 +91,14 @@ const
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  with FieldDefs.AddFieldDef do begin→' +
-  (* *) '    Name := ''f1'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '    Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
   (* *) '  end;→' +
   (* *) '  CreateDataSet;→' +
   (* *) 'end;→' +
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
-  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '    FieldByName(''%s'').Value := %s;→' +
   (* *) '  Post;→' +
   (* *) 'end;→';
 
@@ -150,6 +152,30 @@ begin
     '+→' + '      ' + QuotedStr(' wrong way to use it'));
 end;
 
+procedure TGenCodeDataSetMock.TestOneBCDField_DifferentFieldName;
+var
+  sExpected: string;
+  sActual: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'abc123';
+      DataType := ftBcd;
+      Precision := 8;
+      Size := 2;
+    end;
+    CreateDataSet;
+    AppendRecord([1.01]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']));
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
+end;
+
 procedure TGenCodeDataSetMock.TestOneBCDField_iss001;
 var
   sExpected: string;
@@ -169,7 +195,7 @@ begin
     First;
   end;
   sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
-    ['ftBCD', 10, 4, '16.25']));
+    ['f1', 'ftBCD', 10, 4, 'f1', '16.25']));
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
 end;
