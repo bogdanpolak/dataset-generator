@@ -17,6 +17,7 @@ type
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
+    function GetDataFieldPrecision(fld: TField): integer;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -49,6 +50,18 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
+function TGenerateDataSetCode.GetDataFieldPrecision(fld: TField): integer;
+begin
+  System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
+    (fld is TFloatField));
+  if fld is TBCDField then
+    Result := (fld as TBCDField).Precision
+  else if fld is TFMTBCDField then
+    Result := (fld as TFMTBCDField).Precision
+  else
+    Result := (fld as TFloatField).Precision
+end;
+
 function TGenerateDataSetCode.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
   (*
@@ -69,6 +82,12 @@ begin
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ');'
+  else if (fld.DataType in [ftBCD, ftFMTBcd]) then
+    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
+      '    Name := ''f1'';  ' +
+      Format('DataType := %s;  Precision := %d;  Size := %d;',
+      [FieldTypeToString(fld.DataType), GetDataFieldPrecision(fld), fld.Size]) +
+      sLineBreak + '  end;'
   else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ', 100);'
@@ -122,7 +141,7 @@ begin
         Result := sByNameValue + ' := ' + fld.AsString + ';';
       ftBoolean:
         Result := sByNameValue + ' := ' + BoolToStr(fld.AsBoolean, true) + ';';
-      ftFloat, ftCurrency:
+      ftFloat, ftCurrency, ftBCD, ftFMTBcd:
         Result := sByNameValue + ' := ' + FloatToCode(fld.AsExtended) + ';';
       ftDate:
         Result := sByNameValue + ' := ' + DateToCode(fld.AsDateTime) + ';';
