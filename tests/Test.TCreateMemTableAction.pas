@@ -18,8 +18,8 @@ type
     mockDataSet: TFDMemTable;
     function ReplaceArrowsToEndOfLines(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
-    procedure AssertAreEqualOneFieldTemplateToMock(const fldType: string;
-      fldSize: integer; const fldValue: string);
+    procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
+      const FieldValue: string);
   public
     [Setup]
     procedure Setup;
@@ -34,49 +34,20 @@ type
     [Test]
     procedure TestOneDateTimeField_DateTime;
     [Test]
+    procedure TestOneBCDField_iss001;
+    [Test]
     procedure TestSample1;
   end;
 
 implementation
 
 uses
-  System.Variants;
+  System.Variants,
+  Data.FmtBcd;
 
 // -----------------------------------------------------------------------
 // Utils section
 // -----------------------------------------------------------------------
-
-const
-  CodeTemplateOneField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  FieldDefs.Add(''f1'', %s);→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '    FieldByName(''f1'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→';
-
-procedure TGenCodeDataSetMock.AssertAreEqualOneFieldTemplateToMock
-  (const fldType: string; fldSize: integer; const fldValue: string);
-var
-  ft: string;
-  sExpected: string;
-  aActual: string;
-begin
-  if fldSize > 0 then
-    ft := fldType + ', ' + fldSize.ToString
-  else
-    ft := fldType;
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
-    [ft, fldValue]));
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
-end;
 
 function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
 begin
@@ -107,8 +78,80 @@ begin
 end;
 
 // -----------------------------------------------------------------------
+// Templates
+// -----------------------------------------------------------------------
+
+const
+  CodeTemplateOnePrecisionField =
+  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  with FieldDefs.AddFieldDef do begin→' +
+  (* *) '    Name := ''f1'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '  end;→' +
+  (* *) '  CreateDataSet;→' +
+  (* *) 'end;→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  Append;→' +
+  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  Post;→' +
+  (* *) 'end;→';
+
+const
+  CodeTemplateOneField =
+  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  FieldDefs.Add(''f1'', %s);→' +
+  (* *) '  CreateDataSet;→' +
+  (* *) 'end;→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  Append;→' +
+  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  Post;→' +
+  (* *) 'end;→';
+
+procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
+  : string; const FieldValue: string);
+var
+  sExpected: string;
+  aActual: string;
+begin
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+// -----------------------------------------------------------------------
 // Test section
 // -----------------------------------------------------------------------
+
+procedure TGenCodeDataSetMock.TestOneBCDField_iss001;
+var
+  sExpected: string;
+  sActual: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'f1';
+      DataType := ftBcd;
+      Precision := 10;
+      Size := 4;
+    end;
+    CreateDataSet;
+    AppendRecord([16.25]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['ftBCD', 10, 4, '16.25']));
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
+end;
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateOnly;
 begin
@@ -119,7 +162,7 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01)]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0, 'EncodeDate(2019,7,1)');
+  AssertOneFieldTemplateToMock('ftDateTime', 'EncodeDate(2019,7,1)');
 end;
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateTime;
@@ -131,7 +174,7 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0,
+  AssertOneFieldTemplateToMock('ftDateTime',
     'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)');
 end;
 
@@ -144,7 +187,7 @@ begin
     AppendRecord([1]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftInteger', 0, '1');
+  AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
 procedure TGenCodeDataSetMock.TestOneWideStringField;
@@ -156,7 +199,7 @@ begin
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftWideString', 20,
+  AssertOneFieldTemplateToMock('ftWideString, 20',
     QuotedStr('Alice has a cat'));
 end;
 
