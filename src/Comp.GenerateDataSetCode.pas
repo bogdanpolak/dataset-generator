@@ -9,6 +9,8 @@ uses
 
 type
   TGenerateDataSetCode = class(TComponent)
+  const
+    MaxLiteralLenght = 70;
   private
     FCode: TStrings;
     FDataSet: TDataSet;
@@ -18,6 +20,7 @@ type
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
     function GetDataFieldPrecision(fld: TField): integer;
+    function FormatLongStringLiterals(const Literal: string): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -128,6 +131,35 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
+function TGenerateDataSetCode.FormatLongStringLiterals(const Literal
+  : string): string;
+var
+  s1: string;
+  s2: string;
+begin
+  if Length(Literal) <= MaxLiteralLenght then
+  begin
+    Result := Literal
+  end
+  else
+  begin
+    s1 := Literal;
+    s2 := sLineBreak;
+    while s1 <> '' do
+    begin
+      if Length(s1)<MaxLiteralLenght then begin
+        s2 := s2 +  '      '+s1;
+        s1 := '';
+      end
+      else begin
+        s2 := s2 + '      '+s1.Substring(0,MaxLiteralLenght-1)+'''+'+sLineBreak;
+        s1 := ''''+s1.Substring(MaxLiteralLenght-1);
+      end;
+    end;
+    Result := s2;
+  end;
+end;
+
 function TGenerateDataSetCode.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
@@ -150,7 +182,8 @@ begin
       ftDateTime:
         Result := sByNameValue + ' := ' + DateTimeToCode(fld.AsDateTime) + ';';
       ftString, ftWideString:
-        Result := sByNameValue + ' := ' + QuotedStr(fld.Value) + ';';
+        Result := sByNameValue + ' := ' + FormatLongStringLiterals
+          (QuotedStr(fld.Value)) + ';';
     end;
   end;
 end;
@@ -163,7 +196,7 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.Code.Text;
+    Result := gen.Code.text;
   finally
     gen.Free;
   end;

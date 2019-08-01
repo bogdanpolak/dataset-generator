@@ -36,6 +36,8 @@ type
     [Test]
     procedure TestOneBCDField_iss001;
     [Test]
+    procedure TestLongStringLiterals_iss002;
+    [Test]
     procedure TestSample1;
   end;
 
@@ -128,6 +130,25 @@ end;
 // -----------------------------------------------------------------------
 // Test section
 // -----------------------------------------------------------------------
+
+procedure TGenCodeDataSetMock.TestLongStringLiterals_iss002;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftWideString, 300);
+    CreateDataSet;
+    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
+      ' Constructor Injection, Property Injection, and Method Injection' +
+      ' and about the right and wrong way to use it']);
+    First;
+  end;
+  AssertOneFieldTemplateToMock('ftWideString, 300',
+    '→      ' + QuotedStr
+    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→' + '      ' + QuotedStr
+    ('on, Property Injection, and Method Injection and about the right and') +
+    '+→' + '      ' + QuotedStr(' wrong way to use it'));
+end;
 
 procedure TGenCodeDataSetMock.TestOneBCDField_iss001;
 var
