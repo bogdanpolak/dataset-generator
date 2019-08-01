@@ -18,8 +18,8 @@ type
     mockDataSet: TFDMemTable;
     function ReplaceArrowsToEndOfLines(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
-    procedure AssertAreEqualOneFieldTemplateToMock(const fldType: string;
-      fldSize: integer; const fldValue: string);
+    procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
+      const FieldValue: string);
   public
     [Setup]
     procedure Setup;
@@ -40,7 +40,8 @@ type
 implementation
 
 uses
-  System.Variants;
+  System.Variants,
+  Data.FmtBcd;
 
 // -----------------------------------------------------------------------
 // Utils section
@@ -61,19 +62,14 @@ const
   (* *) '  Post;→' +
   (* *) 'end;→';
 
-procedure TGenCodeDataSetMock.AssertAreEqualOneFieldTemplateToMock
-  (const fldType: string; fldSize: integer; const fldValue: string);
+procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
+  : string; const FieldValue: string);
 var
-  ft: string;
   sExpected: string;
   aActual: string;
 begin
-  if fldSize > 0 then
-    ft := fldType + ', ' + fldSize.ToString
-  else
-    ft := fldType;
   sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
-    [ft, fldValue]));
+    [FieldDefsParams, FieldValue]));
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
 end;
@@ -119,7 +115,7 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01)]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0, 'EncodeDate(2019,7,1)');
+  AssertOneFieldTemplateToMock('ftDateTime', 'EncodeDate(2019,7,1)');
 end;
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateTime;
@@ -131,7 +127,7 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftDateTime', 0,
+  AssertOneFieldTemplateToMock('ftDateTime',
     'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)');
 end;
 
@@ -144,7 +140,7 @@ begin
     AppendRecord([1]);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftInteger', 0, '1');
+  AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
 procedure TGenCodeDataSetMock.TestOneWideStringField;
@@ -156,7 +152,7 @@ begin
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  AssertAreEqualOneFieldTemplateToMock('ftWideString', 20,
+  AssertOneFieldTemplateToMock('ftWideString, 20',
     QuotedStr('Alice has a cat'));
 end;
 
