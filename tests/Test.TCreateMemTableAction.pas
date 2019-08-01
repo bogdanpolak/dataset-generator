@@ -34,6 +34,8 @@ type
     [Test]
     procedure TestOneDateTimeField_DateTime;
     [Test]
+    procedure TestOneBCDField_iss001;
+    [Test]
     procedure TestSample1;
   end;
 
@@ -46,33 +48,6 @@ uses
 // -----------------------------------------------------------------------
 // Utils section
 // -----------------------------------------------------------------------
-
-const
-  CodeTemplateOneField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  FieldDefs.Add(''f1'', %s);→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '    FieldByName(''f1'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→';
-
-procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
-  : string; const FieldValue: string);
-var
-  sExpected: string;
-  aActual: string;
-begin
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]));
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
-end;
 
 function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
 begin
@@ -103,8 +78,80 @@ begin
 end;
 
 // -----------------------------------------------------------------------
+// Templates
+// -----------------------------------------------------------------------
+
+const
+  CodeTemplateOnePrecisionField =
+  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  with FieldDefs.AddFieldDef do begin→' +
+  (* *) '    Name := ''f1'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '  end;→' +
+  (* *) '  CreateDataSet;→' +
+  (* *) 'end;→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  Append;→' +
+  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  Post;→' +
+  (* *) 'end;→';
+
+const
+  CodeTemplateOneField =
+  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  FieldDefs.Add(''f1'', %s);→' +
+  (* *) '  CreateDataSet;→' +
+  (* *) 'end;→' +
+  (* *) 'with ds do→' +
+  (* *) 'begin→' +
+  (* *) '  Append;→' +
+  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  Post;→' +
+  (* *) 'end;→';
+
+procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
+  : string; const FieldValue: string);
+var
+  sExpected: string;
+  aActual: string;
+begin
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+// -----------------------------------------------------------------------
 // Test section
 // -----------------------------------------------------------------------
+
+procedure TGenCodeDataSetMock.TestOneBCDField_iss001;
+var
+  sExpected: string;
+  sActual: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'f1';
+      DataType := ftBcd;
+      Precision := 10;
+      Size := 4;
+    end;
+    CreateDataSet;
+    AppendRecord([16.25]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['ftBCD', 10, 4, '16.25']));
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
+end;
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateOnly;
 begin
