@@ -14,7 +14,7 @@ uses
   FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
   FireDAC.Stan.ExprFuncs, FireDAC.VCLUI.Wait, FireDAC.DApt,
-  Comp.GenerateDataSetCode;
+  Comp.Generator.DataSetCode;
 
 type
   TFormMain = class(TForm)

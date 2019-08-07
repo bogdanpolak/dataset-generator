@@ -35,7 +35,10 @@ object FormMain: TFormMain
     object tshCode: TTabSheet
       Caption = 'Code'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
       ExplicitWidth = 620
+      ExplicitHeight = 0
       object Memo1: TMemo
         AlignWithMargins = True
         Left = 3
@@ -53,7 +56,6 @@ object FormMain: TFormMain
         ParentFont = False
         ScrollBars = ssVertical
         TabOrder = 0
-        ExplicitWidth = 614
       end
     end
   end
