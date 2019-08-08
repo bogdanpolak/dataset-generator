@@ -100,7 +100,7 @@ const
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
-  (* *) '    FieldByName(''%s'').Value := %s;→' +
+  (* *) '  FieldByName(''%s'').Value := %s;→' +
   (* *) '  Post;→' +
   (* *) 'end;→';
 
@@ -115,7 +115,7 @@ const
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
-  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  FieldByName(''f1'').Value := %s;→' +
   (* *) '  Post;→' +
   (* *) 'end;→';
 
@@ -350,16 +350,19 @@ begin
     (* *) 'with ds do→' +
     (* *) 'begin→' +
     (* *) '  Append;→' +
-    (* *) '    FieldByName(''id'').Value := 1;→' +
-    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
-    (* *) '    FieldByName(''float1'').Value := 1.2;→' +
-    (* *) '    FieldByName(''currency1'').Value := 1200;→' +
+    (* *) '  FieldByName(''id'').Value := 1;→' +
+    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '  FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
+    (* *) '  FieldByName(''float1'').Value := 1.2;→' +
+    (* *) '  FieldByName(''currency1'').Value := 1200;→' +
     (* *) '  Post;→' +
+    (* *) 'end;→' +
+    (* *) 'with ds do→' +
+    (* *) 'begin→' +
     (* *) '  Append;→' +
-    (* *) '    FieldByName(''id'').Value := 2;→' +
-    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '    FieldByName(''currency1'').Value := 950;→' +
+    (* *) '  FieldByName(''id'').Value := 2;→' +
+    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '  FieldByName(''currency1'').Value := 950;→' +
     (* *) '  Post;→' +
     (* *) 'end;→');
   with mockDataSet do
