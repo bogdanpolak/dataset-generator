@@ -257,13 +257,13 @@ var
 begin
   with Code do
   begin
-    Add('ds := TFDMemTable.Create(AOwner);');
-    Add('with ds do');
-    Add('begin');
+    Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
+    Add(IndentationText + 'with ds do');
+    Add(IndentationText + 'begin');
     for fld in dataSet.Fields do
-      Add('  ' + GenCodeLineFieldDefAdd(fld));
-    Add('  CreateDataSet;');
-    Add('end;');
+      Add(IndentationText + '  ' + GenCodeLineFieldDefAdd(fld));
+    Add(IndentationText + '  CreateDataSet;');
+    Add(IndentationText + 'end;');
   end;
 end;
 
@@ -279,17 +279,17 @@ begin
   begin
     with Code do
     begin
-      Add('with ds do');
-      Add('begin');
-      Add('  Append;');
+      Add(IndentationText + 'with ds do');
+      Add(IndentationText + 'begin');
+      Add(IndentationText + '  Append;');
       for fld in dataSet.Fields do
       begin
         s1 := GenCodeLineSetFieldValue(fld);
         if s1 <> '' then
-          Add('  ' + s1);
+          Add(IndentationText + '  ' + s1);
       end;
-      Add('  Post;');
-      Add('end;');
+      Add(IndentationText + '  Post;');
+      Add(IndentationText + 'end;');
     end;
     dataSet.Next;
   end;
