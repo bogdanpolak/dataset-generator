@@ -174,13 +174,13 @@ begin
     begin
       if Length(s1) < MaxLiteralLenght then
       begin
-        s2 := s2 + '      ' + s1;
+        s2 := s2 + IndentationText + '    ' + s1;
         s1 := '';
       end
       else
       begin
-        s2 := s2 + '      ' + s1.Substring(0, MaxLiteralLenght - 1) + '''+' +
-          sLineBreak;
+        s2 := s2 + IndentationText + '    ' +
+          s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
         s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
       end;
     end;
