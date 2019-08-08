@@ -39,7 +39,7 @@ begin
 end;
 ```
 
-Event `Button1Click` will generate following code in the Memo1 control:
+Event `Button1Click` will generate the following code in the Memo1 control:
 
 ```text
 ds := TFDMemTable.Create(AOwner);
