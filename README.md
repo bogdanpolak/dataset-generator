@@ -2,7 +2,7 @@
 
 ## Overview
 
-Generate Delphi source code creating mock dataset (TFDMemTable) based on any TDataSet.
+Generate Delphi source code creating a mock dataset (TFDMemTable) based on any TDataSet.
 
 ## Sample - component usage
 
@@ -39,7 +39,7 @@ begin
 end;
 ```
 
-Event `Button1Click` will generate followin code in the Memo1 control:
+Event `Button1Click` will generate following code in the Memo1 control:
 
 ```text
 ds := TFDMemTable.Create(AOwner);
