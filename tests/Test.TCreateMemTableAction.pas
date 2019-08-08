@@ -377,8 +377,33 @@ begin
 end;
 
 procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+var
+  FieldDefsParams: string;
+  FieldValue: string;
+  sExpected: string;
+  aActual: string;
 begin
-  // * Add test for indentation with long string literals
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftWideString, 300);
+    CreateDataSet;
+    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
+      ' Constructor Injection, Property Injection, and Method Injection' +
+      ' and about the right and wrong way to use it']);
+    First;
+  end;
+  FieldDefsParams := 'ftWideString, 300';
+  FieldValue := '→    ' + QuotedStr
+    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→' + '    ' + QuotedStr
+    ('on, Property Injection, and Method Injection and about the right and') +
+    '+→' + '    ' + QuotedStr(' wrong way to use it');
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, ' ');
+  GenerateDataSetCode.IndentationText := ' ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
 end;
 
 procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
