@@ -31,6 +31,7 @@ type
     FDataSet: TDataSet;
     FHeader: TStrings;
     FFooter: TStrings;
+    FIndentationText: String;
     procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
@@ -48,6 +49,8 @@ type
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property Header: TStrings read FHeader write FHeader;
     property Footer: TStrings read FFooter write FFooter;
+    property IndentationText: String read FIndentationText
+      write FIndentationText;
   end;
 
 implementation
