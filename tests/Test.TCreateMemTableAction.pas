@@ -42,6 +42,10 @@ type
     procedure TestHeader_OneLine;
     procedure TestFooter_TwoLines;
     // -------------
+    procedure Test_IndentationText_2Spaces;
+    procedure Test_IndentationText_BCDField;
+    procedure Test_IndentationText_LongStringValue;
+    // -------------
     procedure TestSample1;
   end;
 
@@ -323,6 +327,28 @@ begin
     [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
+end;
+
+{$ENDREGION}
+
+// -----------------------------------------------------------------------
+// Tests for: property IndentationText
+// -----------------------------------------------------------------------
+{$REGION 'property IndentationText'}
+
+procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
+begin
+  // property IndentationText: string;
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+begin
+  // * Add test for indentation with long string literals
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
+begin
+  //  * Add test for identation with TBCDField
 end;
 
 {$ENDREGION}
