@@ -22,6 +22,7 @@ type
     function GenerateCode(ds: TDataSet): string;
     procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
       const FieldValue: string);
+    function IdentCode(const Code: string; const IdentText: string): string;
   public
     [Setup]
     procedure Setup;
@@ -69,6 +70,22 @@ end;
 function TGenCodeDataSetMock.ReplaceArrowsToEndOfLines(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll])
+end;
+
+function TGenCodeDataSetMock.IdentCode(const Code: string;
+  const IdentText: string): string;
+var
+  sl: TStringList;
+  i: integer;
+begin
+  sl := TStringList.Create;
+  sl.Text := Code;
+  while (sl[sl.Count - 1] = '') do
+    sl.Delete(sl.Count - 1);
+  for i := 0 to sl.Count - 1 do
+    sl[i] := IdentText + sl[i];
+  Result := sl.Text;
+  sl.Free;
 end;
 
 // -----------------------------------------------------------------------
@@ -330,15 +347,33 @@ begin
 end;
 
 {$ENDREGION}
-
 // -----------------------------------------------------------------------
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
 
 procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
+var
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
 begin
-  // property IndentationText: string;
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
 end;
 
 procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
@@ -348,7 +383,7 @@ end;
 
 procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
 begin
-  //  * Add test for identation with TBCDField
+  // * Add test for identation with TBCDField
 end;
 
 {$ENDREGION}
