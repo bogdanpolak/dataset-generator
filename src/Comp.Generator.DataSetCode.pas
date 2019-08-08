@@ -22,8 +22,8 @@ type
   const
     // * --------------------------------------------------------------------
     // * Signature
-    ReleaseDate = 'yyyy.mm.dd';
-    ReleaseVersion = 'hi.lo';
+    ReleaseDate = '2019.08.08';
+    ReleaseVersion = '1.0';
     // * --------------------------------------------------------------------
     MaxLiteralLenght = 70;
   private
