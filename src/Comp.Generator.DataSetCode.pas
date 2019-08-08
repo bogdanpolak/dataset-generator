@@ -1,5 +1,9 @@
 ﻿{ * ------------------------------------------------------------------------
-  * ♥
+  * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
+  * Component: TGenerateDataSetCode
+  * Project: https://github.com/bogdanpolak/datasetToDelphiCode
+  * ReleaseDate: yyyy-mm-dd
+  * Version: <hi>.<lo>
   * ------------------------------------------------------------------------ }
 
 unit Comp.Generator.DataSetCode;
@@ -10,6 +14,13 @@ uses
   System.Classes, System.Types, System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client;
+
+// * ------------------------------------------------------------------------
+// * Update version number (sync unit signature and
+const
+  ReleaseDate = 'yyyy.mm.dd';
+  ReleseVersion = 'hi.lo';
+// * ------------------------------------------------------------------------
 
 type
   TGenerateDataSetCode = class(TComponent)
