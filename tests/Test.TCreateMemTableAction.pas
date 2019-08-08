@@ -22,6 +22,7 @@ type
     function GenerateCode(ds: TDataSet): string;
     procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
       const FieldValue: string);
+    function IdentCode(const Code: string; const IdentText: string): string;
   public
     [Setup]
     procedure Setup;
@@ -41,6 +42,10 @@ type
     // -------------
     procedure TestHeader_OneLine;
     procedure TestFooter_TwoLines;
+    // -------------
+    procedure Test_IndentationText_2Spaces;
+    procedure Test_IndentationText_BCDField;
+    procedure Test_IndentationText_LongStringValue;
     // -------------
     procedure TestSample1;
   end;
@@ -65,6 +70,22 @@ end;
 function TGenCodeDataSetMock.ReplaceArrowsToEndOfLines(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll])
+end;
+
+function TGenCodeDataSetMock.IdentCode(const Code: string;
+  const IdentText: string): string;
+var
+  sl: TStringList;
+  i: integer;
+begin
+  sl := TStringList.Create;
+  sl.Text := Code;
+  while (sl[sl.Count - 1] = '') do
+    sl.Delete(sl.Count - 1);
+  for i := 0 to sl.Count - 1 do
+    sl[i] := IdentText + sl[i];
+  Result := sl.Text;
+  sl.Free;
 end;
 
 // -----------------------------------------------------------------------
@@ -148,11 +169,11 @@ begin
     First;
   end;
   AssertOneFieldTemplateToMock('ftWideString, 300',
-    '→      ' + QuotedStr
+    '→    ' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '      ' + QuotedStr
+    '+→' + '    ' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '      ' + QuotedStr(' wrong way to use it'));
+    '+→' + '    ' + QuotedStr(' wrong way to use it'));
 end;
 
 {$ENDREGION}
@@ -323,6 +344,92 @@ begin
     [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
+end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: property IndentationText
+// -----------------------------------------------------------------------
+{$REGION 'property IndentationText'}
+
+procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
+var
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+var
+  FieldDefsParams: string;
+  FieldValue: string;
+  sExpected: string;
+  aActual: string;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftWideString, 300);
+    CreateDataSet;
+    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
+      ' Constructor Injection, Property Injection, and Method Injection' +
+      ' and about the right and wrong way to use it']);
+    First;
+  end;
+  FieldDefsParams := 'ftWideString, 300';
+  FieldValue := '→    ' + QuotedStr
+    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→' + '    ' + QuotedStr
+    ('on, Property Injection, and Method Injection and about the right and') +
+    '+→' + '    ' + QuotedStr(' wrong way to use it');
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, ' ');
+  GenerateDataSetCode.IndentationText := ' ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
+var
+  sExpected: string;
+  sActual: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'xyz123';
+      DataType := ftBcd;
+      Precision := 8;
+      Size := 2;
+    end;
+    CreateDataSet;
+    AppendRecord([1.01]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
 end;
 
 {$ENDREGION}

@@ -31,6 +31,7 @@ type
     FDataSet: TDataSet;
     FHeader: TStrings;
     FFooter: TStrings;
+    FIndentationText: String;
     procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
@@ -48,6 +49,8 @@ type
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property Header: TStrings read FHeader write FHeader;
     property Footer: TStrings read FFooter write FFooter;
+    property IndentationText: String read FIndentationText
+      write FIndentationText;
   end;
 
 implementation
@@ -109,10 +112,12 @@ begin
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ');'
   else if (fld.DataType in [ftBCD, ftFMTBcd]) then
-    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak + '    ' +
+    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
+      IndentationText + '    ' +
       Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
       [fld.FieldName, FieldTypeToString(fld.DataType),
-      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak + '  end;'
+      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak + IndentationText
+      + '  end;'
   else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ', 100);'
@@ -171,13 +176,13 @@ begin
     begin
       if Length(s1) < MaxLiteralLenght then
       begin
-        s2 := s2 + '      ' + s1;
+        s2 := s2 + IndentationText + '    ' + s1;
         s1 := '';
       end
       else
       begin
-        s2 := s2 + '      ' + s1.Substring(0, MaxLiteralLenght - 1) + '''+' +
-          sLineBreak;
+        s2 := s2 + IndentationText + '    ' +
+          s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
         s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
       end;
     end;
@@ -247,6 +252,23 @@ begin
   Assert(dataSet <> nil, 'Property DataSet not assigned!');
 end;
 
+procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
+  (dataSet: TDataSet);
+var
+  fld: TField;
+begin
+  with Code do
+  begin
+    Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
+    Add(IndentationText + 'with ds do');
+    Add(IndentationText + 'begin');
+    for fld in dataSet.Fields do
+      Add(IndentationText + '  ' + GenCodeLineFieldDefAdd(fld));
+    Add(IndentationText + '  CreateDataSet;');
+    Add(IndentationText + 'end;');
+  end;
+end;
+
 procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
@@ -259,38 +281,21 @@ begin
   begin
     with Code do
     begin
-      Add('with ds do');
-      Add('begin');
-      Add('  Append;');
+      Add(IndentationText + 'with ds do');
+      Add(IndentationText + 'begin');
+      Add(IndentationText + '  Append;');
       for fld in dataSet.Fields do
       begin
         s1 := GenCodeLineSetFieldValue(fld);
         if s1 <> '' then
-          Add('  ' + s1);
+          Add(IndentationText + '  ' + s1);
       end;
-      Add('  Post;');
-      Add('end;');
+      Add(IndentationText + '  Post;');
+      Add(IndentationText + 'end;');
     end;
     dataSet.Next;
   end;
   dataSet.EnableControls;
-end;
-
-procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
-  (dataSet: TDataSet);
-var
-  fld: TField;
-begin
-  with Code do
-  begin
-    Add('ds := TFDMemTable.Create(AOwner);');
-    Add('with ds do');
-    Add('begin');
-    for fld in dataSet.Fields do
-      Add('  ' + GenCodeLineFieldDefAdd(fld));
-    Add('  CreateDataSet;');
-    Add('end;');
-  end;
 end;
 
 procedure TGenerateDataSetCode.Execute;
