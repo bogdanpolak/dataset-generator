@@ -407,8 +407,29 @@ begin
 end;
 
 procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
+var
+  sExpected: string;
+  sActual: string;
 begin
-  // * Add test for identation with TBCDField
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'xyz123';
+      DataType := ftBcd;
+      Precision := 8;
+      Size := 2;
+    end;
+    CreateDataSet;
+    AppendRecord([1.01]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
 end;
 
 {$ENDREGION}
