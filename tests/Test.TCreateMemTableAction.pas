@@ -40,6 +40,7 @@ type
     procedure TestOneDateTimeField_DateTime;
     // -------------
     procedure TestHeader_OneLine;
+    procedure TestFooter_TwoLines;
     // -------------
     procedure TestSample1;
   end;
@@ -291,6 +292,35 @@ begin
   FieldValue := '1';
   sExpected := ReplaceArrowsToEndOfLines
     (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.TestFooter_TwoLines;
+var
+  Line1: string;
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
+begin
+  Line1 := '// footer comment';
+  with GenerateDataSetCode.Footer do
+  begin
+    Add('');
+    Add(Line1);
+  end;
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
 end;

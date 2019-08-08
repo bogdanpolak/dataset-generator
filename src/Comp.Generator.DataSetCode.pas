@@ -300,6 +300,7 @@ begin
   Code.AddStrings(Header);
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
+  Code.AddStrings(Footer);
 end;
 
 end.
