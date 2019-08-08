@@ -169,11 +169,11 @@ begin
     First;
   end;
   AssertOneFieldTemplateToMock('ftWideString, 300',
-    '→      ' + QuotedStr
+    '→    ' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '      ' + QuotedStr
+    '+→' + '    ' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '      ' + QuotedStr(' wrong way to use it'));
+    '+→' + '    ' + QuotedStr(' wrong way to use it'));
 end;
 
 {$ENDREGION}
