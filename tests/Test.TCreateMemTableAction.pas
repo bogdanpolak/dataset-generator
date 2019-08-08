@@ -7,7 +7,9 @@ uses
   System.Classes, System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.GenerateDataSetCode;
+  Comp.Generator.DataSetCode;
+
+{$M+}
 
 type
 
@@ -20,26 +22,31 @@ type
     function GenerateCode(ds: TDataSet): string;
     procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
       const FieldValue: string);
+    function IdentCode(const Code: string; const IdentText: string): string;
   public
     [Setup]
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    [Test]
-    procedure TestOneIntegerField;
-    [Test]
-    procedure TestOneWideStringField;
-    [Test]
-    procedure TestOneDateTimeField_DateOnly;
-    [Test]
-    procedure TestOneDateTimeField_DateTime;
-    [Test]
-    procedure TestOneBCDField_iss001;
-    [Test]
-    procedure TestOneBCDField_DifferentFieldName;
-    [Test]
+  published
+    // -------------
     procedure TestLongStringLiterals_iss002;
-    [Test]
+    // -------------
+    procedure TestOneBCDField_iss001;
+    procedure TestOneBCDField_DifferentFieldName;
+    // -------------
+    procedure TestOneIntegerField;
+    procedure TestOneWideStringField;
+    procedure TestOneDateTimeField_DateOnly;
+    procedure TestOneDateTimeField_DateTime;
+    // -------------
+    procedure TestHeader_OneLine;
+    procedure TestFooter_TwoLines;
+    // -------------
+    procedure Test_IndentationText_2Spaces;
+    procedure Test_IndentationText_BCDField;
+    procedure Test_IndentationText_LongStringValue;
+    // -------------
     procedure TestSample1;
   end;
 
@@ -63,6 +70,22 @@ end;
 function TGenCodeDataSetMock.ReplaceArrowsToEndOfLines(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll])
+end;
+
+function TGenCodeDataSetMock.IdentCode(const Code: string;
+  const IdentText: string): string;
+var
+  sl: TStringList;
+  i: integer;
+begin
+  sl := TStringList.Create;
+  sl.Text := Code;
+  while (sl[sl.Count - 1] = '') do
+    sl.Delete(sl.Count - 1);
+  for i := 0 to sl.Count - 1 do
+    sl[i] := IdentText + sl[i];
+  Result := sl.Text;
+  sl.Free;
 end;
 
 // -----------------------------------------------------------------------
@@ -98,7 +121,7 @@ const
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
-  (* *) '    FieldByName(''%s'').Value := %s;→' +
+  (* *) '  FieldByName(''%s'').Value := %s;→' +
   (* *) '  Post;→' +
   (* *) 'end;→';
 
@@ -113,7 +136,7 @@ const
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
-  (* *) '    FieldByName(''f1'').Value := %s;→' +
+  (* *) '  FieldByName(''f1'').Value := %s;→' +
   (* *) '  Post;→' +
   (* *) 'end;→';
 
@@ -130,8 +153,9 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Test section
+// Tests for: Registered issues (bugs)
 // -----------------------------------------------------------------------
+{$REGION 'Registered issues (bugs)'}
 
 procedure TGenCodeDataSetMock.TestLongStringLiterals_iss002;
 begin
@@ -145,12 +169,18 @@ begin
     First;
   end;
   AssertOneFieldTemplateToMock('ftWideString, 300',
-    '→      ' + QuotedStr
+    '→    ' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '      ' + QuotedStr
+    '+→' + '    ' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '      ' + QuotedStr(' wrong way to use it'));
+    '+→' + '    ' + QuotedStr(' wrong way to use it'));
 end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: One BCD field with one value
+// -----------------------------------------------------------------------
+{$REGION 'One BCD field with one value'}
 
 procedure TGenCodeDataSetMock.TestOneBCDField_DifferentFieldName;
 var
@@ -199,6 +229,12 @@ begin
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
 end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: One DB field with one value
+// -----------------------------------------------------------------------
+{$REGION 'One DB field with one value'}
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateOnly;
 begin
@@ -250,6 +286,158 @@ begin
     QuotedStr('Alice has a cat'));
 end;
 
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: component header and footer
+// -----------------------------------------------------------------------
+{$REGION 'Component header and footer'}
+
+procedure TGenCodeDataSetMock.TestHeader_OneLine;
+var
+  Line1: string;
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
+begin
+  Line1 := '// Test coments';
+  GenerateDataSetCode.Header.Add(Line1);
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines
+    (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.TestFooter_TwoLines;
+var
+  Line1: string;
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
+begin
+  Line1 := '// footer comment';
+  with GenerateDataSetCode.Footer do
+  begin
+    Add('');
+    Add(Line1);
+  end;
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: property IndentationText
+// -----------------------------------------------------------------------
+{$REGION 'property IndentationText'}
+
+procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
+var
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+var
+  FieldDefsParams: string;
+  FieldValue: string;
+  sExpected: string;
+  aActual: string;
+begin
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftWideString, 300);
+    CreateDataSet;
+    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
+      ' Constructor Injection, Property Injection, and Method Injection' +
+      ' and about the right and wrong way to use it']);
+    First;
+  end;
+  FieldDefsParams := 'ftWideString, 300';
+  FieldValue := '→    ' + QuotedStr
+    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→' + '    ' + QuotedStr
+    ('on, Property Injection, and Method Injection and about the right and') +
+    '+→' + '    ' + QuotedStr(' wrong way to use it');
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]));
+  sExpected := Self.IdentCode(sExpected, ' ');
+  GenerateDataSetCode.IndentationText := ' ';
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
+var
+  sExpected: string;
+  sActual: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'xyz123';
+      DataType := ftBcd;
+      Precision := 8;
+      Size := 2;
+    end;
+    CreateDataSet;
+    AppendRecord([1.01]);
+    First;
+  end;
+  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
+  sExpected := Self.IdentCode(sExpected, '  ');
+  GenerateDataSetCode.IndentationText := '  ';
+  sActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, sActual);
+end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: Sample1
+// -----------------------------------------------------------------------
+{$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
+
 procedure TGenCodeDataSetMock.TestSample1;
 var
   expectedCode: string;
@@ -269,16 +457,19 @@ begin
     (* *) 'with ds do→' +
     (* *) 'begin→' +
     (* *) '  Append;→' +
-    (* *) '    FieldByName(''id'').Value := 1;→' +
-    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
-    (* *) '    FieldByName(''float1'').Value := 1.2;→' +
-    (* *) '    FieldByName(''currency1'').Value := 1200;→' +
+    (* *) '  FieldByName(''id'').Value := 1;→' +
+    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '  FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
+    (* *) '  FieldByName(''float1'').Value := 1.2;→' +
+    (* *) '  FieldByName(''currency1'').Value := 1200;→' +
     (* *) '  Post;→' +
+    (* *) 'end;→' +
+    (* *) 'with ds do→' +
+    (* *) 'begin→' +
     (* *) '  Append;→' +
-    (* *) '    FieldByName(''id'').Value := 2;→' +
-    (* *) '    FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '    FieldByName(''currency1'').Value := 950;→' +
+    (* *) '  FieldByName(''id'').Value := 2;→' +
+    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '  FieldByName(''currency1'').Value := 950;→' +
     (* *) '  Post;→' +
     (* *) 'end;→');
   with mockDataSet do
@@ -296,6 +487,8 @@ begin
   actualCode := GenerateCode(mockDataSet);
   Assert.AreEqual(expectedCode, actualCode);
 end;
+
+{$ENDREGION}
 
 initialization
 
