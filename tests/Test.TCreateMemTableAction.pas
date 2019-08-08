@@ -12,6 +12,7 @@ uses
 {$M+}
 
 type
+
   [TestFixture]
   TGenCodeDataSetMock = class(TObject)
   private
@@ -34,6 +35,9 @@ type
     procedure TestOneBCDField_iss001;
     procedure TestOneBCDField_DifferentFieldName;
     procedure TestLongStringLiterals_iss002;
+    // -------------
+    procedure TestHeader_OneLine;
+    // -------------
     procedure TestSample1;
   end;
 
@@ -243,6 +247,39 @@ begin
   AssertOneFieldTemplateToMock('ftWideString, 20',
     QuotedStr('Alice has a cat'));
 end;
+
+// -----------------------------------------------------------------------
+// Tests for: component header and footer
+// -----------------------------------------------------------------------
+{$REGION 'Component header and footer'}
+
+procedure TGenCodeDataSetMock.TestHeader_OneLine;
+var
+  Line1: string;
+  FieldDefsParams: string;
+  FieldValue: AnsiChar;
+begin
+  Line1 := '// Test coments';
+  GenerateDataSetCode.Header.Add(Line1);
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  FieldDefsParams := 'ftInteger';
+  FieldValue := '1';
+  sExpected := ReplaceArrowsToEndOfLines
+    (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
+  aActual := GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, aActual);
+end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Test sample 1
+// -----------------------------------------------------------------------
 
 procedure TGenCodeDataSetMock.TestSample1;
 var
