@@ -29,6 +29,8 @@ type
   private
     FCode: TStrings;
     FDataSet: TDataSet;
+    FHeader: TStrings;
+    FFooter: TStrings;
     procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
@@ -44,6 +46,8 @@ type
     property Code: TStrings read FCode;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
+    property Header: TStrings read FHeader write FHeader;
+    property Footer: TStrings read FFooter write FFooter;
   end;
 
 implementation
@@ -55,11 +59,15 @@ constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
   inherited;
   FCode := TStringList.Create;
+  FHeader := TStringList.Create;
+  FFooter := TStringList.Create;
 end;
 
 destructor TGenerateDataSetCode.Destroy;
 begin
   FCode.Free;
+  FHeader.Free;
+  FFooter.Free;
   inherited;
 end;
 

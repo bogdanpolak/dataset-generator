@@ -275,6 +275,8 @@ var
   Line1: string;
   FieldDefsParams: string;
   FieldValue: AnsiChar;
+  sExpected: string;
+  aActual: string;
 begin
   Line1 := '// Test coments';
   GenerateDataSetCode.Header.Add(Line1);
