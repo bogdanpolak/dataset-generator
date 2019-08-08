@@ -1,4 +1,14 @@
-﻿unit Comp.GenerateDataSetCode;
+﻿{ * ------------------------------------------------------------------------
+  * ♥
+  * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
+  * ♥
+  * Component: TGenerateDataSetCode
+  * Project: https://github.com/bogdanpolak/datasetToDelphiCode
+  * ReleaseDate: ↓ see below in the component const section ↓
+  * ReleaseVersion: ↓ see below in the component const section ↓
+  * ------------------------------------------------------------------------ }
+
+unit Comp.Generator.DataSetCode;
 
 interface
 
@@ -10,6 +20,11 @@ uses
 type
   TGenerateDataSetCode = class(TComponent)
   const
+    // * --------------------------------------------------------------------
+    // * Signature
+    ReleaseDate = 'yyyy.mm.dd';
+    ReleaseVersion = 'hi.lo';
+    // * --------------------------------------------------------------------
     MaxLiteralLenght = 70;
   private
     FCode: TStrings;
@@ -34,7 +49,7 @@ type
 implementation
 
 uses
-  System.Rtti;
+  System.Rtti, Helper.TStrings;
 
 constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
@@ -213,7 +228,7 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.Code.ToStringArray;
+    Result := gen.Code.ToStringDynArray;
   finally
     gen.Free;
   end;
