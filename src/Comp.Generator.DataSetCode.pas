@@ -283,7 +283,6 @@ var
 begin
   with Code do
   begin
-    Clear;
     Add('ds := TFDMemTable.Create(AOwner);');
     Add('with ds do');
     Add('begin');
@@ -297,6 +296,8 @@ end;
 procedure TGenerateDataSetCode.Execute;
 begin
   Guard;
+  Code.Clear;
+  Code.AddStrings(Header);
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
 end;
