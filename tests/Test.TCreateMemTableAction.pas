@@ -9,8 +9,9 @@ uses
   FireDAC.Comp.Client,
   Comp.Generator.DataSetCode;
 
-type
+{$M+}
 
+type
   [TestFixture]
   TGenCodeDataSetMock = class(TObject)
   private
@@ -25,21 +26,14 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
-    [Test]
+  published
     procedure TestOneIntegerField;
-    [Test]
     procedure TestOneWideStringField;
-    [Test]
     procedure TestOneDateTimeField_DateOnly;
-    [Test]
     procedure TestOneDateTimeField_DateTime;
-    [Test]
     procedure TestOneBCDField_iss001;
-    [Test]
     procedure TestOneBCDField_DifferentFieldName;
-    [Test]
     procedure TestLongStringLiterals_iss002;
-    [Test]
     procedure TestSample1;
   end;
 
