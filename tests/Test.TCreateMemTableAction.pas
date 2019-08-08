@@ -28,13 +28,16 @@ type
     [TearDown]
     procedure TearDown;
   published
+    // -------------
+    procedure TestLongStringLiterals_iss002;
+    // -------------
+    procedure TestOneBCDField_iss001;
+    procedure TestOneBCDField_DifferentFieldName;
+    // -------------
     procedure TestOneIntegerField;
     procedure TestOneWideStringField;
     procedure TestOneDateTimeField_DateOnly;
     procedure TestOneDateTimeField_DateTime;
-    procedure TestOneBCDField_iss001;
-    procedure TestOneBCDField_DifferentFieldName;
-    procedure TestLongStringLiterals_iss002;
     // -------------
     procedure TestHeader_OneLine;
     // -------------
@@ -128,8 +131,9 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Test section
+// Tests for: Registered issues (bugs)
 // -----------------------------------------------------------------------
+{$REGION 'Registered issues (bugs)'}
 
 procedure TGenCodeDataSetMock.TestLongStringLiterals_iss002;
 begin
@@ -149,6 +153,12 @@ begin
     ('on, Property Injection, and Method Injection and about the right and') +
     '+→' + '      ' + QuotedStr(' wrong way to use it'));
 end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: One BCD field with one value
+// -----------------------------------------------------------------------
+{$REGION 'One BCD field with one value'}
 
 procedure TGenCodeDataSetMock.TestOneBCDField_DifferentFieldName;
 var
@@ -197,6 +207,12 @@ begin
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
 end;
+
+{$ENDREGION}
+// -----------------------------------------------------------------------
+// Tests for: One DB field with one value
+// -----------------------------------------------------------------------
+{$REGION 'One DB field with one value'}
 
 procedure TGenCodeDataSetMock.TestOneDateTimeField_DateOnly;
 begin
@@ -248,6 +264,7 @@ begin
     QuotedStr('Alice has a cat'));
 end;
 
+{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: component header and footer
 // -----------------------------------------------------------------------
@@ -278,8 +295,9 @@ end;
 
 {$ENDREGION}
 // -----------------------------------------------------------------------
-// Test sample 1
+// Tests for: Sample1
 // -----------------------------------------------------------------------
+{$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
 procedure TGenCodeDataSetMock.TestSample1;
 var
@@ -327,6 +345,8 @@ begin
   actualCode := GenerateCode(mockDataSet);
   Assert.AreEqual(expectedCode, actualCode);
 end;
+
+{$ENDREGION}
 
 initialization
 
