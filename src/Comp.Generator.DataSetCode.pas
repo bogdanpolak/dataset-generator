@@ -255,24 +255,24 @@ begin
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
-  Code.Add('with ds do');
-  Code.Add('begin');
   while not dataSet.Eof do
   begin
     with Code do
     begin
+      Add('with ds do');
+      Add('begin');
       Add('  Append;');
       for fld in dataSet.Fields do
       begin
         s1 := GenCodeLineSetFieldValue(fld);
         if s1 <> '' then
-          Add('    ' + s1);
+          Add('  ' + s1);
       end;
       Add('  Post;');
+      Add('end;');
     end;
     dataSet.Next;
   end;
-  Code.Add('end;');
   dataSet.EnableControls;
 end;
 
