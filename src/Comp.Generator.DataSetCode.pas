@@ -250,6 +250,23 @@ begin
   Assert(dataSet <> nil, 'Property DataSet not assigned!');
 end;
 
+procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
+  (dataSet: TDataSet);
+var
+  fld: TField;
+begin
+  with Code do
+  begin
+    Add('ds := TFDMemTable.Create(AOwner);');
+    Add('with ds do');
+    Add('begin');
+    for fld in dataSet.Fields do
+      Add('  ' + GenCodeLineFieldDefAdd(fld));
+    Add('  CreateDataSet;');
+    Add('end;');
+  end;
+end;
+
 procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
@@ -277,23 +294,6 @@ begin
     dataSet.Next;
   end;
   dataSet.EnableControls;
-end;
-
-procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
-  (dataSet: TDataSet);
-var
-  fld: TField;
-begin
-  with Code do
-  begin
-    Add('ds := TFDMemTable.Create(AOwner);');
-    Add('with ds do');
-    Add('begin');
-    for fld in dataSet.Fields do
-      Add('  ' + GenCodeLineFieldDefAdd(fld));
-    Add('  CreateDataSet;');
-    Add('end;');
-  end;
 end;
 
 procedure TGenerateDataSetCode.Execute;
