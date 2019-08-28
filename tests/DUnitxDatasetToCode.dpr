@@ -1,4 +1,4 @@
-program DatasetToCodeTests;
+program DUnitxDatasetToCode;
 
 {$IFNDEF TESTINSIGHT}
 {$APPTYPE CONSOLE}
