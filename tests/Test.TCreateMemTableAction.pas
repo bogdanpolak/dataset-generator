@@ -28,6 +28,8 @@ type
     procedure Setup;
     [TearDown]
     procedure TearDown;
+    // ---
+    procedure Test_IndentationText_2Spaces;
   published
     // -------------
     procedure TestLongStringLiterals_iss002;
@@ -43,7 +45,6 @@ type
     procedure TestHeader_OneLine;
     procedure TestFooter_TwoLines;
     // -------------
-    procedure Test_IndentationText_2Spaces;
     procedure Test_IndentationText_BCDField;
     procedure Test_IndentationText_LongStringValue;
     // -------------
@@ -118,12 +119,14 @@ const
   (* *) '  end;→' +
   (* *) '  CreateDataSet;→' +
   (* *) 'end;→' +
+  (* *) '{$REGION ''Append data to MemTable''}→' +
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
   (* *) '  FieldByName(''%s'').Value := %s;→' +
   (* *) '  Post;→' +
-  (* *) 'end;→';
+  (* *) 'end;→'+
+  (* *) '{$ENDREGION}→';
 
 const
   CodeTemplateOneField =
@@ -133,12 +136,14 @@ const
   (* *) '  FieldDefs.Add(''f1'', %s);→' +
   (* *) '  CreateDataSet;→' +
   (* *) 'end;→' +
+  (* *) '{$REGION ''Append data to MemTable''}→' +
   (* *) 'with ds do→' +
   (* *) 'begin→' +
   (* *) '  Append;→' +
   (* *) '  FieldByName(''f1'').Value := %s;→' +
   (* *) '  Post;→' +
-  (* *) 'end;→';
+  (* *) 'end;→'+
+  (* *) '{$ENDREGION}→';
 
 procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
   : string; const FieldValue: string);
@@ -351,7 +356,7 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
-
+// TODO: Refactor test
 procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
 var
   FieldDefsParams: string;
@@ -445,6 +450,7 @@ var
 begin
   expectedCode := ReplaceArrowsToEndOfLines(
     (* *) 'ds := TFDMemTable.Create(AOwner);→' +
+    (* *) '{$REGION ''Append data to MemTable''}→' +
     (* *) 'with ds do→' +
     (* *) 'begin→' +
     (* *) '  FieldDefs.Add(''id'', ftInteger);→' +
@@ -471,7 +477,8 @@ begin
     (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
     (* *) '  FieldByName(''currency1'').Value := 950;→' +
     (* *) '  Post;→' +
-    (* *) 'end;→');
+    (* *) 'end;→'+
+    (* *) '{$ENDREGION}→');
   with mockDataSet do
   begin
     FieldDefs.Add('id', ftInteger);

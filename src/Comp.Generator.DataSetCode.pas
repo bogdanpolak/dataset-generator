@@ -281,6 +281,7 @@ begin
   begin
     with Code do
     begin
+      Add('{$REGION ''Append data to MemTable''}');
       Add(IndentationText + 'with ds do');
       Add(IndentationText + 'begin');
       Add(IndentationText + '  Append;');
@@ -295,6 +296,7 @@ begin
     end;
     dataSet.Next;
   end;
+  Code.Add('{$ENDREGION}');
   dataSet.EnableControls;
 end;
 
