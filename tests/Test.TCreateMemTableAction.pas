@@ -18,11 +18,10 @@ type
   private
     GenerateDataSetCode: TGenerateDataSetCode;
     mockDataSet: TFDMemTable;
-    function ReplaceArrowsToEndOfLines(const s: String): string;
+    function ReplaceArrowsAndDiamonds(const s: String): string;
     function GenerateCode(ds: TDataSet): string;
     procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
       const FieldValue: string);
-    function IdentCode(const Code: string; const IdentText: string): string;
   public
     [Setup]
     procedure Setup;
@@ -43,9 +42,10 @@ type
     procedure TestHeader_OneLine;
     procedure TestFooter_TwoLines;
     // -------------
-    procedure Test_IndentationText_2Spaces;
     procedure Test_IndentationText_BCDField;
-    procedure Test_IndentationText_LongStringValue;
+    procedure Test_Indentation_MultilineTextValue;
+    procedure Test_Indentation_Empty;
+    procedure Test_Indentation_1Space;
     // -------------
     procedure TestSample1;
   end;
@@ -67,25 +67,11 @@ begin
   Result := GenerateDataSetCode.Code.Text;
 end;
 
-function TGenCodeDataSetMock.ReplaceArrowsToEndOfLines(const s: String): string;
+function TGenCodeDataSetMock.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
-  Result := StringReplace(s, '→', #13#10, [rfReplaceAll])
-end;
-
-function TGenCodeDataSetMock.IdentCode(const Code: string;
-  const IdentText: string): string;
-var
-  sl: TStringList;
-  i: integer;
-begin
-  sl := TStringList.Create;
-  sl.Text := Code;
-  while (sl[sl.Count - 1] = '') do
-    sl.Delete(sl.Count - 1);
-  for i := 0 to sl.Count - 1 do
-    sl[i] := IdentText + sl[i];
-  Result := sl.Text;
-  sl.Free;
+  Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
+  Result := StringReplace(Result, '◇', GenerateDataSetCode.IndentationText,
+    [rfReplaceAll])
 end;
 
 // -----------------------------------------------------------------------
@@ -110,35 +96,39 @@ end;
 
 const
   CodeTemplateOnePrecisionField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  with FieldDefs.AddFieldDef do begin→' +
-  (* *) '    Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
-  (* *) '  end;→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '  FieldByName(''%s'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→';
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
+  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '◇◇end;→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→' +
+  (* *) '{$REGION ''Append data to MemTable''}→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''%s'').Value := %s;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→' +
+  (* *) '{$ENDREGION}→';
 
 const
   CodeTemplateOneField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  FieldDefs.Add(''f1'', %s);→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '  FieldByName(''f1'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→';
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇FieldDefs.Add(''f1'', %s);→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→' +
+  (* *) '{$REGION ''Append data to MemTable''}→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''f1'').Value := %s;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→' +
+  (* *) '{$ENDREGION}→';
 
 procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
   : string; const FieldValue: string);
@@ -146,7 +136,7 @@ var
   sExpected: string;
   aActual: string;
 begin
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
@@ -169,11 +159,11 @@ begin
     First;
   end;
   AssertOneFieldTemplateToMock('ftWideString, 300',
-    '→    ' + QuotedStr
+    '→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '    ' + QuotedStr
+    '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '    ' + QuotedStr(' wrong way to use it'));
+    '+→◇◇◇' + QuotedStr(' wrong way to use it'));
 end;
 
 {$ENDREGION}
@@ -200,7 +190,7 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']));
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
@@ -224,7 +214,7 @@ begin
     AppendRecord([16.25]);
     First;
   end;
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['f1', 'ftBCD', 10, 4, 'f1', '16.25']));
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
@@ -311,7 +301,7 @@ begin
   end;
   FieldDefsParams := 'ftInteger';
   FieldValue := '1';
-  sExpected := ReplaceArrowsToEndOfLines
+  sExpected := ReplaceArrowsAndDiamonds
     (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
@@ -340,7 +330,7 @@ begin
   end;
   FieldDefsParams := 'ftInteger';
   FieldValue := '1';
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
@@ -352,13 +342,9 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
 
-procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
-var
-  FieldDefsParams: string;
-  FieldValue: AnsiChar;
-  sExpected: string;
-  aActual: string;
+procedure TGenCodeDataSetMock.Test_Indentation_1Space;
 begin
+  GenerateDataSetCode.IndentationText := ' ';
   with mockDataSet do
   begin
     FieldDefs.Add('f1', ftInteger);
@@ -366,17 +352,23 @@ begin
     AppendRecord([1]);
     First;
   end;
-  FieldDefsParams := 'ftInteger';
-  FieldValue := '1';
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]));
-  sExpected := Self.IdentCode(sExpected, '  ');
-  GenerateDataSetCode.IndentationText := '  ';
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
-procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+procedure TGenCodeDataSetMock.Test_Indentation_Empty;
+begin
+  GenerateDataSetCode.IndentationText := '';
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  AssertOneFieldTemplateToMock('ftInteger', '1');
+end;
+
+procedure TGenCodeDataSetMock.Test_Indentation_MultilineTextValue;
 var
   FieldDefsParams: string;
   FieldValue: string;
@@ -393,15 +385,15 @@ begin
     First;
   end;
   FieldDefsParams := 'ftWideString, 300';
-  FieldValue := '→    ' + QuotedStr
-    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '    ' + QuotedStr
+  FieldValue := '→◇◇◇' +
+    QuotedStr(
+    'Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '    ' + QuotedStr(' wrong way to use it');
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOneField,
+    '+→◇◇◇' + QuotedStr(' wrong way to use it');
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
-  sExpected := Self.IdentCode(sExpected, ' ');
-  GenerateDataSetCode.IndentationText := ' ';
+  GenerateDataSetCode.IndentationText := '  ';
   aActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, aActual);
 end;
@@ -424,9 +416,8 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := ReplaceArrowsToEndOfLines(Format(CodeTemplateOnePrecisionField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
-  sExpected := Self.IdentCode(sExpected, '  ');
   GenerateDataSetCode.IndentationText := '  ';
   sActual := GenerateCode(mockDataSet);
   Assert.AreEqual(sExpected, sActual);
@@ -443,35 +434,37 @@ var
   expectedCode: string;
   actualCode: string;
 begin
-  expectedCode := ReplaceArrowsToEndOfLines(
-    (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-    (* *) 'with ds do→' +
-    (* *) 'begin→' +
-    (* *) '  FieldDefs.Add(''id'', ftInteger);→' +
-    (* *) '  FieldDefs.Add(''text1'', ftWideString, 30);→' +
-    (* *) '  FieldDefs.Add(''date1'', ftDate);→' +
-    (* *) '  FieldDefs.Add(''float1'', ftFloat);→' +
-    (* *) '  FieldDefs.Add(''currency1'', ftCurrency);→' +
-    (* *) '  CreateDataSet;→' +
-    (* *) 'end;→' +
-    (* *) 'with ds do→' +
-    (* *) 'begin→' +
-    (* *) '  Append;→' +
-    (* *) '  FieldByName(''id'').Value := 1;→' +
-    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '  FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
-    (* *) '  FieldByName(''float1'').Value := 1.2;→' +
-    (* *) '  FieldByName(''currency1'').Value := 1200;→' +
-    (* *) '  Post;→' +
-    (* *) 'end;→' +
-    (* *) 'with ds do→' +
-    (* *) 'begin→' +
-    (* *) '  Append;→' +
-    (* *) '  FieldByName(''id'').Value := 2;→' +
-    (* *) '  FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '  FieldByName(''currency1'').Value := 950;→' +
-    (* *) '  Post;→' +
-    (* *) 'end;→');
+  expectedCode := ReplaceArrowsAndDiamonds(
+    (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+    (* *) '◇with ds do→' +
+    (* *) '◇begin→' +
+    (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
+    (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
+    (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
+    (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
+    (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
+    (* *) '◇◇CreateDataSet;→' +
+    (* *) '◇end;→' +
+    (* *) '{$REGION ''Append data to MemTable''}→' +
+    (* *) '◇with ds do→' +
+    (* *) '◇begin→' +
+    (* *) '◇◇Append;→' +
+    (* *) '◇◇FieldByName(''id'').Value := 1;→' +
+    (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '◇◇FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
+    (* *) '◇◇FieldByName(''float1'').Value := 1.2;→' +
+    (* *) '◇◇FieldByName(''currency1'').Value := 1200;→' +
+    (* *) '◇◇Post;→' +
+    (* *) '◇end;→' +
+    (* *) '◇with ds do→' +
+    (* *) '◇begin→' +
+    (* *) '◇◇Append;→' +
+    (* *) '◇◇FieldByName(''id'').Value := 2;→' +
+    (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+    (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
+    (* *) '◇◇Post;→' +
+    (* *) '◇end;→' +
+    (* *) '{$ENDREGION}→');
   with mockDataSet do
   begin
     FieldDefs.Add('id', ftInteger);
