@@ -110,7 +110,7 @@ const
   (* *) '◇◇Append;→' +
   (* *) '◇◇FieldByName(''%s'').Value := %s;→' +
   (* *) '◇◇Post;→' +
-  (* *) '◇end;→'+
+  (* *) '◇end;→' +
   (* *) '{$ENDREGION}→';
 
 const
@@ -127,7 +127,7 @@ const
   (* *) '◇◇Append;→' +
   (* *) '◇◇FieldByName(''f1'').Value := %s;→' +
   (* *) '◇◇Post;→' +
-  (* *) '◇end;→'+
+  (* *) '◇end;→' +
   (* *) '{$ENDREGION}→';
 
 procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
@@ -459,7 +459,7 @@ begin
     (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
     (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
     (* *) '◇◇Post;→' +
-    (* *) '◇end;→'+
+    (* *) '◇end;→' +
     (* *) '{$ENDREGION}→');
   with mockDataSet do
   begin
