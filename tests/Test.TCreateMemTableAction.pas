@@ -43,9 +43,9 @@ type
     procedure TestFooter_TwoLines;
     // -------------
     procedure Test_IndentationText_BCDField;
-    procedure Test_IndentationText_LongStringValue;
-    // ---
-    procedure Test_IndentationText_2Spaces;
+    procedure Test_Indentation_MultilineTextValue;
+    procedure Test_Indentation_Empty;
+    procedure Test_Indentation_1Space;
     // -------------
     procedure TestSample1;
   end;
@@ -70,8 +70,8 @@ end;
 function TGenCodeDataSetMock.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
-  Result := StringReplace(Result, '◇', '  ', [rfReplaceAll])
-
+  Result := StringReplace(Result, '◇', GenerateDataSetCode.IndentationText,
+    [rfReplaceAll])
 end;
 
 // -----------------------------------------------------------------------
@@ -341,14 +341,10 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
-// TODO: Refactor test
-procedure TGenCodeDataSetMock.Test_IndentationText_2Spaces;
-var
-  FieldDefsParams: string;
-  FieldValue: AnsiChar;
-  sExpected: string;
-  aActual: string;
+
+procedure TGenCodeDataSetMock.Test_Indentation_1Space;
 begin
+  GenerateDataSetCode.IndentationText := ' ';
   with mockDataSet do
   begin
     FieldDefs.Add('f1', ftInteger);
@@ -356,16 +352,23 @@ begin
     AppendRecord([1]);
     First;
   end;
-  FieldDefsParams := 'ftInteger';
-  FieldValue := '1';
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]));
-  GenerateDataSetCode.IndentationText := '  ';
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
-procedure TGenCodeDataSetMock.Test_IndentationText_LongStringValue;
+procedure TGenCodeDataSetMock.Test_Indentation_Empty;
+begin
+  GenerateDataSetCode.IndentationText := '';
+  with mockDataSet do
+  begin
+    FieldDefs.Add('f1', ftInteger);
+    CreateDataSet;
+    AppendRecord([1]);
+    First;
+  end;
+  AssertOneFieldTemplateToMock('ftInteger', '1');
+end;
+
+procedure TGenCodeDataSetMock.Test_Indentation_MultilineTextValue;
 var
   FieldDefsParams: string;
   FieldValue: string;
@@ -382,11 +385,12 @@ begin
     First;
   end;
   FieldDefsParams := 'ftWideString, 300';
-  FieldValue := '→      ' + QuotedStr
-    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '      ' + QuotedStr
+  FieldValue := '→◇◇◇' +
+    QuotedStr(
+    'Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+    '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '      ' + QuotedStr(' wrong way to use it');
+    '+→◇◇◇' + QuotedStr(' wrong way to use it');
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
   GenerateDataSetCode.IndentationText := '  ';
