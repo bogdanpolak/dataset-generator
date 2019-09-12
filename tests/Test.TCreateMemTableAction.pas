@@ -111,38 +111,38 @@ end;
 
 const
   CodeTemplateOnePrecisionField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  with FieldDefs.AddFieldDef do begin→' +
-  (* *) '    Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
-  (* *) '  end;→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
+  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '◇◇end;→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→' +
   (* *) '{$REGION ''Append data to MemTable''}→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '  FieldByName(''%s'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→'+
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''%s'').Value := %s;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→'+
   (* *) '{$ENDREGION}→';
 
 const
   CodeTemplateOneField =
-  (* *) 'ds := TFDMemTable.Create(AOwner);→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  FieldDefs.Add(''f1'', %s);→' +
-  (* *) '  CreateDataSet;→' +
-  (* *) 'end;→' +
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇FieldDefs.Add(''f1'', %s);→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→' +
   (* *) '{$REGION ''Append data to MemTable''}→' +
-  (* *) 'with ds do→' +
-  (* *) 'begin→' +
-  (* *) '  Append;→' +
-  (* *) '  FieldByName(''f1'').Value := %s;→' +
-  (* *) '  Post;→' +
-  (* *) 'end;→'+
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''f1'').Value := %s;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→'+
   (* *) '{$ENDREGION}→';
 
 procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
@@ -174,11 +174,11 @@ begin
     First;
   end;
   AssertOneFieldTemplateToMock('ftWideString, 300',
-    '→    ' + QuotedStr
+    '→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→' + '    ' + QuotedStr
+    '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→' + '    ' + QuotedStr(' wrong way to use it'));
+    '+→◇◇◇' + QuotedStr(' wrong way to use it'));
 end;
 
 {$ENDREGION}
