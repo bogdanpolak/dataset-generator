@@ -14,7 +14,7 @@ uses
 type
 
   [TestFixture]
-  TGenCodeDataSetMock = class(TObject)
+  TTestCodeWithStructure = class(TObject)
   private
     GenerateDataSetCode: TGenerateDataSetCode;
     mockDataSet: TFDMemTable;
@@ -60,14 +60,14 @@ uses
 // Utils section
 // -----------------------------------------------------------------------
 
-function TGenCodeDataSetMock.GenerateCode(ds: TDataSet): string;
+function TTestCodeWithStructure.GenerateCode(ds: TDataSet): string;
 begin
   GenerateDataSetCode.DataSet := ds;
   GenerateDataSetCode.Execute;
   Result := GenerateDataSetCode.Code.Text;
 end;
 
-function TGenCodeDataSetMock.ReplaceArrowsAndDiamonds(const s: String): string;
+function TTestCodeWithStructure.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
   Result := StringReplace(Result, '◇', GenerateDataSetCode.IndentationText,
@@ -78,13 +78,13 @@ end;
 // Setup and TearDown section
 // -----------------------------------------------------------------------
 
-procedure TGenCodeDataSetMock.Setup;
+procedure TTestCodeWithStructure.Setup;
 begin
   GenerateDataSetCode := TGenerateDataSetCode.Create(nil);
   mockDataSet := TFDMemTable.Create(nil);
 end;
 
-procedure TGenCodeDataSetMock.TearDown;
+procedure TTestCodeWithStructure.TearDown;
 begin
   FreeAndNil(GenerateDataSetCode);
   FreeAndNil(mockDataSet);
@@ -130,7 +130,7 @@ const
   (* *) '◇end;→' +
   (* *) '{$ENDREGION}→';
 
-procedure TGenCodeDataSetMock.AssertOneFieldTemplateToMock(const FieldDefsParams
+procedure TTestCodeWithStructure.AssertOneFieldTemplateToMock(const FieldDefsParams
   : string; const FieldValue: string);
 var
   sExpected: string;
@@ -147,7 +147,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Registered issues (bugs)'}
 
-procedure TGenCodeDataSetMock.TestLongStringLiterals_iss002;
+procedure TTestCodeWithStructure.TestLongStringLiterals_iss002;
 begin
   with mockDataSet do
   begin
@@ -172,7 +172,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'One BCD field with one value'}
 
-procedure TGenCodeDataSetMock.TestOneBCDField_DifferentFieldName;
+procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
 var
   sExpected: string;
   sActual: string;
@@ -196,7 +196,7 @@ begin
   Assert.AreEqual(sExpected, sActual);
 end;
 
-procedure TGenCodeDataSetMock.TestOneBCDField_iss001;
+procedure TTestCodeWithStructure.TestOneBCDField_iss001;
 var
   sExpected: string;
   sActual: string;
@@ -226,7 +226,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'One DB field with one value'}
 
-procedure TGenCodeDataSetMock.TestOneDateTimeField_DateOnly;
+procedure TTestCodeWithStructure.TestOneDateTimeField_DateOnly;
 begin
   with mockDataSet do
   begin
@@ -238,7 +238,7 @@ begin
   AssertOneFieldTemplateToMock('ftDateTime', 'EncodeDate(2019,7,1)');
 end;
 
-procedure TGenCodeDataSetMock.TestOneDateTimeField_DateTime;
+procedure TTestCodeWithStructure.TestOneDateTimeField_DateTime;
 begin
   with mockDataSet do
   begin
@@ -251,7 +251,7 @@ begin
     'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)');
 end;
 
-procedure TGenCodeDataSetMock.TestOneIntegerField;
+procedure TTestCodeWithStructure.TestOneIntegerField;
 begin
   with mockDataSet do
   begin
@@ -263,7 +263,7 @@ begin
   AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
-procedure TGenCodeDataSetMock.TestOneWideStringField;
+procedure TTestCodeWithStructure.TestOneWideStringField;
 begin
   with mockDataSet do
   begin
@@ -282,7 +282,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Component header and footer'}
 
-procedure TGenCodeDataSetMock.TestHeader_OneLine;
+procedure TTestCodeWithStructure.TestHeader_OneLine;
 var
   Line1: string;
   FieldDefsParams: string;
@@ -307,7 +307,7 @@ begin
   Assert.AreEqual(sExpected, aActual);
 end;
 
-procedure TGenCodeDataSetMock.TestFooter_TwoLines;
+procedure TTestCodeWithStructure.TestFooter_TwoLines;
 var
   Line1: string;
   FieldDefsParams: string;
@@ -342,7 +342,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
 
-procedure TGenCodeDataSetMock.Test_Indentation_1Space;
+procedure TTestCodeWithStructure.Test_Indentation_1Space;
 begin
   GenerateDataSetCode.IndentationText := ' ';
   with mockDataSet do
@@ -355,7 +355,7 @@ begin
   AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
-procedure TGenCodeDataSetMock.Test_Indentation_Empty;
+procedure TTestCodeWithStructure.Test_Indentation_Empty;
 begin
   GenerateDataSetCode.IndentationText := '';
   with mockDataSet do
@@ -368,7 +368,7 @@ begin
   AssertOneFieldTemplateToMock('ftInteger', '1');
 end;
 
-procedure TGenCodeDataSetMock.Test_Indentation_MultilineTextValue;
+procedure TTestCodeWithStructure.Test_Indentation_MultilineTextValue;
 var
   FieldDefsParams: string;
   FieldValue: string;
@@ -398,7 +398,7 @@ begin
   Assert.AreEqual(sExpected, aActual);
 end;
 
-procedure TGenCodeDataSetMock.Test_IndentationText_BCDField;
+procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
 var
   sExpected: string;
   sActual: string;
@@ -429,7 +429,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
-procedure TGenCodeDataSetMock.TestSample1;
+procedure TTestCodeWithStructure.TestSample1;
 var
   expectedCode: string;
   actualCode: string;
@@ -485,6 +485,6 @@ end;
 
 initialization
 
-TDUnitX.RegisterTestFixture(TGenCodeDataSetMock);
+TDUnitX.RegisterTestFixture(TTestCodeWithStructure);
 
 end.
