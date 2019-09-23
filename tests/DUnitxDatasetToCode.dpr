@@ -11,7 +11,7 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-  Test.TCreateMemTableAction in 'Test.TCreateMemTableAction.pas',
+  Test.CodeWithStructure in 'Test.CodeWithStructure.pas',
   Comp.Generator.DataSetCode in '..\src\Comp.Generator.DataSetCode.pas',
   Helper.TStrings in '..\src\Helper.TStrings.pas';
 
