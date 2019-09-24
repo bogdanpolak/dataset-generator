@@ -4,22 +4,20 @@ interface
 
 uses
   DUnitX.TestFramework,
-  System.Classes, System.SysUtils,
+  System.Classes,
+  System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode;
+  Comp.Generator.DataSetCode,
+  Test.Common;
 
 {$M+}
 
 type
 
   [TestFixture]
-  TTestCodeWithStructure = class(TObject)
+  TTestCodeWithStructure = class(TTestGenerate)
   private
-    GenerateDataSetCode: TGenerateDataSetCode;
-    mockDataSet: TFDMemTable;
-    function ReplaceArrowsAndDiamonds(const s: String): string;
-    function GenerateCode(ds: TDataSet): string;
     procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
       const FieldValue: string);
   public
@@ -57,37 +55,17 @@ uses
   Data.FmtBcd;
 
 // -----------------------------------------------------------------------
-// Utils section
-// -----------------------------------------------------------------------
-
-function TTestCodeWithStructure.GenerateCode(ds: TDataSet): string;
-begin
-  GenerateDataSetCode.DataSet := ds;
-  GenerateDataSetCode.Execute;
-  Result := GenerateDataSetCode.Code.Text;
-end;
-
-function TTestCodeWithStructure.ReplaceArrowsAndDiamonds(const s: String): string;
-begin
-  Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
-  Result := StringReplace(Result, '◇', GenerateDataSetCode.IndentationText,
-    [rfReplaceAll])
-end;
-
-// -----------------------------------------------------------------------
 // Setup and TearDown section
 // -----------------------------------------------------------------------
 
 procedure TTestCodeWithStructure.Setup;
 begin
-  GenerateDataSetCode := TGenerateDataSetCode.Create(nil);
-  mockDataSet := TFDMemTable.Create(nil);
+  Self.Common_Setup;
 end;
 
 procedure TTestCodeWithStructure.TearDown;
 begin
-  FreeAndNil(GenerateDataSetCode);
-  FreeAndNil(mockDataSet);
+  Self.Common_TearDown;
 end;
 
 // -----------------------------------------------------------------------
@@ -134,12 +112,11 @@ procedure TTestCodeWithStructure.AssertOneFieldTemplateToMock(const FieldDefsPar
   : string; const FieldValue: string);
 var
   sExpected: string;
-  aActual: string;
 begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 // -----------------------------------------------------------------------
@@ -175,7 +152,6 @@ end;
 procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
 var
   sExpected: string;
-  sActual: string;
 begin
   with mockDataSet do
   begin
@@ -192,14 +168,13 @@ begin
   end;
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']));
-  sActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, sActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 procedure TTestCodeWithStructure.TestOneBCDField_iss001;
 var
   sExpected: string;
-  sActual: string;
 begin
   with mockDataSet do
   begin
@@ -216,8 +191,8 @@ begin
   end;
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['f1', 'ftBCD', 10, 4, 'f1', '16.25']));
-  sActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, sActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 {$ENDREGION}
@@ -288,7 +263,6 @@ var
   FieldDefsParams: string;
   FieldValue: AnsiChar;
   sExpected: string;
-  aActual: string;
 begin
   Line1 := '// Test coments';
   GenerateDataSetCode.Header.Add(Line1);
@@ -303,8 +277,8 @@ begin
   FieldValue := '1';
   sExpected := ReplaceArrowsAndDiamonds
     (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 procedure TTestCodeWithStructure.TestFooter_TwoLines;
@@ -313,7 +287,6 @@ var
   FieldDefsParams: string;
   FieldValue: AnsiChar;
   sExpected: string;
-  aActual: string;
 begin
   Line1 := '// footer comment';
   with GenerateDataSetCode.Footer do
@@ -332,8 +305,8 @@ begin
   FieldValue := '1';
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 {$ENDREGION}
@@ -373,7 +346,6 @@ var
   FieldDefsParams: string;
   FieldValue: string;
   sExpected: string;
-  aActual: string;
 begin
   with mockDataSet do
   begin
@@ -394,14 +366,13 @@ begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
   GenerateDataSetCode.IndentationText := '  ';
-  aActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, aActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
 var
   sExpected: string;
-  sActual: string;
 begin
   with mockDataSet do
   begin
@@ -419,8 +390,8 @@ begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
   GenerateDataSetCode.IndentationText := '  ';
-  sActual := GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, sActual);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
 end;
 
 {$ENDREGION}
@@ -432,7 +403,6 @@ end;
 procedure TTestCodeWithStructure.TestSample1;
 var
   expectedCode: string;
-  actualCode: string;
 begin
   expectedCode := ReplaceArrowsAndDiamonds(
     (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
@@ -477,8 +447,8 @@ begin
     AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
     First;
   end;
-  actualCode := GenerateCode(mockDataSet);
-  Assert.AreEqual(expectedCode, actualCode);
+  GenerateCode(mockDataSet);
+  Assert.AreEqual(expectedCode, GenerateDataSetCode.Code.Text);
 end;
 
 {$ENDREGION}

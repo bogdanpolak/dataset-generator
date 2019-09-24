@@ -14,7 +14,8 @@ uses
   Helper.TStrings in '..\src\Helper.TStrings.pas',
   Comp.Generator.DataSetCode in '..\src\Comp.Generator.DataSetCode.pas',
   Test.CodeWithStructure in 'Test.CodeWithStructure.pas',
-  Test.CodeWithAppendData in 'Test.CodeWithAppendData.pas';
+  Test.CodeWithAppendData in 'Test.CodeWithAppendData.pas',
+  Test.Common in 'Test.Common.pas';
 
 var
   runner : ITestRunner;

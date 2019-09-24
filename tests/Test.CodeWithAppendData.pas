@@ -7,14 +7,15 @@ uses
   System.Classes, System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode;
+  Comp.Generator.DataSetCode,
+  Test.Common;
 
 {$M+}
 
 type
 
   [TestFixture]
-  TTestCodeWithAppendData = class(TObject)
+  TTestCodeWithAppendData = class(TTestGenerate)
   private
     GenerateDataSetCode: TGenerateDataSetCode;
     mockDataSet: TFDMemTable;
