@@ -87,14 +87,6 @@ end;
 
 const
   CodeTemplateOnePrecisionField =
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
-  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
-  (* *) '◇◇end;→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
   (* *) '{$REGION ''Append data to MemTable''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
@@ -106,12 +98,6 @@ const
 
 const
   CodeTemplateOneField =
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇FieldDefs.Add(''f1'', %s);→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
   (* *) '{$REGION ''Append data to MemTable''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
@@ -141,8 +127,7 @@ begin
     First;
   end;
   aExpectedCode := Format(CodeTemplateOneField,
-    ['ftWideString, 300',
-    '→◇◇◇' + QuotedStr
+    ['→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
@@ -173,8 +158,7 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := Format(CodeTemplateOnePrecisionField,
-    ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']);
+  sExpected := Format(CodeTemplateOnePrecisionField, ['abc123', '1.01']);
   AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
@@ -195,8 +179,7 @@ begin
     AppendRecord([16.25]);
     First;
   end;
-  sExpected := Format(CodeTemplateOnePrecisionField,
-    ['f1', 'ftBCD', 10, 4, 'f1', '16.25']);
+  sExpected := Format(CodeTemplateOnePrecisionField, ['f1', '16.25']);
   AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
@@ -217,8 +200,7 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01)]);
     First;
   end;
-  aExpectedCode := Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)']);
+  aExpectedCode := Format(CodeTemplateOneField, ['EncodeDate(2019,7,1)']);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
@@ -234,7 +216,7 @@ begin
     First;
   end;
   aExpectedCode := Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
+    ['EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
@@ -249,7 +231,7 @@ begin
     AppendRecord([1]);
     First;
   end;
-  aExpectedCode := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  aExpectedCode := Format(CodeTemplateOneField, ['1']);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
@@ -264,8 +246,7 @@ begin
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  aExpectedCode := Format(CodeTemplateOneField,
-    ['ftWideString, 20', QuotedStr('Alice has a cat')]);
+  aExpectedCode := Format(CodeTemplateOneField, [QuotedStr('Alice has a cat')]);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
@@ -287,7 +268,7 @@ begin
     AppendRecord([1]);
     First;
   end;
-  aExpectedCode := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  aExpectedCode := Format(CodeTemplateOneField, ['1']);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
@@ -303,14 +284,12 @@ begin
     AppendRecord([1]);
     First;
   end;
-  aExpectedCode := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  aExpectedCode := Format(CodeTemplateOneField, ['1']);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
 end;
 
 procedure TTestCodeWithAppendData.Test_Indentation_MultilineTextValue;
 var
-  FieldDefsParams: string;
-  FieldValue: string;
   sExpected: string;
 begin
   GenerateDataSetCode.IndentationText := '  ';
@@ -323,13 +302,12 @@ begin
       ' and about the right and wrong way to use it']);
     First;
   end;
-  FieldDefsParams := 'ftWideString, 300';
-  FieldValue := '→◇◇◇' + QuotedStr
+  sExpected := Format(CodeTemplateOneField,
+    ['→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→◇◇◇' + QuotedStr(' wrong way to use it');
-  sExpected := Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]);
+    '+→◇◇◇' + QuotedStr(' wrong way to use it')]);
   AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
@@ -351,7 +329,7 @@ begin
     First;
   end;
   sExpected := Format(CodeTemplateOnePrecisionField,
-    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']);
+    ['xyz123', '1.01']);
   GenerateDataSetCode.IndentationText := '  ';
   AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
@@ -367,16 +345,6 @@ var
   expectedCode: string;
 begin
   expectedCode :=
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
-  (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
-  (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
-  (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
-  (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
   (* *) '{$REGION ''Append data to MemTable''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
