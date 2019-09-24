@@ -27,7 +27,8 @@ type
     // * --------------------------------------------------------------------
     MaxLiteralLenght = 70;
   private
-    FCode: TStrings;
+    FCodeWithStructue: TStrings;
+    FCodeWithAppendData: TStrings;
     FDataSet: TDataSet;
     FHeader: TStrings;
     FFooter: TStrings;
@@ -44,8 +45,8 @@ type
     destructor Destroy; override;
     procedure Execute;
     property dataSet: TDataSet read FDataSet write FDataSet;
-    property CodeWithStructure: TStrings read FCode;
-    property CodeWithAppendData: TStrings read FCode;
+    property CodeWithStructure: TStrings read FCodeWithStructue;
+    property CodeWithAppendData: TStrings read FCodeWithAppendData;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property IndentationText: String read FIndentationText
@@ -60,7 +61,8 @@ uses
 constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
   inherited;
-  FCode := TStringList.Create;
+  FCodeWithStructue := TStringList.Create;
+  FCodeWithAppendData := TStringList.Create;
   FHeader := TStringList.Create;
   FFooter := TStringList.Create;
   FIndentationText := '  ';
@@ -68,7 +70,8 @@ end;
 
 destructor TGenerateDataSetCode.Destroy;
 begin
-  FCode.Free;
+  FCodeWithStructue.Free;
+  FCodeWithAppendData.Free;
   FHeader.Free;
   FFooter.Free;
   inherited;
@@ -259,7 +262,7 @@ procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
 var
   fld: TField;
 begin
-  with FCode do
+  with CodeWithStructure do
   begin
     Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
     Add(IndentationText + 'with ds do');
@@ -276,13 +279,13 @@ var
   fld: TField;
   s1: string;
 begin
-  FCode.Add('{$REGION ''Append data to MemTable''}');
+  CodeWithAppendData.Add('{$REGION ''Append data to MemTable''}');
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
   while not dataSet.Eof do
   begin
-    with FCode do
+    with CodeWithAppendData do
     begin
       Add(IndentationText + 'with ds do');
       Add(IndentationText + 'begin');
@@ -299,13 +302,14 @@ begin
     dataSet.Next;
   end;
   dataSet.EnableControls;
-  FCode.Add('{$ENDREGION}');
+  CodeWithAppendData.Add('{$ENDREGION}');
 end;
 
 procedure TGenerateDataSetCode.Execute;
 begin
   Guard;
-  FCode.Clear;
+  CodeWithStructure.Clear;
+  CodeWithAppendData.Clear;
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
 end;
