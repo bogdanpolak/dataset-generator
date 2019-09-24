@@ -27,15 +27,13 @@ type
     procedure TearDown;
   published
     // -------------
-    procedure TestLongStringLiterals_iss002;
-    // -------------
-    procedure TestOneBCDField_iss001;
     procedure TestOneBCDField_DifferentFieldName;
     // -------------
     procedure TestOneIntegerField;
     procedure TestOneWideStringField;
     procedure TestOneDateTimeField_DateOnly;
     procedure TestOneDateTimeField_DateTime;
+    procedure TestOneBCDField;
     // -------------
     procedure Test_IndentationText_BCDField;
     procedure Test_Indentation_MultilineTextValue;
@@ -52,8 +50,33 @@ uses
   Data.FmtBcd;
 
 // -----------------------------------------------------------------------
-// Utils section
+// Templates
 // -----------------------------------------------------------------------
+
+const
+  CodeTemplateOneBcdField =
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
+  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '◇◇end;→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→';
+
+const
+  CodeTemplateOneField =
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇FieldDefs.Add(''f1'', %s);→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→';
+
+
+  // -----------------------------------------------------------------------
+  // Utils section
+  // -----------------------------------------------------------------------
 
 procedure TTestCodeWithStructure.AreEqual_TextTemplate_And_GeneratedCode
   (const TextTemplate: string);
@@ -82,124 +105,7 @@ begin
   Self.Common_TearDown;
 end;
 
-// -----------------------------------------------------------------------
-// Templates
-// -----------------------------------------------------------------------
 
-const
-  CodeTemplateOnePrecisionField =
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
-  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
-  (* *) '◇◇end;→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
-  (* *) '{$REGION ''Append data to MemTable''}→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇Append;→' +
-  (* *) '◇◇FieldByName(''%s'').Value := %s;→' +
-  (* *) '◇◇Post;→' +
-  (* *) '◇end;→' +
-  (* *) '{$ENDREGION}→';
-
-const
-  CodeTemplateOneField =
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇FieldDefs.Add(''f1'', %s);→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
-  (* *) '{$REGION ''Append data to MemTable''}→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇Append;→' +
-  (* *) '◇◇FieldByName(''f1'').Value := %s;→' +
-  (* *) '◇◇Post;→' +
-  (* *) '◇end;→' +
-  (* *) '{$ENDREGION}→';
-
-  // -----------------------------------------------------------------------
-  // Tests for: Registered issues (bugs)
-  // -----------------------------------------------------------------------
-{$REGION 'Registered issues (bugs)'}
-
-procedure TTestCodeWithStructure.TestLongStringLiterals_iss002;
-var
-  sExpeced: string;
-begin
-  with mockDataSet do
-  begin
-    FieldDefs.Add('f1', ftWideString, 300);
-    CreateDataSet;
-    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
-      ' Constructor Injection, Property Injection, and Method Injection' +
-      ' and about the right and wrong way to use it']);
-    First;
-  end;
-  sExpeced := Format(CodeTemplateOneField, ['ftWideString, 300',
-    '→◇◇◇' + QuotedStr
-    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→◇◇◇' + QuotedStr
-    ('on, Property Injection, and Method Injection and about the right and') +
-    '+→◇◇◇' + QuotedStr(' wrong way to use it')]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
-end;
-
-{$ENDREGION}
-// -----------------------------------------------------------------------
-// Tests for: One BCD field with one value
-// -----------------------------------------------------------------------
-{$REGION 'One BCD field with one value'}
-
-procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
-var
-  sExpected: string;
-begin
-  with mockDataSet do
-  begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'abc123';
-      DataType := ftBcd;
-      Precision := 8;
-      Size := 2;
-    end;
-    CreateDataSet;
-    AppendRecord([1.01]);
-    First;
-  end;
-  sExpected := Format(CodeTemplateOnePrecisionField,
-    ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
-end;
-
-procedure TTestCodeWithStructure.TestOneBCDField_iss001;
-var
-  sExpected: string;
-begin
-  with mockDataSet do
-  begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'f1';
-      DataType := ftBcd;
-      Precision := 10;
-      Size := 4;
-    end;
-    CreateDataSet;
-    AppendRecord([16.25]);
-    First;
-  end;
-  sExpected := Format(CodeTemplateOnePrecisionField,
-    ['f1', 'ftBCD', 10, 4, 'f1', '16.25']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
-end;
-
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: One DB field with one value
 // -----------------------------------------------------------------------
@@ -232,8 +138,8 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField, ['ftDateTime',
-    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
+  sExpeced := Format(CodeTemplateOneField,
+    ['ftDateTime', 'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
   AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
@@ -263,9 +169,51 @@ begin
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField, ['ftWideString, 20',
-    QuotedStr('Alice has a cat')]);
+  sExpeced := Format(CodeTemplateOneField,
+    ['ftWideString, 20', QuotedStr('Alice has a cat')]);
   AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+end;
+
+procedure TTestCodeWithStructure.TestOneBCDField;
+var
+  sExpected: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'f1';
+      DataType := ftBcd;
+      Precision := 10;
+      Size := 4;
+    end;
+    CreateDataSet;
+    AppendRecord([16.25]);
+    First;
+  end;
+  sExpected := Format(CodeTemplateOneBcdField, ['f1', 'ftBCD', 10, 4]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
+end;
+
+procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
+var
+  sExpected: string;
+begin
+  with mockDataSet do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := 'abc123';
+      DataType := ftBcd;
+      Precision := 8;
+      Size := 2;
+    end;
+    CreateDataSet;
+    AppendRecord([1.01]);
+    First;
+  end;
+  sExpected := Format(CodeTemplateOneBcdField, ['abc123', 'ftBCD', 8, 2]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 {$ENDREGION}
@@ -350,8 +298,8 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := Format(CodeTemplateOnePrecisionField,
-    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']);
+  sExpected := Format(CodeTemplateOneBcdField,
+    ['xyz123', 'ftBCD', 8, 2]);
   AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
@@ -375,27 +323,7 @@ begin
   (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
   (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
   (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→' +
-  (* *) '{$REGION ''Append data to MemTable''}→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇Append;→' +
-  (* *) '◇◇FieldByName(''id'').Value := 1;→' +
-  (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-  (* *) '◇◇FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
-  (* *) '◇◇FieldByName(''float1'').Value := 1.2;→' +
-  (* *) '◇◇FieldByName(''currency1'').Value := 1200;→' +
-  (* *) '◇◇Post;→' +
-  (* *) '◇end;→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇Append;→' +
-  (* *) '◇◇FieldByName(''id'').Value := 2;→' +
-  (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-  (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
-  (* *) '◇◇Post;→' +
-  (* *) '◇end;→' +
-  (* *) '{$ENDREGION}→';
+  (* *) '◇end;→';
   with mockDataSet do
   begin
     FieldDefs.Add('id', ftInteger);
