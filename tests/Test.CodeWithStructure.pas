@@ -108,15 +108,15 @@ const
   (* *) '◇end;→' +
   (* *) '{$ENDREGION}→';
 
-procedure TTestCodeWithStructure.AssertOneFieldTemplateToMock(const FieldDefsParams
-  : string; const FieldValue: string);
+procedure TTestCodeWithStructure.AssertOneFieldTemplateToMock
+  (const FieldDefsParams: string; const FieldValue: string);
 var
   sExpected: string;
 begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]));
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 // -----------------------------------------------------------------------
@@ -169,7 +169,7 @@ begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']));
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 procedure TTestCodeWithStructure.TestOneBCDField_iss001;
@@ -192,7 +192,7 @@ begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
     ['f1', 'ftBCD', 10, 4, 'f1', '16.25']));
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 {$ENDREGION}
@@ -278,7 +278,7 @@ begin
   sExpected := ReplaceArrowsAndDiamonds
     (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 procedure TTestCodeWithStructure.TestFooter_TwoLines;
@@ -306,7 +306,7 @@ begin
   sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 {$ENDREGION}
@@ -357,9 +357,8 @@ begin
     First;
   end;
   FieldDefsParams := 'ftWideString, 300';
-  FieldValue := '→◇◇◇' +
-    QuotedStr(
-    'Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+  FieldValue := '→◇◇◇' + QuotedStr
+    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
     '+→◇◇◇' + QuotedStr(' wrong way to use it');
@@ -367,7 +366,7 @@ begin
     [FieldDefsParams, FieldValue]));
   GenerateDataSetCode.IndentationText := '  ';
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
@@ -391,7 +390,7 @@ begin
     ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
   GenerateDataSetCode.IndentationText := '  ';
   GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 {$ENDREGION}
@@ -448,7 +447,7 @@ begin
     First;
   end;
   GenerateCode(mockDataSet);
-  Assert.AreEqual(expectedCode, GenerateDataSetCode.Code.Text);
+  Assert.AreEqual(expectedCode, GenerateDataSetCode.CodeWithStructure.Text);
 end;
 
 {$ENDREGION}

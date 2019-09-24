@@ -65,7 +65,7 @@ function TTestCodeWithAppendData.GenerateCode(ds: TDataSet): string;
 begin
   GenerateDataSetCode.DataSet := ds;
   GenerateDataSetCode.Execute;
-  Result := GenerateDataSetCode.Code.Text;
+  Result := GenerateDataSetCode.CodeWithAppendData.Text;
 end;
 
 function TTestCodeWithAppendData.ReplaceArrowsAndDiamonds(const s: String): string;

@@ -44,7 +44,8 @@ type
     destructor Destroy; override;
     procedure Execute;
     property dataSet: TDataSet read FDataSet write FDataSet;
-    property Code: TStrings read FCode;
+    property CodeWithStructure: TStrings read FCode;
+    property CodeWithAppendData: TStrings read FCode;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property Header: TStrings read FHeader write FHeader;
@@ -227,7 +228,8 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.Code.text;
+    Result := gen.CodeWithStructure.Text + sLineBreak + sLineBreak +
+      gen.CodeWithAppendData.Text;
   finally
     gen.Free;
   end;
@@ -242,7 +244,8 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.Code.ToStringDynArray;
+    Result := gen.CodeWithStructure.ToStringDynArray + [sLineBreak, sLineBreak]
+      + gen.CodeWithStructure.ToStringDynArray;
   finally
     gen.Free;
   end;
@@ -258,7 +261,7 @@ procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
 var
   fld: TField;
 begin
-  with Code do
+  with FCode do
   begin
     Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
     Add(IndentationText + 'with ds do');
@@ -275,17 +278,17 @@ var
   fld: TField;
   s1: string;
 begin
-  Code.Add('{$REGION ''Append data to MemTable''}');
+  FCode.Add('{$REGION ''Append data to MemTable''}');
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
   while not dataSet.Eof do
   begin
-    with Code do
+    with FCode do
     begin
       Add(IndentationText + 'with ds do');
       Add(IndentationText + 'begin');
-      Add(IndentationText + IndentationText+ 'Append;');
+      Add(IndentationText + IndentationText + 'Append;');
       for fld in dataSet.Fields do
       begin
         s1 := GenCodeLineSetFieldValue(fld);
@@ -298,17 +301,17 @@ begin
     dataSet.Next;
   end;
   dataSet.EnableControls;
-  Code.Add('{$ENDREGION}');
+  FCode.Add('{$ENDREGION}');
 end;
 
 procedure TGenerateDataSetCode.Execute;
 begin
   Guard;
-  Code.Clear;
-  Code.AddStrings(Header);
+  FCode.Clear;
+  FCode.AddStrings(Header);
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
-  Code.AddStrings(Footer);
+  FCode.AddStrings(Footer);
 end;
 
 end.
