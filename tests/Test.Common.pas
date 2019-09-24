@@ -17,7 +17,6 @@ type
     GenerateDataSetCode: TGenerateDataSetCode;
     mockDataSet: TFDMemTable;
     function ReplaceArrowsAndDiamonds(const s: String): string;
-    procedure GenerateCode(ds: TDataSet);
     procedure Common_Setup;
     procedure Common_TearDown;
   end;
@@ -30,13 +29,6 @@ begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
   Result := StringReplace(Result, '◇', GenerateDataSetCode.IndentationText,
     [rfReplaceAll])
-end;
-
-procedure TTestGenerate.GenerateCode(ds: TDataSet);
-begin
-  GenerateDataSetCode.DataSet := ds;
-  GenerateDataSetCode.Execute;
-  // Result := GenerateDataSetCode.Code.Text;
 end;
 
 procedure TTestGenerate.Common_Setup;

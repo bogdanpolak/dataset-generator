@@ -18,8 +18,8 @@ type
   [TestFixture]
   TTestCodeWithStructure = class(TTestGenerate)
   private
-    procedure AssertOneFieldTemplateToMock(const FieldDefsParams: string;
-      const FieldValue: string);
+    procedure AreEqual_TextTemplate_And_GeneratedCode
+      (const TextTemplate: string);
   public
     [Setup]
     procedure Setup;
@@ -53,6 +53,23 @@ implementation
 uses
   System.Variants,
   Data.FmtBcd;
+
+// -----------------------------------------------------------------------
+// Utils section
+// -----------------------------------------------------------------------
+
+procedure TTestCodeWithStructure.AreEqual_TextTemplate_And_GeneratedCode
+  (const TextTemplate: string);
+var
+  sExpected: string;
+  sActual: string;
+begin
+  sExpected := ReplaceArrowsAndDiamonds(TextTemplate);
+  Self.GenerateDataSetCode.DataSet := Self.mockDataSet;
+  Self.GenerateDataSetCode.Execute;
+  sActual := Self.GenerateDataSetCode.CodeWithStructure.Text;
+  Assert.AreEqual(sExpected, sActual);
+end;
 
 // -----------------------------------------------------------------------
 // Setup and TearDown section
@@ -108,23 +125,14 @@ const
   (* *) '◇end;→' +
   (* *) '{$ENDREGION}→';
 
-procedure TTestCodeWithStructure.AssertOneFieldTemplateToMock
-  (const FieldDefsParams: string; const FieldValue: string);
-var
-  sExpected: string;
-begin
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]));
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
-end;
-
-// -----------------------------------------------------------------------
-// Tests for: Registered issues (bugs)
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
+  // Tests for: Registered issues (bugs)
+  // -----------------------------------------------------------------------
 {$REGION 'Registered issues (bugs)'}
 
 procedure TTestCodeWithStructure.TestLongStringLiterals_iss002;
+var
+  sExpeced: string;
 begin
   with mockDataSet do
   begin
@@ -135,12 +143,13 @@ begin
       ' and about the right and wrong way to use it']);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftWideString, 300',
+  sExpeced := Format(CodeTemplateOneField, ['ftWideString, 300',
     '→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→◇◇◇' + QuotedStr(' wrong way to use it'));
+    '+→◇◇◇' + QuotedStr(' wrong way to use it')]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 {$ENDREGION}
@@ -166,10 +175,9 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
-    ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']));
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Format(CodeTemplateOnePrecisionField,
+    ['abc123', 'ftBCD', 8, 2, 'abc123', '1.01']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 procedure TTestCodeWithStructure.TestOneBCDField_iss001;
@@ -189,10 +197,9 @@ begin
     AppendRecord([16.25]);
     First;
   end;
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
-    ['f1', 'ftBCD', 10, 4, 'f1', '16.25']));
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Format(CodeTemplateOnePrecisionField,
+    ['f1', 'ftBCD', 10, 4, 'f1', '16.25']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 {$ENDREGION}
@@ -202,6 +209,8 @@ end;
 {$REGION 'One DB field with one value'}
 
 procedure TTestCodeWithStructure.TestOneDateTimeField_DateOnly;
+var
+  sExpeced: string;
 begin
   with mockDataSet do
   begin
@@ -210,10 +219,14 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01)]);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftDateTime', 'EncodeDate(2019,7,1)');
+  sExpeced := Format(CodeTemplateOneField,
+    ['ftDateTime', 'EncodeDate(2019,7,1)']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 procedure TTestCodeWithStructure.TestOneDateTimeField_DateTime;
+var
+  sExpeced: string;
 begin
   with mockDataSet do
   begin
@@ -222,11 +235,14 @@ begin
     AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftDateTime',
-    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)');
+  sExpeced := Format(CodeTemplateOneField, ['ftDateTime',
+    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 procedure TTestCodeWithStructure.TestOneIntegerField;
+var
+  sExpeced: string;
 begin
   with mockDataSet do
   begin
@@ -235,10 +251,13 @@ begin
     AppendRecord([1]);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftInteger', '1');
+  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 procedure TTestCodeWithStructure.TestOneWideStringField;
+var
+  sExpeced: string;
 begin
   with mockDataSet do
   begin
@@ -247,8 +266,9 @@ begin
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftWideString, 20',
-    QuotedStr('Alice has a cat'));
+  sExpeced := Format(CodeTemplateOneField, ['ftWideString, 20',
+    QuotedStr('Alice has a cat')]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 {$ENDREGION}
@@ -275,10 +295,9 @@ begin
   end;
   FieldDefsParams := 'ftInteger';
   FieldValue := '1';
-  sExpected := ReplaceArrowsAndDiamonds
-    (Line1 + '→' + Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]));
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Line1 + '→' + Format(CodeTemplateOneField,
+    [FieldDefsParams, FieldValue]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 procedure TTestCodeWithStructure.TestFooter_TwoLines;
@@ -303,10 +322,9 @@ begin
   end;
   FieldDefsParams := 'ftInteger';
   FieldValue := '1';
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]) + '→' + Line1 + '→');
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]) + '→'
+    + Line1 + '→';
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 {$ENDREGION}
@@ -316,6 +334,8 @@ end;
 {$REGION 'property IndentationText'}
 
 procedure TTestCodeWithStructure.Test_Indentation_1Space;
+var
+  sExpeced: string;
 begin
   GenerateDataSetCode.IndentationText := ' ';
   with mockDataSet do
@@ -325,10 +345,13 @@ begin
     AppendRecord([1]);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftInteger', '1');
+  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 procedure TTestCodeWithStructure.Test_Indentation_Empty;
+var
+  sExpeced: string;
 begin
   GenerateDataSetCode.IndentationText := '';
   with mockDataSet do
@@ -338,7 +361,8 @@ begin
     AppendRecord([1]);
     First;
   end;
-  AssertOneFieldTemplateToMock('ftInteger', '1');
+  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
 end;
 
 procedure TTestCodeWithStructure.Test_Indentation_MultilineTextValue;
@@ -347,6 +371,7 @@ var
   FieldValue: string;
   sExpected: string;
 begin
+  GenerateDataSetCode.IndentationText := '  ';
   with mockDataSet do
   begin
     FieldDefs.Add('f1', ftWideString, 300);
@@ -362,17 +387,15 @@ begin
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
     '+→◇◇◇' + QuotedStr(' wrong way to use it');
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]));
-  GenerateDataSetCode.IndentationText := '  ';
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
 var
   sExpected: string;
 begin
+  GenerateDataSetCode.IndentationText := '  ';
   with mockDataSet do
   begin
     with FieldDefs.AddFieldDef do
@@ -386,11 +409,9 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
-    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']));
-  GenerateDataSetCode.IndentationText := '  ';
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(sExpected, GenerateDataSetCode.CodeWithStructure.Text);
+  sExpected := Format(CodeTemplateOnePrecisionField,
+    ['xyz123', 'ftBCD', 8, 2, 'xyz123', '1.01']);
+  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 {$ENDREGION}
@@ -403,37 +424,37 @@ procedure TTestCodeWithStructure.TestSample1;
 var
   expectedCode: string;
 begin
-  expectedCode := ReplaceArrowsAndDiamonds(
-    (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-    (* *) '◇with ds do→' +
-    (* *) '◇begin→' +
-    (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
-    (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
-    (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
-    (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
-    (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
-    (* *) '◇◇CreateDataSet;→' +
-    (* *) '◇end;→' +
-    (* *) '{$REGION ''Append data to MemTable''}→' +
-    (* *) '◇with ds do→' +
-    (* *) '◇begin→' +
-    (* *) '◇◇Append;→' +
-    (* *) '◇◇FieldByName(''id'').Value := 1;→' +
-    (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '◇◇FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
-    (* *) '◇◇FieldByName(''float1'').Value := 1.2;→' +
-    (* *) '◇◇FieldByName(''currency1'').Value := 1200;→' +
-    (* *) '◇◇Post;→' +
-    (* *) '◇end;→' +
-    (* *) '◇with ds do→' +
-    (* *) '◇begin→' +
-    (* *) '◇◇Append;→' +
-    (* *) '◇◇FieldByName(''id'').Value := 2;→' +
-    (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
-    (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
-    (* *) '◇◇Post;→' +
-    (* *) '◇end;→' +
-    (* *) '{$ENDREGION}→');
+  expectedCode :=
+  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
+  (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
+  (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
+  (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
+  (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
+  (* *) '◇◇CreateDataSet;→' +
+  (* *) '◇end;→' +
+  (* *) '{$REGION ''Append data to MemTable''}→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''id'').Value := 1;→' +
+  (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+  (* *) '◇◇FieldByName(''date1'').Value := EncodeDate(2019,9,16);→' +
+  (* *) '◇◇FieldByName(''float1'').Value := 1.2;→' +
+  (* *) '◇◇FieldByName(''currency1'').Value := 1200;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→' +
+  (* *) '◇with ds do→' +
+  (* *) '◇begin→' +
+  (* *) '◇◇Append;→' +
+  (* *) '◇◇FieldByName(''id'').Value := 2;→' +
+  (* *) '◇◇FieldByName(''text1'').Value := ''Ala ma kota'';→' +
+  (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
+  (* *) '◇◇Post;→' +
+  (* *) '◇end;→' +
+  (* *) '{$ENDREGION}→';
   with mockDataSet do
   begin
     FieldDefs.Add('id', ftInteger);
@@ -446,8 +467,7 @@ begin
     AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
     First;
   end;
-  GenerateCode(mockDataSet);
-  Assert.AreEqual(expectedCode, GenerateDataSetCode.CodeWithStructure.Text);
+  AreEqual_TextTemplate_And_GeneratedCode(expectedCode);
 end;
 
 {$ENDREGION}
