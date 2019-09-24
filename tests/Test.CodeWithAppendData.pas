@@ -36,9 +36,6 @@ type
     procedure TestOneDateTimeField_DateOnly;
     procedure TestOneDateTimeField_DateTime;
     // -------------
-    procedure TestHeader_OneLine;
-    procedure TestFooter_TwoLines;
-    // -------------
     procedure Test_IndentationText_BCDField;
     procedure Test_Indentation_MultilineTextValue;
     procedure Test_Indentation_Empty;
@@ -270,61 +267,6 @@ begin
   aExpectedCode := Format(CodeTemplateOneField,
     ['ftWideString, 20', QuotedStr('Alice has a cat')]);
   AreEqual_TextTemplate_And_GeneratedCode(aExpectedCode);
-end;
-
-{$ENDREGION}
-// -----------------------------------------------------------------------
-// Tests for: component header and footer
-// -----------------------------------------------------------------------
-{$REGION 'Component header and footer'}
-
-procedure TTestCodeWithAppendData.TestHeader_OneLine;
-var
-  Line1: string;
-  FieldDefsParams: string;
-  FieldValue: AnsiChar;
-  sExpected: string;
-begin
-  Line1 := '// Test coments';
-  GenerateDataSetCode.Header.Add(Line1);
-  with mockDataSet do
-  begin
-    FieldDefs.Add('f1', ftInteger);
-    CreateDataSet;
-    AppendRecord([1]);
-    First;
-  end;
-  FieldDefsParams := 'ftInteger';
-  FieldValue := '1';
-  sExpected := Line1 + '→' + Format(CodeTemplateOneField,
-    [FieldDefsParams, FieldValue]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
-end;
-
-procedure TTestCodeWithAppendData.TestFooter_TwoLines;
-var
-  Line1: string;
-  FieldDefsParams: string;
-  FieldValue: AnsiChar;
-  sExpected: string;
-begin
-  Line1 := '// footer comment';
-  with GenerateDataSetCode.Footer do
-  begin
-    Add('');
-    Add(Line1);
-  end;
-  with mockDataSet do
-  begin
-    FieldDefs.Add('f1', ftInteger);
-    CreateDataSet;
-    AppendRecord([1]);
-    First;
-  end;
-  FieldDefsParams := 'ftInteger';
-  FieldValue := '1';
-  sExpected := Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]) + '→' + Line1 + '→';
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
 end;
 
 {$ENDREGION}

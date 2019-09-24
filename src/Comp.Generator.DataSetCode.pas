@@ -48,8 +48,6 @@ type
     property CodeWithAppendData: TStrings read FCode;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
-    property Header: TStrings read FHeader write FHeader;
-    property Footer: TStrings read FFooter write FFooter;
     property IndentationText: String read FIndentationText
       write FIndentationText;
   end;
@@ -308,10 +306,8 @@ procedure TGenerateDataSetCode.Execute;
 begin
   Guard;
   FCode.Clear;
-  FCode.AddStrings(Header);
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
-  FCode.AddStrings(Footer);
 end;
 
 end.
