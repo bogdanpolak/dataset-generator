@@ -41,33 +41,33 @@ end;
 
 Event `Button1Click` will generate the following code in the Memo1 control:
 
-```text
+```pas
 ds := TFDMemTable.Create(AOwner);
 with ds do
 begin
-  FieldDefs.Add(''id'', ftInteger);
-  FieldDefs.Add(''text1'', ftWideString, 30);
-  FieldDefs.Add(''date1'', ftDate);
-  FieldDefs.Add(''float1'', ftFloat);
-  FieldDefs.Add(''currency1'', ftCurrency);
+  FieldDefs.Add('id', ftInteger);
+  FieldDefs.Add('text1', ftWideString, 30);
+  FieldDefs.Add('date1', ftDate);
+  FieldDefs.Add('float1', ftFloat);
+  FieldDefs.Add('currency1', ftCurrency);
   CreateDataSet;
 end;
 with ds do
 begin
   Append;
-  FieldByName(''id'').Value := 1;
-  FieldByName(''text1'').Value := ''Ala ma kota'';
-  FieldByName(''date1'').Value := EncodeDate(2019,9,16);
-  FieldByName(''float1'').Value := 1.2;
-  FieldByName(''currency1'').Value := 1200;
+  FieldByName('id').Value := 1;
+  FieldByName('text1').Value := 'Ala ma kota';
+  FieldByName('date1').Value := EncodeDate(2019,9,16);
+  FieldByName('float1').Value := 1.2;
+  FieldByName('currency1').Value := 1200;
   Post;
 end;
 with ds do
 begin
   Append;
-  FieldByName(''id'').Value := 2;
-  FieldByName(''text1'').Value := ''Ala ma kota'';
-  FieldByName(''currency1'').Value := 950;
+  FieldByName('id').Value := 2;
+  FieldByName('text1').Value := 'Ala ma kota';
+  FieldByName('currency1').Value := 950;
   Post;
 end;
 ```
