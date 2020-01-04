@@ -8,18 +8,21 @@ uses
   System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode,
-  Test.Common;
+  Comp.Generator.DataSetCode;
 
 {$M+}
 
 type
 
   [TestFixture]
-  TTestCodeWithStructure = class(TTestGenerate)
+  TTestCodeWithStructure = class(TObject)
   private
-    procedure AreEqual_TextTemplate_And_GeneratedCode
-      (const TextTemplate: string);
+    fGenerator: TGenerateDataSetCode;
+    fOwner: TComponent;
+    fExpectedCode: TStringList;
+    procedure AreCodesEqual(expectedCode: TStrings; actualCode: TStrings);
+    function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
+    function ReplaceArrowsAndDiamonds(const s: String): string;
   public
     [Setup]
     procedure Setup;
@@ -78,17 +81,17 @@ const
   // Utils section
   // -----------------------------------------------------------------------
 
-procedure TTestCodeWithStructure.AreEqual_TextTemplate_And_GeneratedCode
-  (const TextTemplate: string);
-var
-  sExpected: string;
-  sActual: string;
+function TTestCodeWithStructure.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
-  sExpected := ReplaceArrowsAndDiamonds(TextTemplate);
-  Self.GenerateDataSetCode.DataSet := Self.mockDataSet;
-  Self.GenerateDataSetCode.Execute;
-  sActual := Self.GenerateDataSetCode.CodeWithStructure.Text;
-  Assert.AreEqual(sExpected, sActual);
+  Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
+  Result := StringReplace(Result, '◇', fGenerator.IndentationText,
+    [rfReplaceAll])
+end;
+
+procedure TTestCodeWithStructure.AreCodesEqual(expectedCode: TStrings;
+  actualCode: TStrings);
+begin
+  Assert.AreEqual(expectedCode.Text, actualCode.Text);
 end;
 
 // -----------------------------------------------------------------------
@@ -97,12 +100,16 @@ end;
 
 procedure TTestCodeWithStructure.Setup;
 begin
-  Self.Common_Setup;
+  fGenerator := TGenerateDataSetCode.Create(nil);
+  fOwner := TComponent.Create(nil);
+  fExpectedCode := TStringList.Create;
 end;
 
 procedure TTestCodeWithStructure.TearDown;
 begin
-  Self.Common_TearDown;
+  fGenerator.Free;
+  fOwner.Free;
+  fExpectedCode.Free;
 end;
 
 
@@ -112,73 +119,81 @@ end;
 {$REGION 'One DB field with one value'}
 
 procedure TTestCodeWithStructure.TestOneDateTimeField_DateOnly;
-var
-  sExpeced: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftDateTime);
     CreateDataSet;
     AppendRecord([EncodeDate(2019, 07, 01)]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftDateTime', 'EncodeDate(2019,7,1)']));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.TestOneDateTimeField_DateTime;
-var
-  sExpeced: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftDateTime);
     CreateDataSet;
     AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftDateTime', 'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.TestOneIntegerField;
-var
-  sExpeced: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftInteger);
     CreateDataSet;
     AppendRecord([1]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftInteger', '1']));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.TestOneWideStringField;
-var
-  sExpeced: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftWideString, 20);
     CreateDataSet;
     AppendRecord(['Alice has a cat']);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField,
-    ['ftWideString, 20', QuotedStr('Alice has a cat')]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftWideString, 20', QuotedStr('Alice has a cat')]));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.TestOneBCDField;
-var
-  sExpected: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     with FieldDefs.AddFieldDef do
     begin
@@ -191,15 +206,18 @@ begin
     AppendRecord([16.25]);
     First;
   end;
-  sExpected := Format(CodeTemplateOneBcdField, ['f1', 'ftBCD', 10, 4]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneBcdField,
+    ['f1', 'ftBCD', 10, 4]));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
-var
-  sExpected: string;
 begin
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     with FieldDefs.AddFieldDef do
     begin
@@ -212,8 +230,12 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := Format(CodeTemplateOneBcdField, ['abc123', 'ftBCD', 8, 2]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneBcdField,
+    ['abc123', 'ftBCD', 8, 2]));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 {$ENDREGION}
@@ -223,45 +245,49 @@ end;
 {$REGION 'property IndentationText'}
 
 procedure TTestCodeWithStructure.Test_Indentation_1Space;
-var
-  sExpeced: string;
 begin
-  GenerateDataSetCode.IndentationText := ' ';
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftInteger);
     CreateDataSet;
     AppendRecord([1]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+  fGenerator.IndentationText := ' ';
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftInteger', '1']));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.Test_Indentation_Empty;
-var
-  sExpeced: string;
 begin
-  GenerateDataSetCode.IndentationText := '';
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftInteger);
     CreateDataSet;
     AppendRecord([1]);
     First;
   end;
-  sExpeced := Format(CodeTemplateOneField, ['ftInteger', '1']);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpeced);
+  fGenerator.IndentationText := '';
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftInteger', '1']));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.Test_Indentation_MultilineTextValue;
 var
-  FieldDefsParams: string;
-  FieldValue: string;
-  sExpected: string;
+  aExpectedFieldValue: string;
 begin
-  GenerateDataSetCode.IndentationText := '  ';
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     FieldDefs.Add('f1', ftWideString, 300);
     CreateDataSet;
@@ -270,22 +296,27 @@ begin
       ' and about the right and wrong way to use it']);
     First;
   end;
-  FieldDefsParams := 'ftWideString, 300';
-  FieldValue := '→◇◇◇' + QuotedStr
-    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+
+  aExpectedFieldValue := '→◇◇◇' +
+    QuotedStr(
+    'Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
     '+→◇◇◇' + QuotedStr(' wrong way to use it');
-  sExpected := Format(CodeTemplateOneField, [FieldDefsParams, FieldValue]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['ftWideString, 300', aExpectedFieldValue]));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
 var
   sExpected: string;
 begin
-  GenerateDataSetCode.IndentationText := '  ';
-  with mockDataSet do
+  fGenerator.DataSet := TFDMemTable.Create(fOwner);
+  with fGenerator.DataSet as TFDMemTable do
   begin
     with FieldDefs.AddFieldDef do
     begin
@@ -298,9 +329,13 @@ begin
     AppendRecord([1.01]);
     First;
   end;
-  sExpected := Format(CodeTemplateOneBcdField,
-    ['xyz123', 'ftBCD', 8, 2]);
-  AreEqual_TextTemplate_And_GeneratedCode(sExpected);
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneBcdField,
+    ['xyz123', 'ftBCD', 8, 2]));
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 {$ENDREGION}
@@ -309,22 +344,13 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
-procedure TTestCodeWithStructure.TestSample1;
+function TTestCodeWithStructure.GivenSampleDataSetWithTwoRows
+  (aOwner: TComponent): TDataSet;
 var
-  expectedCode: string;
+  memTable: TFDMemTable;
 begin
-  expectedCode :=
-  (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
-  (* *) '◇with ds do→' +
-  (* *) '◇begin→' +
-  (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
-  (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
-  (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
-  (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
-  (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
-  (* *) '◇◇CreateDataSet;→' +
-  (* *) '◇end;→';
-  with mockDataSet do
+  memTable := TFDMemTable.Create(aOwner);
+  with memTable do
   begin
     FieldDefs.Add('id', ftInteger);
     FieldDefs.Add('text1', ftWideString, 30);
@@ -332,11 +358,32 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
+    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16),
+      1.2, 1200]);
+    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
     First;
   end;
-  AreEqual_TextTemplate_And_GeneratedCode(expectedCode);
+  Result := memTable;
+end;
+
+procedure TTestCodeWithStructure.TestSample1;
+begin
+  fGenerator.DataSet := GivenSampleDataSetWithTwoRows(fOwner);
+
+  fGenerator.Execute;
+
+  fExpectedCode.Text := ReplaceArrowsAndDiamonds(
+    (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
+    (* *) '◇with ds do→' +
+    (* *) '◇begin→' +
+    (* *) '◇◇FieldDefs.Add(''id'', ftInteger);→' +
+    (* *) '◇◇FieldDefs.Add(''text1'', ftWideString, 30);→' +
+    (* *) '◇◇FieldDefs.Add(''date1'', ftDate);→' +
+    (* *) '◇◇FieldDefs.Add(''float1'', ftFloat);→' +
+    (* *) '◇◇FieldDefs.Add(''currency1'', ftCurrency);→' +
+    (* *) '◇◇CreateDataSet;→' +
+    (* *) '◇end;→');
+  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
 {$ENDREGION}
