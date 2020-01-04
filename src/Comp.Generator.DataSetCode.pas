@@ -1,12 +1,10 @@
-﻿{ * ------------------------------------------------------------------------
-  * ♥
-  * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
-  * ♥
-  * Component: TGenerateDataSetCode
-  * Project: https://github.com/bogdanpolak/datasetToDelphiCode
-  * ReleaseDate: ↓ see below in the component const section ↓
-  * ReleaseVersion: ↓ see below in the component const section ↓
-  * ------------------------------------------------------------------------ }
+﻿{* ------------------------------------------------------------------------
+ * ♥
+ * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
+ * ♥
+ * Component: TGenerateDataSetCode
+ * Project: https://github.com/bogdanpolak/datasetToDelphiCode
+ * ------------------------------------------------------------------------ }
 
 unit Comp.Generator.DataSetCode;
 
@@ -30,8 +28,6 @@ type
     FCodeWithStructue: TStrings;
     FCodeWithAppendData: TStrings;
     FDataSet: TDataSet;
-    FHeader: TStrings;
-    FFooter: TStrings;
     FIndentationText: String;
     procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
@@ -44,11 +40,12 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Execute;
+    class function GenerateAsString(ds: TDataSet): string;
+    class function GenerateAsArray(ds: TDataSet): TStringDynArray;
+  published
     property dataSet: TDataSet read FDataSet write FDataSet;
     property CodeWithStructure: TStrings read FCodeWithStructue;
     property CodeWithAppendData: TStrings read FCodeWithAppendData;
-    class function GenerateAsString(ds: TDataSet): string;
-    class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property IndentationText: String read FIndentationText
       write FIndentationText;
   end;
@@ -56,15 +53,13 @@ type
 implementation
 
 uses
-  System.Rtti, Helper.TStrings;
+  System.Rtti;
 
 constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
   inherited;
   FCodeWithStructue := TStringList.Create;
   FCodeWithAppendData := TStringList.Create;
-  FHeader := TStringList.Create;
-  FFooter := TStringList.Create;
   FIndentationText := '  ';
 end;
 
@@ -72,8 +67,6 @@ destructor TGenerateDataSetCode.Destroy;
 begin
   FCodeWithStructue.Free;
   FCodeWithAppendData.Free;
-  FHeader.Free;
-  FFooter.Free;
   inherited;
 end;
 
@@ -96,20 +89,18 @@ end;
 
 function TGenerateDataSetCode.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
-  (*
-    ---------------------------------------------------------------------------
+  (* -----------------------------------------------------------------------
     [Doc]
-    TFieldType = (ftUnknown, ftString, ftSmallint, ftInteger, ftWord, // 0..4
-    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime, // 5..11
-    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo, // 12..18
-    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString, // 19..24
-    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob, // 25..31
-    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd, // 32..37
-    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval, // 38..41
-    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream, //42..48
-    ftTimeStampOffset, ftObject, ftSingle); //49..51
-    ---------------------------------------------------------------------------
-  *)
+   TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
+   ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
+   ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
+   ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
+   ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
+   ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
+   ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
+   ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
+   ftTimeStampOffset, ftObject, ftSingle);
+   ------------------------------------------------------------------------- *)
   if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
@@ -236,6 +227,26 @@ begin
   end;
 end;
 
+(* This function replace (fix) standard  Delphi RTL TStrings.ToStringArray
+  .    method, because ot the following issue (in Delphi XE8 and older ones):
+ Delphi 10.3 Rio:
+ .   - TStringDynArray = TArray<string>;
+ .   - function TStrings.ToStringArray: TArray<string>;
+ .   - can assign: TArray<string> --> TStringDynArray
+ Delphi XE8:
+ .   - TStringDynArray = array of string;
+ .   - function TStrings.ToStringArray: array of string;
+ .   - not able to assign: array of string --> TStringDynArray
+*)
+function TStringsToStringDynArray(sl: TStrings): TStringDynArray;
+var
+  i: integer;
+begin
+  SetLength(Result, sl.Count);
+  for i := 0 to sl.Count - 1 do
+    Result[i] := sl[i];
+end;
+
 class function TGenerateDataSetCode.GenerateAsArray(ds: TDataSet)
   : TStringDynArray;
 var
@@ -245,8 +256,9 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.CodeWithStructure.ToStringDynArray + [sLineBreak, sLineBreak]
-      + gen.CodeWithStructure.ToStringDynArray;
+    Result := TStringsToStringDynArray(gen.CodeWithStructure) //.
+      + [sLineBreak, sLineBreak] //.
+      + TStringsToStringDynArray(gen.CodeWithStructure);
   finally
     gen.Free;
   end;
