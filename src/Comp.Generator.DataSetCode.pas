@@ -28,8 +28,6 @@ type
     FCodeWithStructue: TStrings;
     FCodeWithAppendData: TStrings;
     FDataSet: TDataSet;
-    FHeader: TStrings;
-    FFooter: TStrings;
     FIndentationText: String;
     procedure Guard;
     function GenCodeLineFieldDefAdd(fld: TField): string;
@@ -62,8 +60,6 @@ begin
   inherited;
   FCodeWithStructue := TStringList.Create;
   FCodeWithAppendData := TStringList.Create;
-  FHeader := TStringList.Create;
-  FFooter := TStringList.Create;
   FIndentationText := '  ';
 end;
 
@@ -71,8 +67,6 @@ destructor TGenerateDataSetCode.Destroy;
 begin
   FCodeWithStructue.Free;
   FCodeWithAppendData.Free;
-  FHeader.Free;
-  FFooter.Free;
   inherited;
 end;
 
