@@ -54,7 +54,7 @@ type
 implementation
 
 uses
-  System.Rtti, Helper.TStrings;
+  System.Rtti;
 
 constructor TGenerateDataSetCode.Create(AOwner: TComponent);
 begin
@@ -232,6 +232,26 @@ begin
   end;
 end;
 
+(* This function replace (fix) standard  Delphi RTL TStrings.ToStringArray
+  .    method, because ot the following issue (in Delphi XE8 and older ones):
+ Delphi 10.3 Rio:
+ .   - TStringDynArray = TArray<string>;
+ .   - function TStrings.ToStringArray: TArray<string>;
+ .   - can assign: TArray<string> --> TStringDynArray
+ Delphi XE8:
+ .   - TStringDynArray = array of string;
+ .   - function TStrings.ToStringArray: array of string;
+ .   - not able to assign: array of string --> TStringDynArray
+*)
+function TStringsToStringDynArray(sl: TStrings): TStringDynArray;
+var
+  i: integer;
+begin
+  SetLength(Result, sl.Count);
+  for i := 0 to sl.Count - 1 do
+    Result[i] := sl[i];
+end;
+
 class function TGenerateDataSetCode.GenerateAsArray(ds: TDataSet)
   : TStringDynArray;
 var
@@ -241,8 +261,9 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.CodeWithStructure.ToStringDynArray + [sLineBreak, sLineBreak]
-      + gen.CodeWithStructure.ToStringDynArray;
+    Result := TStringsToStringDynArray(gen.CodeWithStructure) //.
+      + [sLineBreak, sLineBreak] //.
+      + TStringsToStringDynArray(gen.CodeWithStructure);
   finally
     gen.Free;
   end;
