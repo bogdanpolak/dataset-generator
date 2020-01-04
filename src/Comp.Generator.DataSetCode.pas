@@ -42,11 +42,12 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Execute;
+    class function GenerateAsString(ds: TDataSet): string;
+    class function GenerateAsArray(ds: TDataSet): TStringDynArray;
+  published
     property dataSet: TDataSet read FDataSet write FDataSet;
     property CodeWithStructure: TStrings read FCodeWithStructue;
     property CodeWithAppendData: TStrings read FCodeWithAppendData;
-    class function GenerateAsString(ds: TDataSet): string;
-    class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     property IndentationText: String read FIndentationText
       write FIndentationText;
   end;
