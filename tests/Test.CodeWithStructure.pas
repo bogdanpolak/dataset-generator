@@ -6,10 +6,11 @@ uses
   DUnitX.TestFramework,
   System.Classes,
   System.SysUtils,
+  System.Math,
   Data.DB,
   FireDAC.Comp.Client,
   Comp.Generator.DataSetCode,
-  GeneratorForTests;
+  GeneratorForTests, Helper.DUnitAssert;
 
 {$M+}
 
@@ -24,8 +25,8 @@ type
     procedure AreCodesEqual(expectedCode: TStrings; actualCode: TStrings);
     function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
     function ReplaceArrowsAndDiamonds(const s: String): string;
-    function GivenDBField(aOwner: TComponent; const fieldName: string;
-      fieldType: TFieldType): TField;
+    function GivenField(aOwner: TComponent; const fieldName: string;
+      fieldType: TFieldType; size: integer = 0): TField;
   public
     [Setup]
     procedure Setup;
@@ -33,13 +34,11 @@ type
     procedure TearDown;
   published
     // -------------
-    procedure TestOneBCDField_DifferentFieldName;
-    // -------------
     procedure GenFieldDef_Integer;
-    procedure TestOneWideStringField;
+    procedure GenFieldDef_WideString;
     procedure GenFieldDef_Date;
     procedure GenFieldDef_DateTime;
-    procedure TestOneBCDField;
+    procedure GenFieldDef_BCD;
     // -------------
     procedure Test_IndentationText_BCDField;
     procedure Test_Indentation_MultilineTextValue;
@@ -60,14 +59,6 @@ uses
 // -----------------------------------------------------------------------
 
 const
-  LineTemplateOneBcdField =
-  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
-  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
-  (* *) '◇◇end;';
-
-  LineTemplateOneField =
-  (* *) 'FieldDefs.Add(''f1'', %s);';
-
   CodeTemplateOneBcdField =
   (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
   (* *) '◇with ds do→' +
@@ -128,13 +119,13 @@ end;
 // Tests for: One DB field with one value
 // -----------------------------------------------------------------------
 
-function TestGenerateStructure.GivenDBField(aOwner: TComponent;
-  const fieldName: string; fieldType: TFieldType): TField;
+function TestGenerateStructure.GivenField(aOwner: TComponent;
+  const fieldName: string; fieldType: TFieldType; size: integer = 0): TField;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(aOwner);
-  ds.FieldDefs.Add(fieldName, fieldType);
+  ds.FieldDefs.Add(fieldName, fieldType, size);
   ds.CreateDataSet;
   Result := ds.Fields[0];
 end;
@@ -144,7 +135,7 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenDBField(fOwner, 'Birthday', ftDate);
+  fld := GivenField(fOwner, 'Birthday', ftDate);
 
   actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
@@ -156,7 +147,7 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenDBField(fOwner, 'Created', ftDateTime);
+  fld := GivenField(fOwner, 'Created', ftDateTime);
 
   actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
@@ -168,77 +159,50 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenDBField(fOwner, 'Rating', ftInteger);
+  fld := GivenField(fOwner, 'Rating', ftInteger);
 
   actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
   Assert.AreEqual('FieldDefs.Add(''Rating'', ftInteger);', actualCode);
 end;
 
-procedure TestGenerateStructure.TestOneWideStringField;
+procedure TestGenerateStructure.GenFieldDef_WideString;
+var
+  fld: TField;
+  actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('f1', ftWideString, 20);
-    CreateDataSet;
-    AppendRecord(['Alice has a cat']);
-    First;
-  end;
+  fld := GivenField(fOwner, 'Description', ftWideString, 30);
 
-  fGenerator.Execute;
+  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    ['ftWideString, 20', QuotedStr('Alice has a cat')]));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
+  Assert.AreEqual('FieldDefs.Add(''Description'', ftWideString, 30);',
+    actualCode);
 end;
 
-procedure TestGenerateStructure.TestOneBCDField;
+procedure TestGenerateStructure.GenFieldDef_BCD;
+var
+  ds: TFDMemTable;
+  fld: TField;
+  actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
+  ds := TFDMemTable.Create(fOwner);
+  with ds.FieldDefs.AddFieldDef do
   begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'f1';
-      DataType := ftBcd;
-      Precision := 10;
-      Size := 4;
-    end;
-    CreateDataSet;
-    AppendRecord([16.25]);
-    First;
+    Name := 'Price';
+    DataType := ftBcd;
+    Precision := 10;
+    size := 4;
   end;
+  ds.CreateDataSet;
+  fld := ds.Fields[0];
 
-  fGenerator.Execute;
+  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneBcdField,
-    ['f1', 'ftBCD', 10, 4]));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
-end;
-
-procedure TestGenerateStructure.TestOneBCDField_DifferentFieldName;
-begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'abc123';
-      DataType := ftBcd;
-      Precision := 8;
-      Size := 2;
-    end;
-    CreateDataSet;
-    AppendRecord([1.01]);
-    First;
-  end;
-
-  fGenerator.Execute;
-
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneBcdField,
-    ['abc123', 'ftBCD', 8, 2]));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
+  Assert.AreMemosEqual( //.
+    'with FieldDefs.AddFieldDef do begin'#13 +
+    '      Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
+    + '    end;', //.
+    actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -313,8 +277,6 @@ begin
 end;
 
 procedure TestGenerateStructure.Test_IndentationText_BCDField;
-var
-  sExpected: string;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -324,7 +286,7 @@ begin
       Name := 'xyz123';
       DataType := ftBcd;
       Precision := 8;
-      Size := 2;
+      size := 2;
     end;
     CreateDataSet;
     AppendRecord([1.01]);
@@ -342,7 +304,6 @@ end;
 // -----------------------------------------------------------------------
 // Tests for: Sample1
 // -----------------------------------------------------------------------
-{$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
 function TestGenerateStructure.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
   : TDataSet;
@@ -384,8 +345,6 @@ begin
     (* *) '◇end;→');
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
-
-{$ENDREGION}
 
 initialization
 
