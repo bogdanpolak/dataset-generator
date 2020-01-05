@@ -30,11 +30,12 @@ type
     FDataSet: TDataSet;
     FIndentationText: String;
     procedure Guard;
+    function GetDataFieldPrecision(fld: TField): integer;
+  protected
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
-    function GetDataFieldPrecision(fld: TField): integer;
     function FormatLongStringLiterals(const Literal: string): string;
   public
     constructor Create(AOwner: TComponent); override;

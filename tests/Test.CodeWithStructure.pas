@@ -8,7 +8,8 @@ uses
   System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode;
+  Comp.Generator.DataSetCode,
+  GeneratorForTests;
 
 {$M+}
 
@@ -17,12 +18,14 @@ type
   [TestFixture]
   TestGenerateStructure = class(TObject)
   private
-    fGenerator: TDSGenerator;
+    fGenerator: TDSGeneratorUnderTest;
     fOwner: TComponent;
     fExpectedCode: TStringList;
     procedure AreCodesEqual(expectedCode: TStrings; actualCode: TStrings);
     function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
     function ReplaceArrowsAndDiamonds(const s: String): string;
+    function GivenDBField(aOwner: TComponent; const fieldName: string;
+      fieldType: TFieldType): TField;
   public
     [Setup]
     procedure Setup;
@@ -32,10 +35,10 @@ type
     // -------------
     procedure TestOneBCDField_DifferentFieldName;
     // -------------
-    procedure TestOneIntegerField;
+    procedure GenFieldDef_Integer;
     procedure TestOneWideStringField;
-    procedure TestOneDateTimeField_DateOnly;
-    procedure TestOneDateTimeField_DateTime;
+    procedure GenFieldDef_Date;
+    procedure GenFieldDef_DateTime;
     procedure TestOneBCDField;
     // -------------
     procedure Test_IndentationText_BCDField;
@@ -57,6 +60,14 @@ uses
 // -----------------------------------------------------------------------
 
 const
+  LineTemplateOneBcdField =
+  (* *) '◇◇with FieldDefs.AddFieldDef do begin→' +
+  (* *) '◇◇◇Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;→' +
+  (* *) '◇◇end;';
+
+  LineTemplateOneField =
+  (* *) 'FieldDefs.Add(''f1'', %s);';
+
   CodeTemplateOneBcdField =
   (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
   (* *) '◇with ds do→' +
@@ -67,7 +78,6 @@ const
   (* *) '◇◇CreateDataSet;→' +
   (* *) '◇end;→';
 
-const
   CodeTemplateOneField =
   (* *) '◇ds := TFDMemTable.Create(AOwner);→' +
   (* *) '◇with ds do→' +
@@ -81,7 +91,8 @@ const
   // Utils section
   // -----------------------------------------------------------------------
 
-function TestGenerateStructure.ReplaceArrowsAndDiamonds(const s: String): string;
+function TestGenerateStructure.ReplaceArrowsAndDiamonds
+  (const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
   Result := StringReplace(Result, '◇', fGenerator.IndentationText,
@@ -100,7 +111,7 @@ end;
 
 procedure TestGenerateStructure.Setup;
 begin
-  fGenerator := TDSGenerator.Create(nil);
+  fGenerator := TDSGeneratorUnderTest.Create(nil);
   fOwner := TComponent.Create(nil);
   fExpectedCode := TStringList.Create;
 end;
@@ -117,58 +128,51 @@ end;
 // Tests for: One DB field with one value
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.TestOneDateTimeField_DateOnly;
+function TestGenerateStructure.GivenDBField(aOwner: TComponent;
+  const fieldName: string; fieldType: TFieldType): TField;
+var
+  ds: TFDMemTable;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('f1', ftDateTime);
-    CreateDataSet;
-    AppendRecord([EncodeDate(2019, 07, 01)]);
-    First;
-  end;
-
-  fGenerator.Execute;
-
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)']));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
+  ds := TFDMemTable.Create(aOwner);
+  ds.FieldDefs.Add(fieldName, fieldType);
+  ds.CreateDataSet;
+  Result := ds.Fields[0];
 end;
 
-procedure TestGenerateStructure.TestOneDateTimeField_DateTime;
+procedure TestGenerateStructure.GenFieldDef_Date;
+var
+  fld: TField;
+  actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('f1', ftDateTime);
-    CreateDataSet;
-    AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
-    First;
-  end;
+  fld := GivenDBField(fOwner, 'Birthday', ftDate);
 
-  fGenerator.Execute;
+  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    ['ftDateTime', 'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
+  Assert.AreEqual('FieldDefs.Add(''Birthday'', ftDate);', actualCode);
 end;
 
-procedure TestGenerateStructure.TestOneIntegerField;
+procedure TestGenerateStructure.GenFieldDef_DateTime;
+var
+  fld: TField;
+  actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('f1', ftInteger);
-    CreateDataSet;
-    AppendRecord([1]);
-    First;
-  end;
+  fld := GivenDBField(fOwner, 'Created', ftDateTime);
 
-  fGenerator.Execute;
+  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
-  fExpectedCode.Text := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
-    ['ftInteger', '1']));
-  AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
+  Assert.AreEqual('FieldDefs.Add(''Created'', ftDateTime);', actualCode);
+end;
+
+procedure TestGenerateStructure.GenFieldDef_Integer;
+var
+  fld: TField;
+  actualCode: string;
+begin
+  fld := GivenDBField(fOwner, 'Rating', ftInteger);
+
+  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+
+  Assert.AreEqual('FieldDefs.Add(''Rating'', ftInteger);', actualCode);
 end;
 
 procedure TestGenerateStructure.TestOneWideStringField;
@@ -340,8 +344,8 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
-function TestGenerateStructure.GivenSampleDataSetWithTwoRows
-  (aOwner: TComponent): TDataSet;
+function TestGenerateStructure.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
+  : TDataSet;
 var
   memTable: TFDMemTable;
 begin
@@ -354,8 +358,7 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16),
-      1.2, 1200]);
+    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
     AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
     First;
   end;

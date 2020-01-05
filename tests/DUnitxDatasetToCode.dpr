@@ -13,7 +13,8 @@ uses
   DUnitX.TestFramework,
   Comp.Generator.DataSetCode in '..\src\Comp.Generator.DataSetCode.pas',
   Test.CodeWithStructure in 'Test.CodeWithStructure.pas',
-  Test.CodeWithAppendData in 'Test.CodeWithAppendData.pas';
+  Test.CodeWithAppendData in 'Test.CodeWithAppendData.pas',
+  GeneratorForTests in 'GeneratorForTests.pas';
 
 var
   runner : ITestRunner;
