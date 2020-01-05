@@ -14,15 +14,16 @@ uses
 type
 
   [TestFixture]
-  TTestCodeWithAppendData = class(TObject)
+  TestGenerateAppends = class(TObject)
   private
-    fGenerator: TGenerateDataSetCode;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
     fExpectedCode: TStringList;
     function ReplaceArrowsAndDiamonds(const s: String): string;
-    procedure Assert_AreEqual_TemplateAndCode(const expectedTemplate
-      : string; const actualCode: string);
+    procedure Assert_AreCodesEqual(const expectedCode: string;
+      const actualCode: string);
     function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
+    function Given_DataSet_With300String(aOwner: TComponent): TDataSet;
   public
     [Setup]
     procedure Setup;
@@ -58,34 +59,31 @@ uses
 // Utils section
 // -----------------------------------------------------------------------
 
-function TTestCodeWithAppendData.ReplaceArrowsAndDiamonds(const s: String): string;
+function TestGenerateAppends.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
   Result := StringReplace(Result, '◇', fGenerator.IndentationText,
     [rfReplaceAll])
 end;
 
-procedure TTestCodeWithAppendData.Assert_AreEqual_TemplateAndCode
-  (const expectedTemplate: string; const actualCode: string);
-var
-  sExpected: string;
+procedure TestGenerateAppends.Assert_AreCodesEqual(const expectedCode: string;
+  const actualCode: string);
 begin
-  sExpected := ReplaceArrowsAndDiamonds(expectedTemplate);
-  Assert.AreEqual(sExpected, actualCode);
+  Assert.AreEqual(expectedCode, actualCode);
 end;
 
 // -----------------------------------------------------------------------
 // Setup and TearDown section
 // -----------------------------------------------------------------------
 
-procedure TTestCodeWithAppendData.Setup;
+procedure TestGenerateAppends.Setup;
 begin
-  fGenerator := TGenerateDataSetCode.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
   fExpectedCode := TStringList.Create;
 end;
 
-procedure TTestCodeWithAppendData.TearDown;
+procedure TestGenerateAppends.TearDown;
 begin
   fGenerator.Free;
   fOwner.Free;
@@ -98,7 +96,7 @@ end;
 
 const
   CodeTemplateOnePrecisionField =
-  (* *) '{$REGION ''Append data to MemTable''}→' +
+  (* *) '{$REGION ''Append data''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
   (* *) '◇◇Append;→' +
@@ -109,7 +107,7 @@ const
 
 const
   CodeTemplateOneField =
-  (* *) '{$REGION ''Append data to MemTable''}→' +
+  (* *) '{$REGION ''Append data''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
   (* *) '◇◇Append;→' +
@@ -122,14 +120,14 @@ const
   // -----------------------------------------------------------------------
   // Tests for: Registered issues (bugs)
   // -----------------------------------------------------------------------
-{$REGION 'Registered issues (bugs)'}
 
-procedure TTestCodeWithAppendData.TestLongStringLiterals_iss002;
+function TestGenerateAppends.Given_DataSet_With300String(aOwner: TComponent)
+  : TDataSet;
 var
-  aExpectedCode: string;
+  ds: TFDMemTable;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
+  ds := TFDMemTable.Create(fOwner);
+  with ds do
   begin
     FieldDefs.Add('f1', ftWideString, 300);
     CreateDataSet;
@@ -138,25 +136,29 @@ begin
       ' and about the right and wrong way to use it']);
     First;
   end;
+  Result := ds;
+end;
+
+procedure TestGenerateAppends.TestLongStringLiterals_iss002;
+var
+  aExpectedCode: string;
+begin
+  fGenerator.DataSet := Given_DataSet_With300String(fOwner);
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField,
-    ['→◇◇◇' + QuotedStr
-    ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
-    '+→◇◇◇' + QuotedStr
-    ('on, Property Injection, and Method Injection and about the right and') +
-    '+→◇◇◇' + QuotedStr(' wrong way to use it')]);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['→◇◇◇''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+→'
+    + '◇◇◇''on, Property Injection, and Method Injection and about the right and''+→'
+    + '◇◇◇'' wrong way to use it''']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: One BCD field with one value
 // -----------------------------------------------------------------------
-{$REGION 'One BCD field with one value'}
 
-procedure TTestCodeWithAppendData.TestOneBCDField_DifferentFieldName;
+procedure TestGenerateAppends.TestOneBCDField_DifferentFieldName;
 var
   sExpected: string;
 begin
@@ -177,11 +179,12 @@ begin
 
   fGenerator.Execute;
 
-  sExpected := Format(CodeTemplateOnePrecisionField, ['abc123', '1.01']);
-  Assert_AreEqual_TemplateAndCode(sExpected, fGenerator.CodeWithAppendData.Text);
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
+    ['abc123', '1.01']));
+  Assert_AreCodesEqual(sExpected, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.TestOneBCDField_iss001;
+procedure TestGenerateAppends.TestOneBCDField_iss001;
 var
   sExpected: string;
 begin
@@ -200,20 +203,18 @@ begin
     First;
   end;
 
-
   fGenerator.Execute;
 
-  sExpected := Format(CodeTemplateOnePrecisionField, ['f1', '16.25']);
-  Assert_AreEqual_TemplateAndCode(sExpected, fGenerator.CodeWithAppendData.Text);
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
+    ['f1', '16.25']));
+  Assert_AreCodesEqual(sExpected, fGenerator.CodeWithAppendData.Text);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: One DB field with one value
 // -----------------------------------------------------------------------
-{$REGION 'One DB field with one value'}
 
-procedure TTestCodeWithAppendData.TestOneDateTimeField_DateOnly;
+procedure TestGenerateAppends.TestOneDateTimeField_DateOnly;
 var
   aExpectedCode: string;
 begin
@@ -228,11 +229,12 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField, ['EncodeDate(2019,7,1)']);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['EncodeDate(2019,7,1)']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.TestOneDateTimeField_DateTime;
+procedure TestGenerateAppends.TestOneDateTimeField_DateTime;
 var
   aExpectedCode: string;
 begin
@@ -247,12 +249,12 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField,
-    ['EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    ['EncodeDate(2019,7,1)+EncodeTime(15,7,30,500)']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.TestOneIntegerField;
+procedure TestGenerateAppends.TestOneIntegerField;
 var
   aExpectedCode: string;
 begin
@@ -267,11 +269,12 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField, ['1']);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds
+    (Format(CodeTemplateOneField, ['1']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.TestOneWideStringField;
+procedure TestGenerateAppends.TestOneWideStringField;
 var
   aExpectedCode: string;
 begin
@@ -286,17 +289,16 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField, [QuotedStr('Alice has a cat')]);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
+    [QuotedStr('Alice has a cat')]));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
-{$REGION 'property IndentationText'}
 
-procedure TTestCodeWithAppendData.Test_Indentation_1Space;
+procedure TestGenerateAppends.Test_Indentation_1Space;
 var
   aExpectedCode: string;
 begin
@@ -312,11 +314,12 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField, ['1']);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds
+    (Format(CodeTemplateOneField, ['1']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.Test_Indentation_Empty;
+procedure TestGenerateAppends.Test_Indentation_Empty;
 var
   aExpectedCode: string;
 begin
@@ -332,11 +335,12 @@ begin
 
   fGenerator.Execute;
 
-  aExpectedCode := Format(CodeTemplateOneField, ['1']);
-  Assert_AreEqual_TemplateAndCode(aExpectedCode, fGenerator.CodeWithAppendData.Text);
+  aExpectedCode := ReplaceArrowsAndDiamonds
+    (Format(CodeTemplateOneField, ['1']));
+  Assert_AreCodesEqual(aExpectedCode, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.Test_Indentation_MultilineTextValue;
+procedure TestGenerateAppends.Test_Indentation_MultilineTextValue;
 var
   sExpected: string;
 begin
@@ -354,16 +358,16 @@ begin
 
   fGenerator.Execute;
 
-  sExpected := Format(CodeTemplateOneField,
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOneField,
     ['→◇◇◇' + QuotedStr
     ('Covers Dependency Injection, you''ll learn about Constructor Injecti') +
     '+→◇◇◇' + QuotedStr
     ('on, Property Injection, and Method Injection and about the right and') +
-    '+→◇◇◇' + QuotedStr(' wrong way to use it')]);
-  Assert_AreEqual_TemplateAndCode(sExpected, fGenerator.CodeWithAppendData.Text);
+    '+→◇◇◇' + QuotedStr(' wrong way to use it')]));
+  Assert_AreCodesEqual(sExpected, fGenerator.CodeWithAppendData.Text);
 end;
 
-procedure TTestCodeWithAppendData.Test_IndentationText_BCDField;
+procedure TestGenerateAppends.Test_IndentationText_BCDField;
 var
   sExpected: string;
 begin
@@ -385,18 +389,17 @@ begin
 
   fGenerator.Execute;
 
-  sExpected := Format(CodeTemplateOnePrecisionField, ['xyz123', '1.01']);
-  Assert_AreEqual_TemplateAndCode(sExpected, fGenerator.CodeWithAppendData.Text);
+  sExpected := ReplaceArrowsAndDiamonds(Format(CodeTemplateOnePrecisionField,
+    ['xyz123', '1.01']));
+  Assert_AreCodesEqual(sExpected, fGenerator.CodeWithAppendData.Text);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: Sample1
 // -----------------------------------------------------------------------
-{$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
-function TTestCodeWithAppendData.GivenSampleDataSetWithTwoRows
-  (aOwner: TComponent): TDataSet;
+function TestGenerateAppends.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
+  : TDataSet;
 var
   memTable: TFDMemTable;
 begin
@@ -409,15 +412,14 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16),
-      1.2, 1200]);
+    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
     AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
     First;
   end;
   Result := memTable;
 end;
 
-procedure TTestCodeWithAppendData.TestSample1;
+procedure TestGenerateAppends.TestSample1;
 var
   expectedCode: string;
 begin
@@ -425,8 +427,8 @@ begin
 
   fGenerator.Execute;
 
-  expectedCode :=
-  (* *) '{$REGION ''Append data to MemTable''}→' +
+  expectedCode := ReplaceArrowsAndDiamonds(
+  (* *) '{$REGION ''Append data''}→' +
   (* *) '◇with ds do→' +
   (* *) '◇begin→' +
   (* *) '◇◇Append;→' +
@@ -445,15 +447,13 @@ begin
   (* *) '◇◇FieldByName(''currency1'').Value := 950;→' +
   (* *) '◇◇Post;→' +
   (* *) '◇end;→' +
-  (* *) '{$ENDREGION}→';
+  (* *) '{$ENDREGION}→');
 
-  Assert_AreEqual_TemplateAndCode(expectedCode, fGenerator.CodeWithAppendData.Text);
+  Assert_AreCodesEqual(expectedCode, fGenerator.CodeWithAppendData.Text);
 end;
-
-{$ENDREGION}
 
 initialization
 
-TDUnitX.RegisterTestFixture(TTestCodeWithAppendData);
+TDUnitX.RegisterTestFixture(TestGenerateAppends);
 
 end.

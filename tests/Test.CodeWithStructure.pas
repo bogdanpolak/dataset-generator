@@ -15,9 +15,9 @@ uses
 type
 
   [TestFixture]
-  TTestCodeWithStructure = class(TObject)
+  TestGenerateStructure = class(TObject)
   private
-    fGenerator: TGenerateDataSetCode;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
     fExpectedCode: TStringList;
     procedure AreCodesEqual(expectedCode: TStrings; actualCode: TStrings);
@@ -81,14 +81,14 @@ const
   // Utils section
   // -----------------------------------------------------------------------
 
-function TTestCodeWithStructure.ReplaceArrowsAndDiamonds(const s: String): string;
+function TestGenerateStructure.ReplaceArrowsAndDiamonds(const s: String): string;
 begin
   Result := StringReplace(s, '→', #13#10, [rfReplaceAll]);
   Result := StringReplace(Result, '◇', fGenerator.IndentationText,
     [rfReplaceAll])
 end;
 
-procedure TTestCodeWithStructure.AreCodesEqual(expectedCode: TStrings;
+procedure TestGenerateStructure.AreCodesEqual(expectedCode: TStrings;
   actualCode: TStrings);
 begin
   Assert.AreEqual(expectedCode.Text, actualCode.Text);
@@ -98,14 +98,14 @@ end;
 // Setup and TearDown section
 // -----------------------------------------------------------------------
 
-procedure TTestCodeWithStructure.Setup;
+procedure TestGenerateStructure.Setup;
 begin
-  fGenerator := TGenerateDataSetCode.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
   fExpectedCode := TStringList.Create;
 end;
 
-procedure TTestCodeWithStructure.TearDown;
+procedure TestGenerateStructure.TearDown;
 begin
   fGenerator.Free;
   fOwner.Free;
@@ -118,7 +118,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'One DB field with one value'}
 
-procedure TTestCodeWithStructure.TestOneDateTimeField_DateOnly;
+procedure TestGenerateStructure.TestOneDateTimeField_DateOnly;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -136,7 +136,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.TestOneDateTimeField_DateTime;
+procedure TestGenerateStructure.TestOneDateTimeField_DateTime;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -154,7 +154,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.TestOneIntegerField;
+procedure TestGenerateStructure.TestOneIntegerField;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -172,7 +172,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.TestOneWideStringField;
+procedure TestGenerateStructure.TestOneWideStringField;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -190,7 +190,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.TestOneBCDField;
+procedure TestGenerateStructure.TestOneBCDField;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -214,7 +214,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.TestOneBCDField_DifferentFieldName;
+procedure TestGenerateStructure.TestOneBCDField_DifferentFieldName;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -244,7 +244,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'property IndentationText'}
 
-procedure TTestCodeWithStructure.Test_Indentation_1Space;
+procedure TestGenerateStructure.Test_Indentation_1Space;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -263,7 +263,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.Test_Indentation_Empty;
+procedure TestGenerateStructure.Test_Indentation_Empty;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -282,7 +282,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.Test_Indentation_MultilineTextValue;
+procedure TestGenerateStructure.Test_Indentation_MultilineTextValue;
 var
   aExpectedFieldValue: string;
 begin
@@ -311,7 +311,7 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-procedure TTestCodeWithStructure.Test_IndentationText_BCDField;
+procedure TestGenerateStructure.Test_IndentationText_BCDField;
 var
   sExpected: string;
 begin
@@ -344,7 +344,7 @@ end;
 // -----------------------------------------------------------------------
 {$REGION 'Sample1 : dataset with 4 fields and 2 rows containing NULL values'}
 
-function TTestCodeWithStructure.GivenSampleDataSetWithTwoRows
+function TestGenerateStructure.GivenSampleDataSetWithTwoRows
   (aOwner: TComponent): TDataSet;
 var
   memTable: TFDMemTable;
@@ -366,7 +366,7 @@ begin
   Result := memTable;
 end;
 
-procedure TTestCodeWithStructure.TestSample1;
+procedure TestGenerateStructure.TestSample1;
 begin
   fGenerator.DataSet := GivenSampleDataSetWithTwoRows(fOwner);
 
@@ -390,6 +390,6 @@ end;
 
 initialization
 
-TDUnitX.RegisterTestFixture(TTestCodeWithStructure);
+TDUnitX.RegisterTestFixture(TestGenerateStructure);
 
 end.
