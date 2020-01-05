@@ -116,7 +116,6 @@ end;
 // -----------------------------------------------------------------------
 // Tests for: One DB field with one value
 // -----------------------------------------------------------------------
-{$REGION 'One DB field with one value'}
 
 procedure TestGenerateStructure.TestOneDateTimeField_DateOnly;
 begin
@@ -238,11 +237,9 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
-{$REGION 'property IndentationText'}
 
 procedure TestGenerateStructure.Test_Indentation_1Space;
 begin
@@ -338,7 +335,6 @@ begin
   AreCodesEqual(fExpectedCode, fGenerator.CodeWithStructure);
 end;
 
-{$ENDREGION}
 // -----------------------------------------------------------------------
 // Tests for: Sample1
 // -----------------------------------------------------------------------
