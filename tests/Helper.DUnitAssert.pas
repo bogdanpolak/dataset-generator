@@ -20,11 +20,12 @@ function FindDiffrence(const s1: string; const s2: string): integer;
 var
   j: integer;
 begin
-  if s1=s2 then
-     Exit(0);
-  for j := 1 to Min(s1.Length,s2.Length) do
+  if s1 = s2 then
+    Exit(0);
+  for j := 1 to Min(s1.Length, s2.Length) do
     if s1[j] <> s2[j] then
       Exit(j);
+  Result := Min(s1.Length, s2.Length);
 end;
 
 class procedure TAssertHelper.AreMemosEqual(const actualStrings,
@@ -40,9 +41,8 @@ begin
   try
     slActual.Text := actualStrings;
     slExpected.Text := expectedStrings;
-    Assert.IsTrue(slExpected.Count = slActual.Count,
-      Format('Diffrent number of lines, expected %d is not equal to actual %d',
-      [slExpected.Count, slActual.Count]));
+    Assert.AreEqual(slExpected.Count, slActual.Count,
+      Format('(diffrent number of lines)', [slExpected.Count, slActual.Count]));
     for i := 0 to slExpected.Count - 1 do
       if slExpected[i] <> slActual[i] then
       begin
