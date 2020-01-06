@@ -4,7 +4,8 @@ interface
 
 uses
   DUnitX.TestFramework,
-  System.Classes, System.SysUtils,
+  System.Classes,
+  System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
   Comp.Generator.DataSetCode,
@@ -23,7 +24,7 @@ type
     function GivenField(const fieldName: string; fieldType: TFieldType;
       size: integer = 0): TField;
     function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
-    function Given_DataSet_With300String(aOwner: TComponent): TDataSet;
+    function Given_DataSet_With300String(const aFieldName: string): TDataSet;
   public
     [Setup]
     procedure Setup;
@@ -31,21 +32,21 @@ type
     procedure TearDown;
   published
     // -------------
-    procedure TestOneIntegerField;
-    procedure TestOneWideStringField;
-    procedure TestOneDateTimeField_DateOnly;
-    procedure TestOneDateTimeField_DateTime;
-    procedure TestOneWideStringField_WithLongValue;
-    procedure TestOneBCDField_DifferentFieldName;
+    procedure GenFieldByName_Integer;
+    procedure GenFieldByName_WideString;
+    procedure GenFieldByName_Date;
+    procedure GenFieldByName_DateTime;
+    procedure GenFieldByName_BCDField;
     // -------------
-    procedure TestLongStringLiterals_iss002;
+    procedure GenLongLiterals;
     // -------------
-    procedure Test_IndentationText_BCDField;
-    procedure Test_Indentation_MultilineTextValue;
-    procedure Test_Indentation_Empty;
-    procedure Test_Indentation_1Space;
+    procedure Iss002_GenLongStringLiterals_NewLines;
     // -------------
-    procedure TestSample1;
+    procedure GenIndentation_Empty;
+    procedure GenIndentation_OneSpace;
+    procedure GenIndentation_LongLiteral;
+    // -------------
+    procedure GenSampleDataset_Appends;
   end;
 
 implementation
@@ -85,7 +86,7 @@ begin
   Result := ds.Fields[0];
 end;
 
-procedure TestGenerateAppends.TestOneIntegerField;
+procedure TestGenerateAppends.GenFieldByName_Integer;
 var
   fld: TField;
   actualCode: string;
@@ -98,7 +99,7 @@ begin
   Assert.AreEqual('FieldByName(''Level'').Value := 1;', actualCode);
 end;
 
-procedure TestGenerateAppends.TestOneDateTimeField_DateOnly;
+procedure TestGenerateAppends.GenFieldByName_Date;
 var
   fld: TField;
   actualCode: string;
@@ -112,7 +113,7 @@ begin
     actualCode);
 end;
 
-procedure TestGenerateAppends.TestOneDateTimeField_DateTime;
+procedure TestGenerateAppends.GenFieldByName_DateTime;
 var
   fld: TField;
   actualCode: string;
@@ -128,7 +129,7 @@ begin
     actualCode);
 end;
 
-procedure TestGenerateAppends.TestOneWideStringField;
+procedure TestGenerateAppends.GenFieldByName_WideString;
 var
   fld: TField;
   actualCode: string;
@@ -143,25 +144,7 @@ begin
     actualCode);
 end;
 
-procedure TestGenerateAppends.TestOneWideStringField_WithLongValue;
-var
-  longText: string;
-  actualCode: string;
-begin
-  longText := 'Covers Dependency Injection, you''ll learn about' +
-    ' Constructor Injection, Property Injection, and Method Injection' +
-    ' and about the right and wrong way to use it';
-
-  actualCode := fGenerator.TestFormatLongStringLiterals(longText);
-
-  Assert.AreMemosEqual( //.
-    #13 //.
-    + '      Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
-    + '      '', Property Injection, and Method Injection and about the right and w''+'#13
-    + '      ''rong way to use it'#13, actualCode);
-end;
-
-procedure TestGenerateAppends.TestOneBCDField_DifferentFieldName;
+procedure TestGenerateAppends.GenFieldByName_BCDField;
 var
   ds: TFDMemTable;
   fld: TField;
@@ -185,18 +168,40 @@ begin
 end;
 
 // -----------------------------------------------------------------------
+// Tests: Format code with long string literals
+// -----------------------------------------------------------------------
+
+procedure TestGenerateAppends.GenLongLiterals;
+var
+  longText: string;
+  actualCode: string;
+begin
+  longText := 'Covers Dependency Injection, you''ll learn about' +
+    ' Constructor Injection, Property Injection, and Method Injection' +
+    ' and about the right and wrong way to use it';
+
+  actualCode := fGenerator.TestFormatLongStringLiterals(longText);
+
+  Assert.AreMemosEqual( //.
+    #13 //.
+    + '      Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
+    + '      '', Property Injection, and Method Injection and about the right and w''+'#13
+    + '      ''rong way to use it'#13, actualCode);
+end;
+
+// -----------------------------------------------------------------------
 // Tests for: Registered issues (bugs)
 // -----------------------------------------------------------------------
 
-function TestGenerateAppends.Given_DataSet_With300String(aOwner: TComponent)
-  : TDataSet;
+function TestGenerateAppends.Given_DataSet_With300String(const aFieldName
+  : string): TDataSet;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(fOwner);
   with ds do
   begin
-    FieldDefs.Add('f1', ftWideString, 300);
+    FieldDefs.Add(aFieldName, ftWideString, 300);
     CreateDataSet;
     AppendRecord(['Covers Dependency Injection, you''ll learn about' +
       ' Constructor Injection, Property Injection, and Method Injection' +
@@ -206,11 +211,11 @@ begin
   Result := ds;
 end;
 
-procedure TestGenerateAppends.TestLongStringLiterals_iss002;
+procedure TestGenerateAppends.Iss002_GenLongStringLiterals_NewLines;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := Given_DataSet_With300String(fOwner);
+  fGenerator.DataSet := Given_DataSet_With300String('Info');
 
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithAppendData.Text;
@@ -220,7 +225,7 @@ begin
     + '  with ds do'#13 //.
     + '  begin'#13 //.
     + '    Append;'#13 //
-    + '    FieldByName(''f1'').Value := '#13 //.
+    + '    FieldByName(''Info'').Value := '#13 //.
     + '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
     + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
     + '      '' wrong way to use it'';'#13 //.
@@ -233,7 +238,7 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 
-procedure TestGenerateAppends.Test_Indentation_1Space;
+procedure TestGenerateAppends.GenIndentation_OneSpace;
 var
   actualCode: string;
 begin
@@ -261,7 +266,7 @@ begin
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
-procedure TestGenerateAppends.Test_Indentation_Empty;
+procedure TestGenerateAppends.GenIndentation_Empty;
 var
   actualCode: string;
 begin
@@ -289,20 +294,11 @@ begin
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
-procedure TestGenerateAppends.Test_Indentation_MultilineTextValue;
+procedure TestGenerateAppends.GenIndentation_LongLiteral;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('LongDescription', ftWideString, 300);
-    CreateDataSet;
-    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
-      ' Constructor Injection, Property Injection, and Method Injection' +
-      ' and about the right and wrong way to use it']);
-    First;
-  end;
+  fGenerator.DataSet := Given_DataSet_With300String('LongDescription');
   fGenerator.IndentationText := '  ';
 
   fGenerator.Execute;
@@ -320,40 +316,6 @@ begin
     + '    Post;'#13 //.
     + '  end;'#13 //.
     + '{$ENDREGION}'#13, actualCode);
-end;
-
-procedure TestGenerateAppends.Test_IndentationText_BCDField;
-var
-  actualCode: string;
-begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'Price';
-      DataType := ftBcd;
-      Precision := 8;
-      size := 2;
-    end;
-    CreateDataSet;
-    AppendRecord([870.99]);
-    First;
-  end;
-  fGenerator.IndentationText := '  ';
-
-  fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
-
-  Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''Price'').Value := 870.99;'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -381,7 +343,7 @@ begin
   Result := memTable;
 end;
 
-procedure TestGenerateAppends.TestSample1;
+procedure TestGenerateAppends.GenSampleDataset_Appends;
 var
   actualCode: string;
 begin
