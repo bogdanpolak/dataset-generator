@@ -1,4 +1,4 @@
-﻿unit Test.CodeWithAppendData;
+﻿unit Test.GenerateAppends;
 
 interface
 

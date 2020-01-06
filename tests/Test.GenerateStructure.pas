@@ -1,4 +1,4 @@
-﻿unit Test.CodeWithStructure;
+﻿unit Test.GenerateStructure;
 
 interface
 

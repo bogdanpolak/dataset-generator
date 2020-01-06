@@ -12,8 +12,8 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
   Comp.Generator.DataSetCode in '..\src\Comp.Generator.DataSetCode.pas',
-  Test.CodeWithStructure in 'Test.CodeWithStructure.pas',
-  Test.CodeWithAppendData in 'Test.CodeWithAppendData.pas',
+  Test.GenerateStructure in 'Test.GenerateStructure.pas',
+  Test.GenerateAppends in 'Test.GenerateAppends.pas',
   GeneratorForTests in 'GeneratorForTests.pas',
   Helper.DUnitAssert in 'Helper.DUnitAssert.pas';
 
