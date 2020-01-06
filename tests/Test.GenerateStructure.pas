@@ -10,7 +10,8 @@ uses
   Data.DB,
   FireDAC.Comp.Client,
   Comp.Generator.DataSetCode,
-  GeneratorForTests, Helper.DUnitAssert;
+  GeneratorForTests,
+  Helper.DUnitAssert;
 
 {$M+}
 
@@ -36,11 +37,11 @@ type
     procedure GenFieldDef_DateTime;
     procedure GenFieldDef_BCD;
     // -------------
-    procedure TestSample1;
+    procedure GenStructure_WithMultipleFields;
     // -------------
-    procedure Test_IndentationText_BCDField;
-    procedure Test_Indentation_Empty;
-    procedure Test_Indentation_1Space;
+    procedure GenWithNoIndentation;
+    procedure GenWithIndentation_OneSpace;
+    procedure GenWithIndentation_BCDField;
   end;
 
 implementation
@@ -157,7 +158,7 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Tests for: Sample1
+// Test: Dataset structure generation with multiple diffrent fields
 // -----------------------------------------------------------------------
 
 function TestGenerateStructure.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
@@ -181,7 +182,7 @@ begin
   Result := memTable;
 end;
 
-procedure TestGenerateStructure.TestSample1;
+procedure TestGenerateStructure.GenStructure_WithMultipleFields;
 var
   actualCode: string;
   expectedCode: string;
@@ -209,7 +210,7 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.Test_Indentation_1Space;
+procedure TestGenerateStructure.GenWithIndentation_OneSpace;
 var
   actualCode: string;
   expectedCode: string;
@@ -235,7 +236,7 @@ begin
   Assert.AreMemosEqual(expectedCode, actualCode);
 end;
 
-procedure TestGenerateStructure.Test_Indentation_Empty;
+procedure TestGenerateStructure.GenWithNoIndentation;
 var
   actualCode: string;
   expectedCode: string;
@@ -263,7 +264,7 @@ begin
   Assert.AreMemosEqual(expectedCode, actualCode);
 end;
 
-procedure TestGenerateStructure.Test_IndentationText_BCDField;
+procedure TestGenerateStructure.GenWithIndentation_BCDField;
 var
   actualCode: string;
   expectedCode: string;
