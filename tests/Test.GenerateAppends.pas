@@ -268,6 +268,7 @@ begin
     (* *) + '      '' wrong way to use it'';'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -294,6 +295,7 @@ begin
     (* *) '  FieldByName(''Stage'').Value := 5;'#13 +
     (* *) '  Post;'#13 +
     (* *) ' end;'#13 +
+    (* *) ' ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -317,6 +319,7 @@ begin
     (* *) 'FieldByName(''Degree'').Value := 5;'#13 +
     (* *) 'Post;'#13 +
     (* *) 'end;'#13 +
+    (* *) 'ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -332,17 +335,18 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual( //.
-    '{$REGION ''Append data''}'#13 //.
-    + '  with ds do'#13 //.
-    + '  begin'#13 //.
-    + '    Append;'#13 //.
-    + '    FieldByName(''LongDescription'').Value := '#13 //.
-    + '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
-    + '      '' wrong way to use it'';'#13 //.
-    + '    Post;'#13 //.
-    + '  end;'#13 //.
-    + '{$ENDREGION}'#13, actualCode);
+    (* *) '{$REGION ''Append data''}'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    Append;'#13 +
+    (* *) '    FieldByName(''LongDescription'').Value := '#13 +
+    (* *) '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    (* *) + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
+    (* *) + '      '' wrong way to use it'';'#13 +
+    (* *) '    Post;'#13 +
+    (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
+    (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -379,6 +383,7 @@ begin
     (* *) '    FieldByName(''currency1'').Value := 950;'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
