@@ -47,7 +47,7 @@ procedure TestDSGenerator.Setup;
 begin
   fGenerator := TDSGeneratorUnderTest.Create(nil);
   fOwner := TComponent.Create(nil);
-  fStringStream := TStringStream.Create('',TEncoding.UTF8);
+  fStringStream := TStringStream.Create('', TEncoding.UTF8);
 end;
 
 procedure TestDSGenerator.TearDown;
@@ -156,7 +156,6 @@ begin
 
   TDSGenerator.GenerateAndSaveToStream(ds, fStringStream);
   actualCode := fStringStream.DataString;
-
   Assert.AreMemosEqual(
     (* *) 'unit uSampleDataSet;'#13 +
     (* *) #13 +
