@@ -122,6 +122,7 @@ begin
     (* *) '    FieldByName(''Date'').Value := EncodeDate(1683,9,12);'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
