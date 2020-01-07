@@ -10,8 +10,8 @@ uses
 
 type
   TAssertHelper = class helper for Assert
-    class procedure AreMemosEqual(const actualStrings: string;
-      const expectedStrings: string);
+    class procedure AreMemosEqual(const expectedStrings: string;
+      const actualStrings: string);
   end;
 
 implementation
@@ -28,8 +28,8 @@ begin
   Result := Min(s1.Length, s2.Length);
 end;
 
-class procedure TAssertHelper.AreMemosEqual(const actualStrings,
-  expectedStrings: string);
+class procedure TAssertHelper.AreMemosEqual(const expectedStrings: string;
+  const actualStrings: string);
 var
   slActual: TStringList;
   slExpected: TStringList;
