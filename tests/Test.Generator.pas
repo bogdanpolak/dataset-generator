@@ -28,7 +28,7 @@ type
     [TearDown]
     procedure TearDown;
   published
-    procedure GenerateHistoricalEvents;
+    procedure Generate_HistoricalEvents;
   end;
 
 implementation
@@ -83,7 +83,7 @@ end;
 // Tests for: Generate Sample historical events code
 // -----------------------------------------------------------------------
 
-procedure TestDSGenerator.GenerateHistoricalEvents;
+procedure TestDSGenerator.Generate_HistoricalEvents;
 var
   ds: TDataSet;
   actualCode: string;
