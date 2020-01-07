@@ -78,6 +78,34 @@ begin
   Result := ds.Fields[0];
 end;
 
+function GivenField_BCD_10_4(aOwner: TComponent; const aFieldName: string)
+  : TField;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds.FieldDefs.AddFieldDef do
+  begin
+    Name := aFieldName;
+    DataType := ftBcd;
+    Precision := 10;
+    size := 4;
+  end;
+  ds.CreateDataSet;
+  Result := ds.Fields[0];
+end;
+
+function GivenDataSet_WithInteger(aOwner: TComponent; const aFieldName: string)
+  : TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  ds.FieldDefs.Add(aFieldName, ftInteger);
+  ds.CreateDataSet;
+  Result := ds;
+end;
+
 function GivenDataSet_Sample_WithTwoRows(aOwner: TComponent): TDataSet;
 var
   memTable: TFDMemTable;
@@ -96,6 +124,26 @@ begin
     First;
   end;
   Result := memTable;
+end;
+
+function GivenDataSet_WithBCD_11_3(aOwner: TComponent; const aFieldName: string)
+  : TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    with FieldDefs.AddFieldDef do
+    begin
+      Name := aFieldName;
+      DataType := ftBcd;
+      Precision := 11;
+      size := 3;
+    end;
+    CreateDataSet;
+  end;
+  Result := ds;
 end;
 
 // -----------------------------------------------------------------------
@@ -153,20 +201,10 @@ end;
 
 procedure TestGenerateStructure.GenFieldDef_BCD;
 var
-  ds: TFDMemTable;
   fld: TField;
   actualCode: string;
 begin
-  ds := TFDMemTable.Create(fOwner);
-  with ds.FieldDefs.AddFieldDef do
-  begin
-    Name := 'Price';
-    DataType := ftBcd;
-    Precision := 10;
-    size := 4;
-  end;
-  ds.CreateDataSet;
-  fld := ds.Fields[0];
+  fld := GivenField_BCD_10_4(fOwner, 'Price');
 
   actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
@@ -210,12 +248,7 @@ procedure TestGenerateStructure.GenWithIndentation_OneSpace;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('Points', ftInteger);
-    CreateDataSet;
-  end;
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Points');
   fGenerator.IndentationText := ' ';
 
   fGenerator.Execute;
@@ -234,14 +267,7 @@ procedure TestGenerateStructure.GenWithNoIndentation;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('Points', ftInteger);
-    CreateDataSet;
-    AppendRecord([1]);
-    First;
-  end;
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Points');
   fGenerator.IndentationText := '';
 
   fGenerator.Execute;
@@ -260,18 +286,7 @@ procedure TestGenerateStructure.GenWithIndentation_BCDField;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    with FieldDefs.AddFieldDef do
-    begin
-      Name := 'Bugdet';
-      DataType := ftBcd;
-      Precision := 11;
-      size := 3;
-    end;
-    CreateDataSet;
-  end;
+  fGenerator.DataSet := GivenDataSet_WithBCD_11_3(fOwner, 'Bugdet');
   fGenerator.IndentationText := '  ';
 
   fGenerator.Execute;
