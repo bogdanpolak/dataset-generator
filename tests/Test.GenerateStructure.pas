@@ -22,9 +22,6 @@ type
   private
     fGenerator: TDSGeneratorUnderTest;
     fOwner: TComponent;
-    function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
-    function GivenField(aOwner: TComponent; const fieldName: string;
-      fieldType: TFieldType; size: integer = 0): TField;
   public
     [Setup]
     procedure Setup;
@@ -66,13 +63,12 @@ begin
   fOwner.Free;
 end;
 
-
 // -----------------------------------------------------------------------
-// Tests for: One DB field with one value
+// Dataset factories
 // -----------------------------------------------------------------------
 
-function TestGenerateStructure.GivenField(aOwner: TComponent;
-  const fieldName: string; fieldType: TFieldType; size: integer = 0): TField;
+function GivenField(aOwner: TComponent; const fieldName: string;
+  fieldType: TFieldType; size: integer = 0): TField;
 var
   ds: TFDMemTable;
 begin
@@ -81,6 +77,30 @@ begin
   ds.CreateDataSet;
   Result := ds.Fields[0];
 end;
+
+function GivenDataSet_Sample_WithTwoRows(aOwner: TComponent): TDataSet;
+var
+  memTable: TFDMemTable;
+begin
+  memTable := TFDMemTable.Create(aOwner);
+  with memTable do
+  begin
+    FieldDefs.Add('id', ftInteger);
+    FieldDefs.Add('text1', ftWideString, 30);
+    FieldDefs.Add('date1', ftDate);
+    FieldDefs.Add('float1', ftFloat);
+    FieldDefs.Add('currency1', ftCurrency);
+    CreateDataSet;
+    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
+    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
+    First;
+  end;
+  Result := memTable;
+end;
+
+// -----------------------------------------------------------------------
+// Tests for: One DB field with one value
+// -----------------------------------------------------------------------
 
 procedure TestGenerateStructure.GenFieldDef_Date;
 var
@@ -161,33 +181,12 @@ end;
 // Test: Dataset structure generation with multiple diffrent fields
 // -----------------------------------------------------------------------
 
-function TestGenerateStructure.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
-  : TDataSet;
-var
-  memTable: TFDMemTable;
-begin
-  memTable := TFDMemTable.Create(aOwner);
-  with memTable do
-  begin
-    FieldDefs.Add('id', ftInteger);
-    FieldDefs.Add('text1', ftWideString, 30);
-    FieldDefs.Add('date1', ftDate);
-    FieldDefs.Add('float1', ftFloat);
-    FieldDefs.Add('currency1', ftCurrency);
-    CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
-    First;
-  end;
-  Result := memTable;
-end;
-
 procedure TestGenerateStructure.GenStructure_WithMultipleFields;
 var
   actualCode: string;
   expectedCode: string;
 begin
-  fGenerator.DataSet := GivenSampleDataSetWithTwoRows(fOwner);
+  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
 
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithStructure.Text;
