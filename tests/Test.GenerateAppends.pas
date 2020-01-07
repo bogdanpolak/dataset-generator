@@ -21,10 +21,6 @@ type
   private
     fGenerator: TDSGeneratorUnderTest;
     fOwner: TComponent;
-    function GivenField(const fieldName: string; fieldType: TFieldType;
-      size: integer = 0): TField;
-    function GivenSampleDataSetWithTwoRows(aOwner: TComponent): TDataSet;
-    function Given_DataSet_With300String(const aFieldName: string): TDataSet;
   public
     [Setup]
     procedure Setup;
@@ -72,26 +68,84 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Tests for: Generation of one FieldByName
+// Dataset factories
 // -----------------------------------------------------------------------
 
-function TestGenerateAppends.GivenField(const fieldName: string;
+function GivenField(aOwner: TComponent; const fieldName: string;
   fieldType: TFieldType; size: integer = 0): TField;
 var
   ds: TFDMemTable;
 begin
-  ds := TFDMemTable.Create(fOwner);
+  ds := TFDMemTable.Create(aOwner);
   ds.FieldDefs.Add(fieldName, fieldType, size);
   ds.CreateDataSet;
   Result := ds.Fields[0];
 end;
+
+function GivenDataSet_With300String(aOwner: TComponent;
+  const aFieldName: string): TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add(aFieldName, ftWideString, 300);
+    CreateDataSet;
+    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
+      ' Constructor Injection, Property Injection, and Method Injection' +
+      ' and about the right and wrong way to use it']);
+    First;
+  end;
+  Result := ds;
+end;
+
+function GivenDataSet_WithInteger(aOwner: TComponent; const aFieldName: string)
+  : TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add(aFieldName, ftInteger);
+    CreateDataSet;
+    AppendRecord([5]);
+    First;
+  end;
+  Result := ds;
+end;
+
+function GivenDataSet_Sample_WithTwoRows(aOwner: TComponent): TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add('id', ftInteger);
+    FieldDefs.Add('text1', ftWideString, 30);
+    FieldDefs.Add('date1', ftDate);
+    FieldDefs.Add('float1', ftFloat);
+    FieldDefs.Add('currency1', ftCurrency);
+    CreateDataSet;
+    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
+    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
+    First;
+  end;
+  Result := ds;
+end;
+
+// -----------------------------------------------------------------------
+// Tests for: Generation of one FieldByName
+// -----------------------------------------------------------------------
 
 procedure TestGenerateAppends.GenFieldByName_Integer;
 var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenField('Level', ftInteger);
+  fld := GivenField(fOwner, 'Level', ftInteger);
   fld.DataSet.AppendRecord([1]);
 
   actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
@@ -104,7 +158,7 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenField('Birthday', ftDate);
+  fld := GivenField(fOwner, 'Birthday', ftDate);
   fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
 
   actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
@@ -118,7 +172,7 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenField('ChangeDate', ftDateTime);
+  fld := GivenField(fOwner, 'ChangeDate', ftDateTime);
   fld.DataSet.AppendRecord( //.
     [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
@@ -134,7 +188,7 @@ var
   fld: TField;
   actualCode: string;
 begin
-  fld := GivenField('ChangeDate', ftWideString, 30);
+  fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
   fld.DataSet.AppendRecord(['Alice has a cat']);
 
   actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
@@ -193,29 +247,11 @@ end;
 // Tests for: Registered issues (bugs)
 // -----------------------------------------------------------------------
 
-function TestGenerateAppends.Given_DataSet_With300String(const aFieldName
-  : string): TDataSet;
-var
-  ds: TFDMemTable;
-begin
-  ds := TFDMemTable.Create(fOwner);
-  with ds do
-  begin
-    FieldDefs.Add(aFieldName, ftWideString, 300);
-    CreateDataSet;
-    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
-      ' Constructor Injection, Property Injection, and Method Injection' +
-      ' and about the right and wrong way to use it']);
-    First;
-  end;
-  Result := ds;
-end;
-
 procedure TestGenerateAppends.Iss002_GenLongStringLiterals_NewLines;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := Given_DataSet_With300String('Info');
+  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'Info');
 
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithAppendData.Text;
@@ -242,14 +278,7 @@ procedure TestGenerateAppends.GenIndentation_OneSpace;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('Stage', ftInteger);
-    CreateDataSet;
-    AppendRecord([5]);
-    First;
-  end;
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Stage');
   fGenerator.IndentationText := ' ';
 
   fGenerator.Execute;
@@ -270,14 +299,8 @@ procedure TestGenerateAppends.GenIndentation_Empty;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := TFDMemTable.Create(fOwner);
-  with fGenerator.DataSet as TFDMemTable do
-  begin
-    FieldDefs.Add('Degree', ftInteger);
-    CreateDataSet;
-    AppendRecord([7]);
-    First;
-  end;
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Degree');
+
   fGenerator.IndentationText := '';
 
   fGenerator.Execute;
@@ -288,7 +311,7 @@ begin
     (* *) 'with ds do'#13 +
     (* *) 'begin'#13 +
     (* *) 'Append;'#13 +
-    (* *) 'FieldByName(''Degree'').Value := 7;'#13 +
+    (* *) 'FieldByName(''Degree'').Value := 5;'#13 +
     (* *) 'Post;'#13 +
     (* *) 'end;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
@@ -298,7 +321,7 @@ procedure TestGenerateAppends.GenIndentation_LongLiteral;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := Given_DataSet_With300String('LongDescription');
+  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'LongDescription');
   fGenerator.IndentationText := '  ';
 
   fGenerator.Execute;
@@ -322,32 +345,11 @@ end;
 // Tests for: Sample1
 // -----------------------------------------------------------------------
 
-function TestGenerateAppends.GivenSampleDataSetWithTwoRows(aOwner: TComponent)
-  : TDataSet;
-var
-  memTable: TFDMemTable;
-begin
-  memTable := TFDMemTable.Create(aOwner);
-  with memTable do
-  begin
-    FieldDefs.Add('id', ftInteger);
-    FieldDefs.Add('text1', ftWideString, 30);
-    FieldDefs.Add('date1', ftDate);
-    FieldDefs.Add('float1', ftFloat);
-    FieldDefs.Add('currency1', ftCurrency);
-    CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
-    First;
-  end;
-  Result := memTable;
-end;
-
 procedure TestGenerateAppends.GenSampleDataset_Appends;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenSampleDataSetWithTwoRows(fOwner);
+  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
 
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithAppendData.Text;
