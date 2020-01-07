@@ -47,7 +47,7 @@ procedure TestDSGenerator.Setup;
 begin
   fGenerator := TDSGeneratorUnderTest.Create(nil);
   fOwner := TComponent.Create(nil);
-  fStringStream := TStringStream.Create;
+  fStringStream := TStringStream.Create('',TEncoding.UTF8);
 end;
 
 procedure TestDSGenerator.TearDown;
@@ -157,7 +157,7 @@ begin
   TDSGenerator.GenerateAndSaveToStream(ds, fStringStream);
   actualCode := fStringStream.DataString;
 
-  Assert.AreEqual(
+  Assert.AreMemosEqual(
     (* *) 'unit uSampleDataSet;'#13 +
     (* *) #13 +
     (* *) 'interface'#13 +
@@ -176,7 +176,7 @@ begin
     (* *) 'var'#13 +
     (* *) '  ds: TFDMemTable;'#13 +
     (* *) 'begin'#13 +
-    (* *) '  ds := TFDMemTable.Create(aOwner);'#13 +
+    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
     (* *) '  with ds do'#13 +
     (* *) '  begin'#13 +
     (* *) '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13 +
@@ -186,11 +186,11 @@ begin
     (* *) '  with ds do'#13 +
     (* *) '  begin'#13 +
     (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''text1'').Value := ''Все люди рождаются свободными'';'#13
+    (* *) '    FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
     (* *) + '    Post;'#13 +
     (* *) '  end;'#13 +
-    (* *) '{$ENDREGION}'#13 +
     (* *) '  ds.First;'#13 +
+    (* *) '{$ENDREGION}'#13 +
     (* *) '  Result := ds;'#13 +
     (* *) 'end;'#13 +
     (* *) #13 +

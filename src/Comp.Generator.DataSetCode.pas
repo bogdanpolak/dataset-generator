@@ -16,7 +16,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGeneratorMode = (genAll, genStructure, genAppend);
+  TGeneratorMode = (genAll, genStructure, genAppend, genUnit);
 
   TDSGenerator = class(TComponent)
   const
@@ -28,18 +28,22 @@ type
     MaxLiteralLenght = 70;
   private
     FCode: TStrings;
-    FCodeWithStructure: TStrings;
-    FCodeWithAppendData: TStrings;
+    FStructureCode: TStringList;
+    FAppendCode: TStringList;
+    FTempCode: TStringList;
     FDataSet: TDataSet;
     FIndentationText: String;
     FGeneratorMode: TGeneratorMode;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
+    function GenUnitFooter(): string;
+    function GenFunction: string;
   protected
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
+    function GenUnitHeader(const aUnitName: string): string;
     function FormatLongStringLiterals(const Literal: string): string;
   public
     constructor Create(AOwner: TComponent); override;
@@ -67,16 +71,18 @@ begin
   inherited;
   FGeneratorMode := genAll;
   FCode := TStringList.Create;
-  FCodeWithStructure := TStringList.Create;
-  FCodeWithAppendData := TStringList.Create;
+  FStructureCode := TStringList.Create;
+  FAppendCode := TStringList.Create;
+  FTempCode := TStringList.Create;
   FIndentationText := '  ';
 end;
 
 destructor TDSGenerator.Destroy;
 begin
   FCode.Free;
-  FCodeWithStructure.Free;
-  FCodeWithAppendData.Free;
+  FStructureCode.Free;
+  FAppendCode.Free;
+  FTempCode.Free;
   inherited;
 end;
 
@@ -230,7 +236,7 @@ procedure TDSGenerator.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
-  with FCodeWithStructure do
+  with FStructureCode do
   begin
     Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
     Add(IndentationText + 'with ds do');
@@ -248,7 +254,7 @@ var
   fld: TField;
   s1: string;
 begin
-  aCode := FCodeWithAppendData;
+  aCode := FAppendCode;
   aCode.Add('{$REGION ''Append data''}');
   dataSet.DisableControls;
   dataSet.Open;
@@ -276,17 +282,74 @@ begin
   aCode.Add('{$ENDREGION}');
 end;
 
+function TDSGenerator.GenUnitHeader(const aUnitName: string): string;
+begin
+  FTempCode.Clear;
+  with FTempCode do
+  begin
+    Add('unit ' + aUnitName + ';');
+    Add('');
+    Add('interface');
+    Add('');
+    Add('uses');
+    Add(IndentationText + 'System.Classes,');
+    Add(IndentationText + 'System.SysUtils,');
+    Add(IndentationText + 'Data.DB,');
+    Add(IndentationText + 'FireDAC.Comp.Client;');
+    Add('');
+    Add('function CreateDataSet (aOwner: TComponent): TDataSet;');
+    Add('');
+    Add('implementation');
+    Add('');
+  end;
+  Result := FTempCode.Text;
+end;
+
+function TDSGenerator.GenFunction(): string;
+begin
+  FTempCode.Clear;
+  with FTempCode do
+  begin
+    Add('function CreateDataSet (aOwner: TComponent): TDataSet;');
+    Add('var');
+    Add('  ds: TFDMemTable;');
+    Add('begin');
+    AddStrings(FStructureCode);
+    AddStrings(FAppendCode);
+    Add('  Result := ds;');
+    Add('end;');
+  end;
+  Result := FTempCode.Text;
+end;
+
+function TDSGenerator.GenUnitFooter(): string;
+begin
+  FTempCode.Clear;
+  with FTempCode do
+  begin
+    Add('');
+    Add('end.');
+  end;
+  Result := FTempCode.Text;
+end;
+
 procedure TDSGenerator.Execute;
 begin
   Guard;
-  FCodeWithStructure.Clear;
-  FCodeWithAppendData.Clear;
+  FStructureCode.Clear;
+  FAppendCode.Clear;
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
   case FGeneratorMode of
-    genAll: FCode.Text := FCodeWithStructure.Text + FCodeWithAppendData.Text;
-    genStructure: FCode.Text := FCodeWithStructure.Text;
-    genAppend: FCode.Text := FCodeWithAppendData.Text;
+    genAll:
+      FCode.Text := FStructureCode.Text + FAppendCode.Text;
+    genStructure:
+      FCode.Text := FStructureCode.Text;
+    genAppend:
+      FCode.Text := FAppendCode.Text;
+    genUnit:
+      FCode.Text := GenUnitHeader('uSampleDataSet') + GenFunction +
+        GenUnitFooter;
   end;
 end;
 
@@ -340,8 +403,24 @@ end;
 
 class procedure TDSGenerator.GenerateAndSaveToStream(ds: TDataSet;
   aStream: TStream);
+var
+  gen: TDSGenerator;
+  sCode: Utf8String;
 begin
-
+  gen := TDSGenerator.Create(nil);
+  try
+    gen.dataSet := ds;
+    gen.GeneratorMode := genUnit;
+    gen.Execute;
+    sCode := Utf8String(gen.Code.Text);
+    {
+    aFilePreamble := TEncoding.UTF8.GetPreamble;
+    aStream.Write(aFilePreamble[0], Length(aFilePreamble));
+    }
+    aStream.Write(sCode[1], Length(sCode));
+  finally
+    gen.Free;
+  end;
 end;
 
 end.
