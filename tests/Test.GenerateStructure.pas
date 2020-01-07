@@ -170,11 +170,10 @@ begin
 
   actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
 
-  Assert.AreMemosEqual( //.
-    'with FieldDefs.AddFieldDef do begin'#13 +
-    '      Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
-    + '    end;', //.
-    actualCode);
+  Assert.AreMemosEqual(
+    (* *) 'with FieldDefs.AddFieldDef do begin'#13 +
+    (* *) '      Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
+    (* *) + '    end;', actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -184,25 +183,23 @@ end;
 procedure TestGenerateStructure.GenStructure_WithMultipleFields;
 var
   actualCode: string;
-  expectedCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
 
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithStructure.Text;
 
-  expectedCode := //.
-    '  ds := TFDMemTable.Create(AOwner);'#13 + //.
-    '  with ds do'#13 + //.
-    '  begin'#13 + //.
-    '    FieldDefs.Add(''id'', ftInteger);'#13 + //.
-    '    FieldDefs.Add(''text1'', ftWideString, 30);'#13 + //.
-    '    FieldDefs.Add(''date1'', ftDate);'#13 + //.
-    '    FieldDefs.Add(''float1'', ftFloat);'#13 + //.
-    '    FieldDefs.Add(''currency1'', ftCurrency);'#13 + //.
-    '    CreateDataSet;'#13 + //.
-    '  end;'#13;
-  Assert.AreMemosEqual(expectedCode, actualCode);
+  Assert.AreMemosEqual(
+    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    FieldDefs.Add(''id'', ftInteger);'#13 +
+    (* *) '    FieldDefs.Add(''text1'', ftWideString, 30);'#13 +
+    (* *) '    FieldDefs.Add(''date1'', ftDate);'#13 +
+    (* *) '    FieldDefs.Add(''float1'', ftFloat);'#13 +
+    (* *) '    FieldDefs.Add(''currency1'', ftCurrency);'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -212,7 +209,6 @@ end;
 procedure TestGenerateStructure.GenWithIndentation_OneSpace;
 var
   actualCode: string;
-  expectedCode: string;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -225,20 +221,18 @@ begin
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithStructure.Text;
 
-  expectedCode := //.
-    ' ds := TFDMemTable.Create(AOwner);'#13 + //.
-    ' with ds do'#13 + //.
-    ' begin'#13 + //.
-    '  FieldDefs.Add(''Points'', ftInteger);'#13 + //.
-    '  CreateDataSet;'#13 + //.
-    ' end;'#13;
-  Assert.AreMemosEqual(expectedCode, actualCode);
+  Assert.AreMemosEqual(
+    (* *) ' ds := TFDMemTable.Create(AOwner);'#13 +
+    (* *) ' with ds do'#13 +
+    (* *) ' begin'#13 +
+    (* *) '  FieldDefs.Add(''Points'', ftInteger);'#13 +
+    (* *) '  CreateDataSet;'#13 +
+    (* *) ' end;'#13, actualCode);
 end;
 
 procedure TestGenerateStructure.GenWithNoIndentation;
 var
   actualCode: string;
-  expectedCode: string;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -253,20 +247,18 @@ begin
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithStructure.Text;
 
-  expectedCode := //.
-    'ds := TFDMemTable.Create(AOwner);'#13 + //.
-    'with ds do'#13 + //.
-    'begin'#13 + //.
-    'FieldDefs.Add(''Points'', ftInteger);'#13 + //.
-    'CreateDataSet;'#13 + //.
-    'end;'#13;
-  Assert.AreMemosEqual(expectedCode, actualCode);
+  Assert.AreMemosEqual(
+    (* *) 'ds := TFDMemTable.Create(AOwner);'#13 +
+    (* *) 'with ds do'#13 +
+    (* *) 'begin'#13 +
+    (* *) 'FieldDefs.Add(''Points'', ftInteger);'#13 +
+    (* *) 'CreateDataSet;'#13 +
+    (* *) 'end;'#13, actualCode);
 end;
 
 procedure TestGenerateStructure.GenWithIndentation_BCDField;
 var
   actualCode: string;
-  expectedCode: string;
 begin
   fGenerator.DataSet := TFDMemTable.Create(fOwner);
   with fGenerator.DataSet as TFDMemTable do
@@ -285,16 +277,15 @@ begin
   fGenerator.Execute;
   actualCode := fGenerator.CodeWithStructure.Text;
 
-  expectedCode := //.
-    '  ds := TFDMemTable.Create(AOwner);'#13 + //.
-    '  with ds do'#13 + //.
-    '  begin'#13 + //.
-    '    with FieldDefs.AddFieldDef do begin'#13 + //.
-    '      Name := ''Bugdet'';  DataType := ftBCD;  Precision := 11;  Size := 3;'#13
-    + '    end;'#13 + //.
-    '    CreateDataSet;'#13 + //.
-    '  end;'#13;
-  Assert.AreMemosEqual(expectedCode, actualCode);
+  Assert.AreMemosEqual(
+    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    with FieldDefs.AddFieldDef do begin'#13 +
+    (* *) '      Name := ''Bugdet'';  DataType := ftBCD;  Precision := 11;  Size := 3;'#13
+    (* *) + '    end;'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13, actualCode);
 end;
 
 initialization
