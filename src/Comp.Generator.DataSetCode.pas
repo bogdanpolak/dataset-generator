@@ -53,7 +53,7 @@ type
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     class procedure GenerateAndSaveToStream(ds: TDataSet; aStream: TStream);
   published
-    property dataSet: TDataSet read FDataSet write FDataSet;
+    property DataSet: TDataSet read FDataSet write FDataSet;
     property Code: TStrings read FCode;
     property IndentationText: String read FIndentationText
       write FIndentationText;
