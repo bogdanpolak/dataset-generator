@@ -220,54 +220,6 @@ begin
   end;
 end;
 
-class function TDSGenerator.GenerateAsString(ds: TDataSet): string;
-var
-  gen: TDSGenerator;
-begin
-  gen := TDSGenerator.Create(nil);
-  try
-    gen.dataSet := ds;
-    gen.Execute;
-    Result := gen.Code.Text;
-  finally
-    gen.Free;
-  end;
-end;
-
-(* This function replace (fix) standard  Delphi RTL TStrings.ToStringArray
-  .    method, because ot the following issue (in Delphi XE8 and older ones):
- Delphi 10.3 Rio:
- .   - TStringDynArray = TArray<string>;
- .   - function TStrings.ToStringArray: TArray<string>;
- .   - can assign: TArray<string> --> TStringDynArray
- Delphi XE8:
- .   - TStringDynArray = array of string;
- .   - function TStrings.ToStringArray: array of string;
- .   - not able to assign: array of string --> TStringDynArray
-*)
-function TStringsToStringDynArray(sl: TStrings): TStringDynArray;
-var
-  i: integer;
-begin
-  SetLength(Result, sl.Count);
-  for i := 0 to sl.Count - 1 do
-    Result[i] := sl[i];
-end;
-
-class function TDSGenerator.GenerateAsArray(ds: TDataSet): TStringDynArray;
-var
-  gen: TDSGenerator;
-begin
-  gen := TDSGenerator.Create(nil);
-  try
-    gen.dataSet := ds;
-    gen.Execute;
-    Result := TStringsToStringDynArray(gen.Code);
-  finally
-    gen.Free;
-  end;
-end;
-
 procedure TDSGenerator.Guard;
 begin
   Assert(dataSet <> nil, 'Property DataSet not assigned!');
@@ -335,7 +287,54 @@ begin
     genStructure: FCode.Text := FCodeWithStructure.Text;
     genAppend: FCode.Text := FCodeWithAppendData.Text;
   end;
+end;
 
+class function TDSGenerator.GenerateAsString(ds: TDataSet): string;
+var
+  gen: TDSGenerator;
+begin
+  gen := TDSGenerator.Create(nil);
+  try
+    gen.dataSet := ds;
+    gen.Execute;
+    Result := gen.Code.Text;
+  finally
+    gen.Free;
+  end;
+end;
+
+(* This function replace (fix) standard  Delphi RTL TStrings.ToStringArray
+  .    method, because ot the following issue (in Delphi XE8 and older ones):
+ Delphi 10.3 Rio:
+ .   - TStringDynArray = TArray<string>;
+ .   - function TStrings.ToStringArray: TArray<string>;
+ .   - can assign: TArray<string> --> TStringDynArray
+ Delphi XE8:
+ .   - TStringDynArray = array of string;
+ .   - function TStrings.ToStringArray: array of string;
+ .   - not able to assign: array of string --> TStringDynArray
+*)
+function TStringsToStringDynArray(sl: TStrings): TStringDynArray;
+var
+  i: integer;
+begin
+  SetLength(Result, sl.Count);
+  for i := 0 to sl.Count - 1 do
+    Result[i] := sl[i];
+end;
+
+class function TDSGenerator.GenerateAsArray(ds: TDataSet): TStringDynArray;
+var
+  gen: TDSGenerator;
+begin
+  gen := TDSGenerator.Create(nil);
+  try
+    gen.dataSet := ds;
+    gen.Execute;
+    Result := TStringsToStringDynArray(gen.Code);
+  finally
+    gen.Free;
+  end;
 end;
 
 end.
