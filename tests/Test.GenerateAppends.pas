@@ -252,22 +252,23 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'Info');
+  fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
+  actualCode := fGenerator.Code.Text;
 
-  Assert.AreMemosEqual( //.
-    '{$REGION ''Append data''}'#13 //.
-    + '  with ds do'#13 //.
-    + '  begin'#13 //.
-    + '    Append;'#13 //
-    + '    FieldByName(''Info'').Value := '#13 //.
-    + '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
-    + '      '' wrong way to use it'';'#13 //.
-    + '    Post;'#13 //.
-    + '  end;'#13 //.
-    + '{$ENDREGION}'#13, actualCode);
+  Assert.AreMemosEqual(
+    (* *) '{$REGION ''Append data''}'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    Append;'#13 +
+    (* *) '    FieldByName(''Info'').Value := '#13 +
+    (* *) '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    (* *) + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
+    (* *) + '      '' wrong way to use it'';'#13 +
+    (* *) '    Post;'#13 +
+    (* *) '  end;'#13 +
+    (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -279,10 +280,11 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Stage');
+  fGenerator.GeneratorMode := genAppend;
   fGenerator.IndentationText := ' ';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) '{$REGION ''Append data''}'#13 +
@@ -300,11 +302,12 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Degree');
+  fGenerator.GeneratorMode := genAppend;
 
   fGenerator.IndentationText := '';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) '{$REGION ''Append data''}'#13 +
@@ -322,10 +325,11 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'LongDescription');
+  fGenerator.GeneratorMode := genAppend;
   fGenerator.IndentationText := '  ';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual( //.
     '{$REGION ''Append data''}'#13 //.
@@ -350,9 +354,10 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithAppendData.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) '{$REGION ''Append data''}'#13 +

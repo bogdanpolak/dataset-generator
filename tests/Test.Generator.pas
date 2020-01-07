@@ -85,13 +85,12 @@ end;
 
 procedure TestDSGenerator.GenerateHistoricalEvents;
 var
+  ds: TDataSet;
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_HistoricalEvents(fOwner);
+  ds := GivenDataSet_HistoricalEvents(fOwner);
 
-  fGenerator.Execute;
-  actualCode := fGenerator.CodeWithStructure.Text +
-    fGenerator.CodeWithAppendData.Text;
+  actualCode := TDSGenerator.GenerateAsString(ds);
 
   Assert.AreMemosEqual(
     (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +

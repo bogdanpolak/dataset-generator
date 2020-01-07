@@ -16,6 +16,8 @@ uses
   FireDAC.Comp.Client;
 
 type
+  TGeneratorMode = (genAll, genStructure, genAppend);
+
   TDSGenerator = class(TComponent)
   const
     // * --------------------------------------------------------------------
@@ -25,10 +27,12 @@ type
     // * --------------------------------------------------------------------
     MaxLiteralLenght = 70;
   private
-    FCodeWithStructue: TStrings;
+    FCode: TStrings;
+    FCodeWithStructure: TStrings;
     FCodeWithAppendData: TStrings;
     FDataSet: TDataSet;
     FIndentationText: String;
+    FGeneratorMode: TGeneratorMode;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
   protected
@@ -45,10 +49,11 @@ type
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
   published
     property dataSet: TDataSet read FDataSet write FDataSet;
-    property CodeWithStructure: TStrings read FCodeWithStructue;
-    property CodeWithAppendData: TStrings read FCodeWithAppendData;
+    property Code: TStrings read FCode;
     property IndentationText: String read FIndentationText
       write FIndentationText;
+    property GeneratorMode: TGeneratorMode read FGeneratorMode
+      write FGeneratorMode;
   end;
 
 implementation
@@ -59,14 +64,17 @@ uses
 constructor TDSGenerator.Create(AOwner: TComponent);
 begin
   inherited;
-  FCodeWithStructue := TStringList.Create;
+  FGeneratorMode := genAll;
+  FCode := TStringList.Create;
+  FCodeWithStructure := TStringList.Create;
   FCodeWithAppendData := TStringList.Create;
   FIndentationText := '  ';
 end;
 
 destructor TDSGenerator.Destroy;
 begin
-  FCodeWithStructue.Free;
+  FCode.Free;
+  FCodeWithStructure.Free;
   FCodeWithAppendData.Free;
   inherited;
 end;
@@ -153,8 +161,7 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiterals(const Literal
-  : string): string;
+function TDSGenerator.FormatLongStringLiterals(const Literal: string): string;
 var
   s1: string;
   s2: string;
@@ -221,8 +228,7 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := gen.CodeWithStructure.Text + sLineBreak + sLineBreak +
-      gen.CodeWithAppendData.Text;
+    Result := gen.Code.Text;
   finally
     gen.Free;
   end;
@@ -248,8 +254,7 @@ begin
     Result[i] := sl[i];
 end;
 
-class function TDSGenerator.GenerateAsArray(ds: TDataSet)
-  : TStringDynArray;
+class function TDSGenerator.GenerateAsArray(ds: TDataSet): TStringDynArray;
 var
   gen: TDSGenerator;
 begin
@@ -257,9 +262,7 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := TStringsToStringDynArray(gen.CodeWithStructure) //.
-      + [sLineBreak, sLineBreak] //.
-      + TStringsToStringDynArray(gen.CodeWithStructure);
+    Result := TStringsToStringDynArray(gen.Code);
   finally
     gen.Free;
   end;
@@ -270,12 +273,11 @@ begin
   Assert(dataSet <> nil, 'Property DataSet not assigned!');
 end;
 
-procedure TDSGenerator.GenCodeCreateMockTableWithStructure
-  (dataSet: TDataSet);
+procedure TDSGenerator.GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
 var
   fld: TField;
 begin
-  with CodeWithStructure do
+  with FCodeWithStructure do
   begin
     Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
     Add(IndentationText + 'with ds do');
@@ -289,16 +291,18 @@ end;
 
 procedure TDSGenerator.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
+  aCode: TStrings;
   fld: TField;
   s1: string;
 begin
-  CodeWithAppendData.Add('{$REGION ''Append data''}');
+  aCode := FCodeWithAppendData;
+  aCode.Add('{$REGION ''Append data''}');
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
   while not dataSet.Eof do
   begin
-    with CodeWithAppendData do
+    with aCode do
     begin
       Add(IndentationText + 'with ds do');
       Add(IndentationText + 'begin');
@@ -315,16 +319,22 @@ begin
     dataSet.Next;
   end;
   dataSet.EnableControls;
-  CodeWithAppendData.Add('{$ENDREGION}');
+  aCode.Add('{$ENDREGION}');
 end;
 
 procedure TDSGenerator.Execute;
 begin
   Guard;
-  CodeWithStructure.Clear;
-  CodeWithAppendData.Clear;
+  FCodeWithStructure.Clear;
+  FCodeWithAppendData.Clear;
   GenCodeCreateMockTableWithStructure(dataSet);
   GenCodeAppendDataToMockTable(dataSet);
+  case FGeneratorMode of
+    genAll: FCode.Text := FCodeWithStructure.Text + FCodeWithAppendData.Text;
+    genStructure: FCode.Text := FCodeWithStructure.Text;
+    genAppend: FCode.Text := FCodeWithAppendData.Text;
+  end;
+
 end;
 
 end.

@@ -223,9 +223,10 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.GeneratorMode := genStructure;
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithStructure.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
@@ -249,10 +250,11 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Points');
+  fGenerator.GeneratorMode := genStructure;
   fGenerator.IndentationText := ' ';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithStructure.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) ' ds := TFDMemTable.Create(AOwner);'#13 +
@@ -268,10 +270,11 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Points');
+  fGenerator.GeneratorMode := genStructure;
   fGenerator.IndentationText := '';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithStructure.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) 'ds := TFDMemTable.Create(AOwner);'#13 +
@@ -287,10 +290,11 @@ var
   actualCode: string;
 begin
   fGenerator.DataSet := GivenDataSet_WithBCD_11_3(fOwner, 'Bugdet');
+  fGenerator.GeneratorMode := genStructure;
   fGenerator.IndentationText := '  ';
 
   fGenerator.Execute;
-  actualCode := fGenerator.CodeWithStructure.Text;
+  actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
     (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
