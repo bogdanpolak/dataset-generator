@@ -30,7 +30,7 @@ type
     procedure TearDown;
   published
     procedure Generate_HistoricalEvents;
-    procedure GenerateToStream_HistoricalEvents;
+    procedure GenerateToStream_StringDataSet;
   end;
 
 implementation
@@ -146,7 +146,7 @@ begin
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
-procedure TestDSGenerator.GenerateToStream_HistoricalEvents;
+procedure TestDSGenerator.GenerateToStream_StringDataSet;
 var
   ds: TDataSet;
   actualCode: string;

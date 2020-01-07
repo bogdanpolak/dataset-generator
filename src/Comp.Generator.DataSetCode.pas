@@ -36,15 +36,15 @@ type
     FGeneratorMode: TGeneratorMode;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
-    function GenUnitFooter(): string;
-    function GenFunction: string;
   protected
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
-    function GenUnitHeader(const aUnitName: string): string;
     function FormatLongStringLiterals(const Literal: string): string;
+    function GenUnitHeader(const aUnitName: string): string;
+    function GenUnitFooter(): string;
+    function GenFunction: string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
