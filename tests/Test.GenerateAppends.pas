@@ -268,6 +268,7 @@ begin
     (* *) + '      '' wrong way to use it'';'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -294,6 +295,7 @@ begin
     (* *) '  FieldByName(''Stage'').Value := 5;'#13 +
     (* *) '  Post;'#13 +
     (* *) ' end;'#13 +
+    (* *) ' ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -317,6 +319,7 @@ begin
     (* *) 'FieldByName(''Degree'').Value := 5;'#13 +
     (* *) 'Post;'#13 +
     (* *) 'end;'#13 +
+    (* *) 'ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -342,6 +345,7 @@ begin
     (* *) + '      '' wrong way to use it'';'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
@@ -379,6 +383,7 @@ begin
     (* *) '    FieldByName(''currency1'').Value := 950;'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
 
