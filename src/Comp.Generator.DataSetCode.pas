@@ -319,6 +319,7 @@ begin
     dataSet.Next;
   end;
   dataSet.EnableControls;
+  aCode.Add(IndentationText + 'ds.First;');
   aCode.Add('{$ENDREGION}');
 end;
 
