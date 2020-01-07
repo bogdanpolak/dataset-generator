@@ -1,4 +1,4 @@
-unit Test.Generator;
+﻿unit Test.Generator;
 
 interface
 
@@ -22,6 +22,7 @@ type
   private
     fGenerator: TDSGeneratorUnderTest;
     fOwner: TComponent;
+    fStringStream: TStringStream;
   public
     [Setup]
     procedure Setup;
@@ -29,6 +30,7 @@ type
     procedure TearDown;
   published
     procedure Generate_HistoricalEvents;
+    procedure GenerateToStream_HistoricalEvents;
   end;
 
 implementation
@@ -45,12 +47,14 @@ procedure TestDSGenerator.Setup;
 begin
   fGenerator := TDSGeneratorUnderTest.Create(nil);
   fOwner := TComponent.Create(nil);
+  fStringStream := TStringStream.Create;
 end;
 
 procedure TestDSGenerator.TearDown;
 begin
   fGenerator.Free;
   fOwner.Free;
+  fStringStream.Free;
 end;
 
 // -----------------------------------------------------------------------
@@ -77,6 +81,22 @@ begin
     First;
   end;
   Result := memTable;
+end;
+
+function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
+  const aDataValue: string): TDataSet;
+var
+  ds: TFDMemTable;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add(aFieldName, ftWideString, 30);
+    CreateDataSet;
+    AppendRecord([aDataValue]);
+    First;
+  end;
+  Result := ds;
 end;
 
 // -----------------------------------------------------------------------
@@ -124,6 +144,57 @@ begin
     (* *) '  end;'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateToStream_HistoricalEvents;
+var
+  ds: TDataSet;
+  actualCode: string;
+begin
+  ds := GivenDataSet_WithString(fOwner, 'CyrlicText',
+    'Все люди рождаются свободными');
+
+  TDSGenerator.GenerateAndSaveToStream(ds, fStringStream);
+  actualCode := fStringStream.DataString;
+
+  Assert.AreEqual(
+    (* *) 'unit uSampleDataSet;'#13 +
+    (* *) #13 +
+    (* *) 'interface'#13 +
+    (* *) #13 +
+    (* *) 'uses'#13 +
+    (* *) '  System.Classes,'#13 +
+    (* *) '  System.SysUtils,'#13 +
+    (* *) '  Data.DB,'#13 +
+    (* *) '  FireDAC.Comp.Client;'#13 +
+    (* *) #13 +
+    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
+    (* *) #13 +
+    (* *) 'implementation'#13 +
+    (* *) #13 +
+    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
+    (* *) 'var'#13 +
+    (* *) '  ds: TFDMemTable;'#13 +
+    (* *) 'begin'#13 +
+    (* *) '  ds := TFDMemTable.Create(aOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13 +
+    (* *) '{$REGION ''Append data''}'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    Append;'#13 +
+    (* *) '    FieldByName(''text1'').Value := ''Все люди рождаются свободными'';'#13
+    (* *) + '    Post;'#13 +
+    (* *) '  end;'#13 +
+    (* *) '{$ENDREGION}'#13 +
+    (* *) '  ds.First;'#13 +
+    (* *) '  Result := ds;'#13 +
+    (* *) 'end;'#13 +
+    (* *) #13 +
+    (* *) 'end.'#13, actualCode);
 end;
 
 end.

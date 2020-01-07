@@ -47,6 +47,7 @@ type
     procedure Execute;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
+    class procedure GenerateAndSaveToStream(ds: TDataSet; aStream: TStream);
   published
     property dataSet: TDataSet read FDataSet write FDataSet;
     property Code: TStrings read FCode;
@@ -335,6 +336,12 @@ begin
   finally
     gen.Free;
   end;
+end;
+
+class procedure TDSGenerator.GenerateAndSaveToStream(ds: TDataSet;
+  aStream: TStream);
+begin
+
 end;
 
 end.
