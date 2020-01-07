@@ -2,7 +2,7 @@
  * ♥
  * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
  * ♥
- * Component: TGenerateDataSetCode
+ * Component: TDSGenerator
  * Project: https://github.com/bogdanpolak/datasetToDelphiCode
  * ------------------------------------------------------------------------ }
 
@@ -16,7 +16,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGenerateDataSetCode = class(TComponent)
+  TDSGenerator = class(TComponent)
   const
     // * --------------------------------------------------------------------
     // * Signature
@@ -30,11 +30,12 @@ type
     FDataSet: TDataSet;
     FIndentationText: String;
     procedure Guard;
+    function GetDataFieldPrecision(fld: TField): integer;
+  protected
     function GenCodeLineFieldDefAdd(fld: TField): string;
     function GenCodeLineSetFieldValue(fld: TField): string;
     procedure GenCodeCreateMockTableWithStructure(dataSet: TDataSet);
     procedure GenCodeAppendDataToMockTable(dataSet: TDataSet);
-    function GetDataFieldPrecision(fld: TField): integer;
     function FormatLongStringLiterals(const Literal: string): string;
   public
     constructor Create(AOwner: TComponent); override;
@@ -55,7 +56,7 @@ implementation
 uses
   System.Rtti;
 
-constructor TGenerateDataSetCode.Create(AOwner: TComponent);
+constructor TDSGenerator.Create(AOwner: TComponent);
 begin
   inherited;
   FCodeWithStructue := TStringList.Create;
@@ -63,7 +64,7 @@ begin
   FIndentationText := '  ';
 end;
 
-destructor TGenerateDataSetCode.Destroy;
+destructor TDSGenerator.Destroy;
 begin
   FCodeWithStructue.Free;
   FCodeWithAppendData.Free;
@@ -75,7 +76,7 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TGenerateDataSetCode.GetDataFieldPrecision(fld: TField): integer;
+function TDSGenerator.GetDataFieldPrecision(fld: TField): integer;
 begin
   System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
     (fld is TFloatField));
@@ -87,7 +88,7 @@ begin
     Result := (fld as TFloatField).Precision
 end;
 
-function TGenerateDataSetCode.GenCodeLineFieldDefAdd(fld: TField): string;
+function TDSGenerator.GenCodeLineFieldDefAdd(fld: TField): string;
 begin
   (* -----------------------------------------------------------------------
     [Doc]
@@ -152,7 +153,7 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TGenerateDataSetCode.FormatLongStringLiterals(const Literal
+function TDSGenerator.FormatLongStringLiterals(const Literal
   : string): string;
 var
   s1: string;
@@ -184,7 +185,7 @@ begin
   end;
 end;
 
-function TGenerateDataSetCode.GenCodeLineSetFieldValue(fld: TField): string;
+function TDSGenerator.GenCodeLineSetFieldValue(fld: TField): string;
 var
   sByNameValue: string;
 begin
@@ -212,11 +213,11 @@ begin
   end;
 end;
 
-class function TGenerateDataSetCode.GenerateAsString(ds: TDataSet): string;
+class function TDSGenerator.GenerateAsString(ds: TDataSet): string;
 var
-  gen: TGenerateDataSetCode;
+  gen: TDSGenerator;
 begin
-  gen := TGenerateDataSetCode.Create(nil);
+  gen := TDSGenerator.Create(nil);
   try
     gen.dataSet := ds;
     gen.Execute;
@@ -247,12 +248,12 @@ begin
     Result[i] := sl[i];
 end;
 
-class function TGenerateDataSetCode.GenerateAsArray(ds: TDataSet)
+class function TDSGenerator.GenerateAsArray(ds: TDataSet)
   : TStringDynArray;
 var
-  gen: TGenerateDataSetCode;
+  gen: TDSGenerator;
 begin
-  gen := TGenerateDataSetCode.Create(nil);
+  gen := TDSGenerator.Create(nil);
   try
     gen.dataSet := ds;
     gen.Execute;
@@ -264,12 +265,12 @@ begin
   end;
 end;
 
-procedure TGenerateDataSetCode.Guard;
+procedure TDSGenerator.Guard;
 begin
   Assert(dataSet <> nil, 'Property DataSet not assigned!');
 end;
 
-procedure TGenerateDataSetCode.GenCodeCreateMockTableWithStructure
+procedure TDSGenerator.GenCodeCreateMockTableWithStructure
   (dataSet: TDataSet);
 var
   fld: TField;
@@ -286,12 +287,12 @@ begin
   end;
 end;
 
-procedure TGenerateDataSetCode.GenCodeAppendDataToMockTable(dataSet: TDataSet);
+procedure TDSGenerator.GenCodeAppendDataToMockTable(dataSet: TDataSet);
 var
   fld: TField;
   s1: string;
 begin
-  CodeWithAppendData.Add('{$REGION ''Append data to MemTable''}');
+  CodeWithAppendData.Add('{$REGION ''Append data''}');
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
@@ -317,7 +318,7 @@ begin
   CodeWithAppendData.Add('{$ENDREGION}');
 end;
 
-procedure TGenerateDataSetCode.Execute;
+procedure TDSGenerator.Execute;
 begin
   Guard;
   CodeWithStructure.Clear;
