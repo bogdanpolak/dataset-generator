@@ -34,7 +34,7 @@ type
     procedure GenFieldDef_DateTime;
     procedure GenFieldDef_BCD;
     // -------------
-    procedure GenStructure_WithMultipleFields;
+    procedure Execute_WithMultipleFields;
     // -------------
     procedure GenWithNoIndentation;
     procedure GenWithIndentation_OneSpace;
@@ -218,7 +218,7 @@ end;
 // Test: Dataset structure generation with multiple diffrent fields
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.GenStructure_WithMultipleFields;
+procedure TestGenerateStructure.Execute_WithMultipleFields;
 var
   actualCode: string;
 begin
