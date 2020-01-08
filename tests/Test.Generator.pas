@@ -31,8 +31,9 @@ type
   published
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
-    procedure GenerateUnit_GenHeader;
-    procedure GenerateUnit_GenFooter;
+    procedure GenerateUnit_Header;
+    procedure GenerateUnit_Header_ClientDataSet;
+    procedure GenerateUnit_Footer;
     procedure GenerateFunction;
   end;
 
@@ -167,6 +168,7 @@ begin
     (* *) 'uses'#13 +
     (* *) '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
     (* *) '  FireDAC.Comp.Client;'#13 +
     (* *) #13 +
@@ -199,7 +201,7 @@ begin
     (* *) 'end.'#13, actualCode);
 end;
 
-procedure TestDSGenerator.GenerateUnit_GenHeader;
+procedure TestDSGenerator.GenerateUnit_Header;
 var
   actualCode: string;
 begin
@@ -212,6 +214,7 @@ begin
     (* *) 'uses'#13 +
     (* *) '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
     (* *) '  FireDAC.Comp.Client;'#13 +
     (* *) #13 +
@@ -219,9 +222,36 @@ begin
     (* *) #13 +
     (* *) 'implementation'#13 +
     (* *) #13, actualCode);
+  // MidasLib, Datasnap.DBClient
 end;
 
-procedure TestDSGenerator.GenerateUnit_GenFooter;
+procedure TestDSGenerator.GenerateUnit_Header_ClientDataSet;
+var
+  actualCode: string;
+begin
+  fGenerator.DataSetType := dstClientDataSet;
+  actualCode := fGenerator.TestGenUnitHeader('Unit1');
+  Assert.AreMemosEqual(
+    (* *) 'unit Unit1;'#13 +
+    (* *) #13 +
+    (* *) 'interface'#13 +
+    (* *) #13 +
+    (* *) 'uses'#13 +
+    (* *) '  System.Classes,'#13 +
+    (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
+    (* *) '  Data.DB,'#13 +
+    (* *) '  Datasnap.DBClient;'#13 +
+    (* *) '  MidasLib;'#13 +
+    (* *) #13 +
+    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
+    (* *) #13 +
+    (* *) 'implementation'#13 +
+    (* *) #13, actualCode);
+  //
+end;
+
+procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin

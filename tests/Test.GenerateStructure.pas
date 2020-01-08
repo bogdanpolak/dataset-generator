@@ -34,11 +34,12 @@ type
     procedure GenFieldDef_DateTime;
     procedure GenFieldDef_BCD;
     // -------------
-    procedure GenStructure_WithMultipleFields;
+    procedure Execute_DataSetType_CDS;
+    procedure Execute_WithMultipleFields;
     // -------------
-    procedure GenWithNoIndentation;
-    procedure GenWithIndentation_OneSpace;
-    procedure GenWithIndentation_BCDField;
+    procedure Execute_WithNoIndentation;
+    procedure Execute_WithOneSpaceIndentation;
+    procedure Execute_DefaultIndentation_BCDField;
   end;
 
 implementation
@@ -218,7 +219,27 @@ end;
 // Test: Dataset structure generation with multiple diffrent fields
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.GenStructure_WithMultipleFields;
+procedure TestGenerateStructure.Execute_DataSetType_CDS;
+var
+  actualCode: string;
+begin
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Group');
+  fGenerator.GeneratorMode := genStructure;
+  fGenerator.DataSetType := dstClientDataSet;
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    (* *) '  ds := TClientDataSet.Create(AOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    FieldDefs.Add(''Group'', ftInteger);'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13, actualCode);
+end;
+
+procedure TestGenerateStructure.Execute_WithMultipleFields;
 var
   actualCode: string;
 begin
@@ -245,7 +266,7 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.GenWithIndentation_OneSpace;
+procedure TestGenerateStructure.Execute_WithOneSpaceIndentation;
 var
   actualCode: string;
 begin
@@ -265,7 +286,7 @@ begin
     (* *) ' end;'#13, actualCode);
 end;
 
-procedure TestGenerateStructure.GenWithNoIndentation;
+procedure TestGenerateStructure.Execute_WithNoIndentation;
 var
   actualCode: string;
 begin
@@ -285,7 +306,7 @@ begin
     (* *) 'end;'#13, actualCode);
 end;
 
-procedure TestGenerateStructure.GenWithIndentation_BCDField;
+procedure TestGenerateStructure.Execute_DefaultIndentation_BCDField;
 var
   actualCode: string;
 begin

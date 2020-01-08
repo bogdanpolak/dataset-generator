@@ -43,6 +43,7 @@ type
     procedure GenIndentation_LongLiteral;
     // -------------
     procedure GenSampleDataset_Appends;
+    procedure GenSampleDataset_OnelineAppends;
   end;
 
 implementation
@@ -383,6 +384,25 @@ begin
     (* *) '    FieldByName(''currency1'').Value := 950;'#13 +
     (* *) '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
+    (* *) '{$ENDREGION}'#13, actualCode);
+end;
+
+procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
+var
+  actualCode: string;
+begin
+  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.GeneratorMode := genAppend;
+  fGenerator.AppendMode := amSinglelineAppends;
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    (* *) '{$REGION ''Append data''}'#13 +
+    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13 +
+    (* *) '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
 end;
