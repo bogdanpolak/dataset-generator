@@ -17,6 +17,7 @@ uses
 
 type
   TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
+  TDataSetType = (dstFDMemTable, dstClientDataSet);
 
   TDSGenerator = class(TComponent)
   const
@@ -34,6 +35,7 @@ type
     FDataSet: TDataSet;
     FIndentationText: String;
     FGeneratorMode: TGeneratorMode;
+    FDataSetType: TDataSetType;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
   protected
@@ -62,6 +64,7 @@ type
       write FIndentationText;
     property GeneratorMode: TGeneratorMode read FGeneratorMode
       write FGeneratorMode;
+    property DataSetType: TDataSetType read FDataSetType write FDataSetType;
   end;
 
 implementation
@@ -74,6 +77,7 @@ constructor TDSGenerator.Create(AOwner: TComponent);
 begin
   inherited;
   FGeneratorMode := genAll;
+  FDataSetType := dstFDMemTable;
   FCode := TStringList.Create;
   FStructureCode := TStringList.Create;
   FAppendCode := TStringList.Create;
