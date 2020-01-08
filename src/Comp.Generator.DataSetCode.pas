@@ -246,12 +246,14 @@ var
   sDataSetCreate: string;
 begin
   case FDataSetType of
-    dstFDMemTable: sDataSetCreate := 'TFDMemTable.Create(AOwner)';
-    dstClientDataSet: sDataSetCreate := 'TClientDataSet.Create(AOwner)';
+    dstFDMemTable:
+      sDataSetCreate := 'TFDMemTable.Create(AOwner)';
+    dstClientDataSet:
+      sDataSetCreate := 'TClientDataSet.Create(AOwner)';
   end;
   with FStructureCode do
   begin
-    Add(IndentationText + 'ds := '+sDataSetCreate+';');
+    Add(IndentationText + 'ds := ' + sDataSetCreate + ';');
     Add(IndentationText + 'with ds do');
     Add(IndentationText + 'begin');
     for fld in dataSet.Fields do
@@ -448,7 +450,7 @@ begin
   end;
 end;
 
-class procedure TDSGenerator.GenerateAndSaveToFile (ds: TDataSet;
+class procedure TDSGenerator.GenerateAndSaveToFile(ds: TDataSet;
   const aFileName: string);
 var
   fs: TFileStream;
@@ -470,7 +472,7 @@ begin
     gen.dataSet := ds;
     gen.GeneratorMode := genFunction;
     gen.Execute;
-    Clipboard.AsText :=gen.Code.Text;
+    Clipboard.AsText := gen.Code.Text;
   finally
     gen.Free;
   end;
