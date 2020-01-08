@@ -1,4 +1,4 @@
-program Dataset2Code;
+program DemoGenerateDataSet;
 
 uses
   Vcl.Forms,
