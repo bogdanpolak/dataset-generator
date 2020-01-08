@@ -168,6 +168,7 @@ begin
     (* *) 'uses'#13 +
     (* *) '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
     (* *) '  FireDAC.Comp.Client;'#13 +
     (* *) #13 +
@@ -213,6 +214,7 @@ begin
     (* *) 'uses'#13 +
     (* *) '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
     (* *) '  FireDAC.Comp.Client;'#13 +
     (* *) #13 +
@@ -237,6 +239,7 @@ begin
     (* *) 'uses'#13 +
     (* *) '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
+    (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
     (* *) '  Datasnap.DBClient;'#13 +
     (* *) '  MidasLib;'#13 +

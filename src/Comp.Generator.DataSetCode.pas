@@ -18,6 +18,7 @@ uses
 type
   TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
   TDataSetType = (dstFDMemTable, dstClientDataSet);
+  TAppendMode = (amMultilineAppends, amSinglelineAppends);
 
   TDSGenerator = class(TComponent)
   const
@@ -36,6 +37,7 @@ type
     FIndentationText: String;
     FGeneratorMode: TGeneratorMode;
     FDataSetType: TDataSetType;
+    FAppendMode: TAppendMode;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
   protected
@@ -65,6 +67,7 @@ type
     property GeneratorMode: TGeneratorMode read FGeneratorMode
       write FGeneratorMode;
     property DataSetType: TDataSetType read FDataSetType write FDataSetType;
+    property AppendMode: TAppendMode read FAppendMode write FAppendMode;
   end;
 
 implementation
@@ -76,13 +79,17 @@ uses
 constructor TDSGenerator.Create(AOwner: TComponent);
 begin
   inherited;
+  // --------------------------------
+  // Default options
   FGeneratorMode := genAll;
   FDataSetType := dstFDMemTable;
+  FAppendMode := amMultilineAppends;
+  FIndentationText := '  ';
+  // --------------------------------
   FCode := TStringList.Create;
   FStructureCode := TStringList.Create;
   FAppendCode := TStringList.Create;
   FTempCode := TStringList.Create;
-  FIndentationText := '  ';
 end;
 
 destructor TDSGenerator.Destroy;
