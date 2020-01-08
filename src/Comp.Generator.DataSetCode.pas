@@ -52,8 +52,10 @@ type
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TStringDynArray;
     class procedure GenerateAndSaveToStream(ds: TDataSet; aStream: TStream);
+    class procedure GenerateAndSaveToFile(ds: TDataSet;
+      const aFileName: string);
   published
-    property DataSet: TDataSet read FDataSet write FDataSet;
+    property dataSet: TDataSet read FDataSet write FDataSet;
     property Code: TStrings read FCode;
     property IndentationText: String read FIndentationText
       write FIndentationText;
@@ -414,12 +416,26 @@ begin
     gen.Execute;
     sCode := Utf8String(gen.Code.Text);
     {
-    aFilePreamble := TEncoding.UTF8.GetPreamble;
-    aStream.Write(aFilePreamble[0], Length(aFilePreamble));
+     aFilePreamble := TEncoding.UTF8.GetPreamble;
+     aStream.Write(aFilePreamble[0], Length(aFilePreamble));
     }
     aStream.Write(sCode[1], Length(sCode));
   finally
     gen.Free;
+  end;
+end;
+
+class procedure TDSGenerator.GenerateAndSaveToFile (ds: TDataSet;
+  const aFileName: string);
+var
+  gen: TDSGenerator;
+  fs: TFileStream;
+begin
+  fs := TFileStream.Create(aFileName, fmCreate);
+  try
+    GenerateAndSaveToStream(ds, fs);
+  finally
+    fs.Free;
   end;
 end;
 
