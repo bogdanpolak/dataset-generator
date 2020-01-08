@@ -40,10 +40,13 @@ type
     FAppendMode: TAppendMode;
     procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
+    procedure GenerateOneAppend_Multiline(aFields: TFields);
+    procedure GenerateOneAppend_Singleline(aFields: TFields);
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
     function GenerateLine_SetFieldValue(fld: TField): string;
     procedure GenerateStructure(dataSet: TDataSet);
+    procedure GenerateOneAppend(aFields: TFields);
     procedure GenerateAppendsBlock(dataSet: TDataSet);
     function FormatLongStringLiterals(const Literal: string): string;
     function GenerateUnitHeader(const aUnitName: string): string;
@@ -270,38 +273,88 @@ begin
   end;
 end;
 
-procedure TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet);
+procedure TDSGenerator.GenerateOneAppend_Multiline(aFields: TFields);
 var
-  aCode: TStrings;
   fld: TField;
   s1: string;
 begin
-  aCode := FAppendCode;
-  aCode.Add('{$REGION ''Append data''}');
+  with FAppendCode do
+  begin
+    Add(IndentationText + 'with ds do');
+    Add(IndentationText + 'begin');
+    Add(IndentationText + IndentationText + 'Append;');
+    for fld in aFields do
+    begin
+      s1 := GenerateLine_SetFieldValue(fld);
+      if s1 <> '' then
+        Add(IndentationText + IndentationText + s1);
+    end;
+    Add(IndentationText + IndentationText + 'Post;');
+    Add(IndentationText + 'end;');
+  end;
+end;
+
+procedure TDSGenerator.GenerateOneAppend_Singleline(aFields: TFields);
+var
+  sFieldsValues: string;
+  fld: TField;
+  s1: string;
+begin
+  sFieldsValues := '';
+  for fld in aFields do
+  begin
+    if fld.IsNull then
+      s1 := 'Null'
+    else
+      case fld.DataType of
+        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+          s1 := fld.AsString;
+        ftBoolean:
+          s1 := BoolToStr(fld.AsBoolean, true);
+        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+          s1 := FloatToCode(fld.AsExtended);
+        ftDate:
+          s1 := DateToCode(fld.AsDateTime);
+        ftTime:
+          s1 := TimeToCode(fld.AsDateTime);
+        ftDateTime:
+          s1 := DateTimeToCode(fld.AsDateTime);
+        ftString, ftWideString:
+          s1 := FormatLongStringLiterals(QuotedStr(fld.Value));
+      end;
+    if sFieldsValues = '' then
+      sFieldsValues := s1
+    else
+      sFieldsValues := sFieldsValues + ', ' + s1;
+  end;
+  FAppendCode.Add(IndentationText + 'ds.AppendRecord([' + sFieldsValues
+    + ']);');
+end;
+
+procedure TDSGenerator.GenerateOneAppend(aFields: TFields);
+begin
+  case FAppendMode of
+    amMultilineAppends:
+      GenerateOneAppend_Multiline(aFields);
+    amSinglelineAppends:
+      GenerateOneAppend_Singleline(aFields);
+  end;
+end;
+
+procedure TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet);
+begin
+  FAppendCode.Add('{$REGION ''Append data''}');
   dataSet.DisableControls;
   dataSet.Open;
   dataSet.First;
   while not dataSet.Eof do
   begin
-    with aCode do
-    begin
-      Add(IndentationText + 'with ds do');
-      Add(IndentationText + 'begin');
-      Add(IndentationText + IndentationText + 'Append;');
-      for fld in dataSet.Fields do
-      begin
-        s1 := GenerateLine_SetFieldValue(fld);
-        if s1 <> '' then
-          Add(IndentationText + IndentationText + s1);
-      end;
-      Add(IndentationText + IndentationText + 'Post;');
-      Add(IndentationText + 'end;');
-    end;
+    GenerateOneAppend(dataSet.Fields);
     dataSet.Next;
   end;
   dataSet.EnableControls;
-  aCode.Add(IndentationText + 'ds.First;');
-  aCode.Add('{$ENDREGION}');
+  FAppendCode.Add(IndentationText + 'ds.First;');
+  FAppendCode.Add('{$ENDREGION}');
 end;
 
 function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
@@ -313,8 +366,8 @@ begin
       sDataSetUnits := IndentationText + 'FireDAC.Comp.Client;';
     dstClientDataSet:
       sDataSetUnits :=
-        (* *) IndentationText + 'Datasnap.DBClient;'#13#10 +
-        (* *) IndentationText + 'MidasLib;';
+      (* *) IndentationText + 'Datasnap.DBClient;'#13#10 +
+      (* *) IndentationText + 'MidasLib;';
   end;
   FTempCode.Clear;
   with FTempCode do
@@ -326,6 +379,7 @@ begin
     Add('uses');
     Add(IndentationText + 'System.Classes,');
     Add(IndentationText + 'System.SysUtils,');
+    Add(IndentationText + 'System.Variants,');
     Add(IndentationText + 'Data.DB,');
     Add(sDataSetUnits);
     Add('');
