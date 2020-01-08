@@ -34,6 +34,7 @@ type
     procedure GenFieldDef_DateTime;
     procedure GenFieldDef_BCD;
     // -------------
+    procedure Execute_DataSetType_CDS;
     procedure Execute_WithMultipleFields;
     // -------------
     procedure GenWithNoIndentation;
@@ -217,6 +218,26 @@ end;
 // -----------------------------------------------------------------------
 // Test: Dataset structure generation with multiple diffrent fields
 // -----------------------------------------------------------------------
+
+procedure TestGenerateStructure.Execute_DataSetType_CDS;
+var
+  actualCode: string;
+begin
+  fGenerator.DataSet := GivenDataSet_WithInteger(fOwner, 'Group');
+  fGenerator.GeneratorMode := genStructure;
+  fGenerator.DataSetType := dstClientDataSet;
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    (* *) '  ds := TClientDataSet.Create(AOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    FieldDefs.Add(''Group'', ftInteger);'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13, actualCode);
+end;
 
 procedure TestGenerateStructure.Execute_WithMultipleFields;
 var
