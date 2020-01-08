@@ -16,7 +16,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGeneratorMode = (genAll, genStructure, genAppend, genUnit);
+  TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
 
   TDSGenerator = class(TComponent)
   const
@@ -67,7 +67,8 @@ type
 implementation
 
 uses
-  System.Rtti;
+  System.Rtti,
+  Vcl.Clipbrd;
 
 constructor TDSGenerator.Create(AOwner: TComponent);
 begin
@@ -353,6 +354,8 @@ begin
     genUnit:
       FCode.Text := GenerateUnitHeader('uSampleDataSet') + GenerateFunction +
         GenerateUnitFooter;
+    genFunction:
+      FCode.Text := GenerateFunction;
   end;
 end;
 
@@ -429,7 +432,6 @@ end;
 class procedure TDSGenerator.GenerateAndSaveToFile (ds: TDataSet;
   const aFileName: string);
 var
-  gen: TDSGenerator;
   fs: TFileStream;
 begin
   fs := TFileStream.Create(aFileName, fmCreate);
@@ -437,6 +439,21 @@ begin
     GenerateAndSaveToStream(ds, fs);
   finally
     fs.Free;
+  end;
+end;
+
+class procedure TDSGenerator.GenerateAndSaveClipboard(ds: TDataSet);
+var
+  gen: TDSGenerator;
+begin
+  gen := TDSGenerator.Create(nil);
+  try
+    gen.dataSet := ds;
+    gen.GeneratorMode := genFunction;
+    gen.Execute;
+    Clipboard.AsText :=gen.Code.Text;
+  finally
+    gen.Free;
   end;
 end;
 
