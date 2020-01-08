@@ -37,9 +37,9 @@ type
     procedure Execute_DataSetType_CDS;
     procedure Execute_WithMultipleFields;
     // -------------
-    procedure GenWithNoIndentation;
-    procedure GenWithIndentation_OneSpace;
-    procedure GenWithIndentation_BCDField;
+    procedure Execute_WithNoIndentation;
+    procedure Execute_WithOneSpaceIndentation;
+    procedure Execute_DefaultIndentation_BCDField;
   end;
 
 implementation
@@ -266,7 +266,7 @@ end;
 // Tests for: property IndentationText
 // -----------------------------------------------------------------------
 
-procedure TestGenerateStructure.GenWithIndentation_OneSpace;
+procedure TestGenerateStructure.Execute_WithOneSpaceIndentation;
 var
   actualCode: string;
 begin
@@ -286,7 +286,7 @@ begin
     (* *) ' end;'#13, actualCode);
 end;
 
-procedure TestGenerateStructure.GenWithNoIndentation;
+procedure TestGenerateStructure.Execute_WithNoIndentation;
 var
   actualCode: string;
 begin
@@ -306,7 +306,7 @@ begin
     (* *) 'end;'#13, actualCode);
 end;
 
-procedure TestGenerateStructure.GenWithIndentation_BCDField;
+procedure TestGenerateStructure.Execute_DefaultIndentation_BCDField;
 var
   actualCode: string;
 begin

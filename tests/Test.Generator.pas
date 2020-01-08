@@ -31,9 +31,9 @@ type
   published
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
-    procedure GenerateUnit_GenHeader;
+    procedure GenerateUnit_Header;
     procedure GenerateUnit_Header_ClientDataSet;
-    procedure GenerateUnit_GenFooter;
+    procedure GenerateUnit_Footer;
     procedure GenerateFunction;
   end;
 
@@ -200,7 +200,7 @@ begin
     (* *) 'end.'#13, actualCode);
 end;
 
-procedure TestDSGenerator.GenerateUnit_GenHeader;
+procedure TestDSGenerator.GenerateUnit_Header;
 var
   actualCode: string;
 begin
@@ -248,7 +248,7 @@ begin
   //
 end;
 
-procedure TestDSGenerator.GenerateUnit_GenFooter;
+procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
