@@ -1,4 +1,4 @@
-program DUnitxDatasetToCode;
+program TestDSGenerator;
 
 {$IFNDEF TESTINSIGHT}
 {$APPTYPE CONSOLE}
