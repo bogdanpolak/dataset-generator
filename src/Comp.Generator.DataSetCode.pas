@@ -296,7 +296,17 @@ begin
 end;
 
 function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
+var
+  sDataSetUnits: string;
 begin
+  case FDataSetType of
+    dstFDMemTable:
+      sDataSetUnits := IndentationText + 'FireDAC.Comp.Client;';
+    dstClientDataSet:
+      sDataSetUnits :=
+        (* *) IndentationText + 'Datasnap.DBClient;'#13#10 +
+        (* *) IndentationText + 'MidasLib;';
+  end;
   FTempCode.Clear;
   with FTempCode do
   begin
@@ -308,7 +318,7 @@ begin
     Add(IndentationText + 'System.Classes,');
     Add(IndentationText + 'System.SysUtils,');
     Add(IndentationText + 'Data.DB,');
-    Add(IndentationText + 'FireDAC.Comp.Client;');
+    Add(sDataSetUnits);
     Add('');
     Add('function CreateDataSet (aOwner: TComponent): TDataSet;');
     Add('');
