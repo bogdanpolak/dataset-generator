@@ -29,29 +29,29 @@ end;
 
 function TDSGeneratorUnderTest.TestGenCodeLineFieldDefAdd(fld: TField): string;
 begin
-  Result := GenCodeLineFieldDefAdd(fld);
+  Result := GenerateLine_FieldDefAdd(fld);
 end;
 
 function TDSGeneratorUnderTest.TestGenCodeLineSetFieldValue(
   fld: TField): string;
 begin
-  Result := GenCodeLineSetFieldValue(fld);
+  Result := GenerateLine_SetFieldValue(fld);
 end;
 
 function TDSGeneratorUnderTest.TestGenUnitHeader(
   const aUnitName: string): string;
 begin
-  Result := GenUnitHeader(aUnitName);
+  Result := GenerateUnitHeader(aUnitName);
 end;
 
 function TDSGeneratorUnderTest.TestGenFunction: string;
 begin
-  Result := GenFunction;
+  Result := GenerateFunction;
 end;
 
 function TDSGeneratorUnderTest.TestGenUnitFooter: string;
 begin
-  Result := GenUnitFooter;
+  Result := GenerateUnitFooter;
 end;
 
 end.
