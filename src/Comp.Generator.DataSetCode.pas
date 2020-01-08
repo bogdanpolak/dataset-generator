@@ -243,10 +243,15 @@ end;
 procedure TDSGenerator.GenerateStructure(dataSet: TDataSet);
 var
   fld: TField;
+  sDataSetCreate: string;
 begin
+  case FDataSetType of
+    dstFDMemTable: sDataSetCreate := 'TFDMemTable.Create(AOwner)';
+    dstClientDataSet: sDataSetCreate := 'TClientDataSet.Create(AOwner)';
+  end;
   with FStructureCode do
   begin
-    Add(IndentationText + 'ds := TFDMemTable.Create(AOwner);');
+    Add(IndentationText + 'ds := '+sDataSetCreate+';');
     Add(IndentationText + 'with ds do');
     Add(IndentationText + 'begin');
     for fld in dataSet.Fields do
