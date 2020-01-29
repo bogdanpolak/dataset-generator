@@ -135,37 +135,37 @@ begin
   actualCode := TDSGenerator.GenerateAsString(ds);
 
   Assert.AreMemosEqual(
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
-    (* *) '    FieldDefs.Add(''Event'', ftWideString, 50);'#13 +
-    (* *) '    FieldDefs.Add(''Date'', ftDate);'#13 +
-    (* *) '    FieldDefs.Add(''Expirence'', ftFloat);'#13 +
-    (* *) '    FieldDefs.Add(''Income'', ftCurrency);'#13 +
-    (* *) '    CreateDataSet;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''EventID'').Value := 1;'#13 +
-    (* *) '    FieldByName(''Event'').Value := ''Liberation of Poland'';'#13 +
-    (* *) '    FieldByName(''Date'').Value := EncodeDate(1989,6,4);'#13 +
-    (* *) '    FieldByName(''Expirence'').Value := 1.2;'#13 +
-    (* *) '    FieldByName(''Income'').Value := 120;'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''EventID'').Value := 2;'#13 +
-    (* *) '    FieldByName(''Event'').Value := ''Battle of Vienna'';'#13 +
-    (* *) '    FieldByName(''Date'').Value := EncodeDate(1683,9,12);'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {}  '  ds := TFDMemTable.Create(AOwner);'#13 +
+    {}  '  with ds do'#13 +
+    {}  '  begin'#13 +
+    {}  '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
+    {}  '    FieldDefs.Add(''Event'', ftWideString, 50);'#13 +
+    {}  '    FieldDefs.Add(''Date'', ftDate);'#13 +
+    {}  '    FieldDefs.Add(''Expirence'', ftFloat);'#13 +
+    {}  '    FieldDefs.Add(''Income'', ftCurrency);'#13 +
+    {}  '    CreateDataSet;'#13 +
+    {}  '  end;'#13 +
+    {}  '{$REGION ''Append data''}'#13 +
+    {}  '  with ds do'#13#10 +
+    {}  '  begin'#13#10 +
+    {}  '    Append;'#13#10 +
+    {}  '    FieldByName(''EventID'').Value := 1;'#13#10 +
+    {}  '    FieldByName(''Event'').Value := ''Liberation of Poland'';'#13#10 +
+    {}  '    FieldByName(''Date'').Value := EncodeDate(1989,6,4);'#13#10 +
+    {}  '    FieldByName(''Expirence'').Value := 1.2;'#13#10 +
+    {}  '    FieldByName(''Income'').Value := 120;'#13#10 +
+    {}  '    Post;'#13#10 +
+    {}  '  end;'#13#10 +
+    {}  '  with ds do'#13 +
+    {}  '  begin'#13 +
+    {}  '    Append;'#13 +
+    {}  '    FieldByName(''EventID'').Value := 2;'#13 +
+    {}  '    FieldByName(''Event'').Value := ''Battle of Vienna'';'#13 +
+    {}  '    FieldByName(''Date'').Value := EncodeDate(1683,9,12);'#13 +
+    {}  '    Post;'#13 +
+    {}  '  end;'#13 +
+    {}  '  ds.First;'#13 +
+    {}  '{$ENDREGION}'#13, actualCode);
 end;
 
 procedure TestDSGenerator.GenerateToStream_StringDataSet;
@@ -179,12 +179,12 @@ begin
   TDSGenerator.GenerateAndSaveToStream(ds, fStringStream);
   actualCode := fStringStream.DataString;
   Assert.AreMemosEqual(
-    (* *) 'unit uSampleDataSet;'#13 +
-    (* *) #13 +
-    (* *) 'interface'#13 +
-    (* *) #13 +
-    (* *) 'uses'#13 +
-    (* *) '  System.Classes,'#13 +
+    (* *)  'unit uSampleDataSet;'#13 +
+    (* *)  #13 +
+    (* *)  'interface'#13 +
+    (* *)  #13 +
+    (* *)  'uses'#13 +
+    (* *)  '  System.Classes,'#13 +
     (* *) '  System.SysUtils,'#13 +
     (* *) '  System.Variants,'#13 +
     (* *) '  Data.DB,'#13 +
