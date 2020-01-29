@@ -35,6 +35,7 @@ type
     procedure GenerateUnit_Header_ClientDataSet;
     procedure GenerateUnit_Footer;
     procedure GenerateFunction;
+    procedure GenerateFunction_ClientDataSet;
   end;
 
 implementation
@@ -306,6 +307,38 @@ begin
     (* *) '    FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
     (* *) + '    Post;'#13 +
     (* *) '  end;'#13 +
+    (* *) '  ds.First;'#13 +
+    (* *) '{$ENDREGION}'#13 +
+    (* *) '  Result := ds;'#13 +
+    (* *) 'end;'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateFunction_ClientDataSet;
+var
+  actualCode: string;
+begin
+  fGenerator.dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
+  fGenerator.DataSetType := dstClientDataSet;
+  fGenerator.AppendMode := amSinglelineAppends;
+
+  actualCode := fGenerator.TestGenFunction;
+
+  Assert.AreMemosEqual(
+    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
+    (* *) 'var'#13 +
+    (* *) '  ds: TClientDataSet;'#13 +
+    (* *) 'begin'#13 +
+    (* *) '  ds := TClientDataSet.Create(AOwner);'#13 +
+    (* *) '  with ds do'#13 +
+    (* *) '  begin'#13 +
+    (* *) '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
+    (* *) '    FieldDefs.Add(''Event'', ftWideString, 50);'#13 +
+    (* *) '    FieldDefs.Add(''Date'', ftDate);'#13 +
+    (* *) '    CreateDataSet;'#13 +
+    (* *) '  end;'#13 +
+    (* *) '{$REGION ''Append data''}'#13 +
+    (* *) '  ds.AppendRecord([1, ''Liberation of Poland'', EncodeDate(1989,6,4)]);'#13 +
+    (* *) '  ds.AppendRecord([2, ''Battle of Vienna'', EncodeDate(1683,9,12)]);'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13 +
     (* *) '  Result := ds;'#13 +
