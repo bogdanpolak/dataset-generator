@@ -87,6 +87,24 @@ begin
   Result := memTable;
 end;
 
+function GivenDataSet_MiniHistoricalEvents(aOwner: TComponent): TDataSet;
+var
+  memTable: TFDMemTable;
+begin
+  memTable := TFDMemTable.Create(aOwner);
+  with memTable do
+  begin
+    FieldDefs.Add('EventID', ftInteger);
+    FieldDefs.Add('Event', ftWideString, 50);
+    FieldDefs.Add('Date', ftDate);
+    CreateDataSet;
+    AppendRecord([1, 'Liberation of Poland', EncodeDate(1989, 06, 04)]);
+    AppendRecord([2, 'Battle of Vienna', EncodeDate(1683, 09, 12)]);
+    First;
+  end;
+  Result := memTable;
+end;
+
 function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
   const aDataValue: string): TDataSet;
 var
@@ -267,10 +285,7 @@ var
 begin
   fGenerator.dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
-  fGenerator.GeneratorMode := genUnit;
 
-
-  fGenerator.Execute;
   actualCode := fGenerator.TestGenFunction;
 
   Assert.AreMemosEqual(
