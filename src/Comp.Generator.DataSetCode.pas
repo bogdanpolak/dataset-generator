@@ -392,11 +392,19 @@ begin
 end;
 
 function TDSGenerator.GenerateFunction(): string;
+var
+  aClassName: string;
 begin
+  case FDataSetType of
+    dstFDMemTable:
+      aClassName := 'TFDMemTable';
+    dstClientDataSet:
+      aClassName := 'TClientDataSet';
+  end;
   Result :=
   {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} 'var' + sLineBreak +
-  {} '  ds: TFDMemTable;' + sLineBreak +
+  {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
   {} GenerateStructure(FDataSet) +
   {} GenerateAppendsBlock(FDataSet) +
