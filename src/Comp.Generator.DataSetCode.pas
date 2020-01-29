@@ -28,12 +28,12 @@ type
     // * --------------------------------------------------------------------
     MaxLiteralLenght = 70;
   private
-    FCode: TStrings;
-    FDataSet: TDataSet;
-    FIndentationText: String;
-    FGeneratorMode: TGeneratorMode;
-    FDataSetType: TDataSetType;
-    FAppendMode: TAppendMode;
+    fCode: TStrings;
+    fDataSet: TDataSet;
+    fIndentationText: String;
+    fGeneratorMode: TGeneratorMode;
+    fDataSetType: TDataSetType;
+    fAppendMode: TAppendMode;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline(aFields: TFields): string;
     function GenerateOneAppend_Singleline(aFields: TFields): string;
@@ -58,14 +58,14 @@ type
       const aFileName: string);
     class procedure GenerateAndSaveClipboard(ds: TDataSet);
   published
-    property dataSet: TDataSet read FDataSet write FDataSet;
-    property Code: TStrings read FCode;
-    property IndentationText: String read FIndentationText
-      write FIndentationText;
-    property GeneratorMode: TGeneratorMode read FGeneratorMode
-      write FGeneratorMode;
-    property DataSetType: TDataSetType read FDataSetType write FDataSetType;
-    property AppendMode: TAppendMode read FAppendMode write FAppendMode;
+    property DataSet: TDataSet read fDataSet write fDataSet;
+    property Code: TStrings read fCode;
+    property IndentationText: String read fIndentationText
+      write fIndentationText;
+    property GeneratorMode: TGeneratorMode read fGeneratorMode
+      write fGeneratorMode;
+    property DataSetType: TDataSetType read fDataSetType write fDataSetType;
+    property AppendMode: TAppendMode read fAppendMode write fAppendMode;
   end;
 
 implementation
@@ -79,17 +79,17 @@ begin
   inherited;
   // --------------------------------
   // Default options
-  FGeneratorMode := genAll;
-  FDataSetType := dstFDMemTable;
-  FAppendMode := amMultilineAppends;
-  FIndentationText := '  ';
+  fGeneratorMode := genAll;
+  fDataSetType := dstFDMemTable;
+  fAppendMode := amMultilineAppends;
+  fIndentationText := '  ';
   // --------------------------------
-  FCode := TStringList.Create;
+  fCode := TStringList.Create;
 end;
 
 destructor TDSGenerator.Destroy;
 begin
-  FCode.Free;
+  fCode.Free;
   inherited;
 end;
 
@@ -130,10 +130,10 @@ begin
       FieldTypeToString(fld.DataType) + ');'
   else if (fld.DataType in [ftBCD, ftFMTBcd]) then
     Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
-      IndentationText + '    ' +
+      fIndentationText + '    ' +
       Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
       [fld.FieldName, FieldTypeToString(fld.DataType),
-      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak + IndentationText
+      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak + fIndentationText
       + '  end;'
   else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
@@ -192,12 +192,12 @@ begin
     begin
       if Length(s1) < MaxLiteralLenght then
       begin
-        s2 := s2 + IndentationText + '    ' + s1;
+        s2 := s2 + fIndentationText + '    ' + s1;
         s1 := '';
       end
       else
       begin
-        s2 := s2 + IndentationText + IndentationText + IndentationText +
+        s2 := s2 + fIndentationText + fIndentationText + fIndentationText +
           s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
         s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
       end;
@@ -240,25 +240,25 @@ var
   sDataSetCreate: string;
   sFieldDefinitions: string;
 begin
-  case FDataSetType of
+  case fDataSetType of
     dstFDMemTable:
       sDataSetCreate := 'TFDMemTable.Create(AOwner)';
     dstClientDataSet:
       sDataSetCreate := 'TClientDataSet.Create(AOwner)';
   end;
   sFieldDefinitions := '';
-  if FDataSet <> nil then
-    for fld in FDataSet.Fields do
+  if fDataSet <> nil then
+    for fld in fDataSet.Fields do
       sFieldDefinitions := sFieldDefinitions +
-      {} IndentationText + IndentationText + GenerateLine_FieldDefAdd(fld) +
+      {} fIndentationText + fIndentationText + GenerateLine_FieldDefAdd(fld) +
         sLineBreak;
   Result :=
-  {} IndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
-  {} IndentationText + 'with ds do' + sLineBreak +
-  {} IndentationText + 'begin' + sLineBreak +
+  {} fIndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
+  {} fIndentationText + 'with ds do' + sLineBreak +
+  {} fIndentationText + 'begin' + sLineBreak +
   {} sFieldDefinitions +
-  {} IndentationText + IndentationText + 'CreateDataSet;' + sLineBreak +
-  {} IndentationText + 'end;' + sLineBreak
+  {} fIndentationText + fIndentationText + 'CreateDataSet;' + sLineBreak +
+  {} fIndentationText + 'end;' + sLineBreak
 end;
 
 function TDSGenerator.GenerateOneAppend_Multiline(aFields: TFields): string;
@@ -269,17 +269,17 @@ var
 begin
   sl := TStringList.Create;
   try
-    sl.Add(IndentationText + 'with ds do');
-    sl.Add(IndentationText + 'begin');
-    sl.Add(IndentationText + IndentationText + 'Append;');
+    sl.Add(fIndentationText + 'with ds do');
+    sl.Add(fIndentationText + 'begin');
+    sl.Add(fIndentationText + fIndentationText + 'Append;');
     for fld in aFields do
     begin
       s1 := GenerateLine_SetFieldValue(fld);
       if s1 <> '' then
-        sl.Add(IndentationText + IndentationText + s1);
+        sl.Add(fIndentationText + fIndentationText + s1);
     end;
-    sl.Add(IndentationText + IndentationText + 'Post;');
-    sl.Add(IndentationText + 'end;');
+    sl.Add(fIndentationText + fIndentationText + 'Post;');
+    sl.Add(fIndentationText + 'end;');
     Result := sl.Text;
   finally
     sl.Free;
@@ -319,13 +319,13 @@ begin
     else
       sFieldsValues := sFieldsValues + ', ' + s1;
   end;
-  Result := IndentationText + 'ds.AppendRecord([' + sFieldsValues + ']);' +
+  Result := fIndentationText + 'ds.AppendRecord([' + sFieldsValues + ']);' +
     sLineBreak;
 end;
 
 function TDSGenerator.GenerateOneAppend(aFields: TFields): string;
 begin
-  case FAppendMode of
+  case fAppendMode of
     amMultilineAppends:
       Result := GenerateOneAppend_Multiline(aFields);
     amSinglelineAppends:
@@ -356,7 +356,7 @@ begin
   Result :=
   {} '{$REGION ''Append data''}' + sLineBreak +
   {} sDataAppend +
-  {} IndentationText + 'ds.First;' + sLineBreak +
+  {} fIndentationText + 'ds.First;' + sLineBreak +
   {} '{$ENDREGION}' + sLineBreak;
 end;
 
@@ -364,13 +364,13 @@ function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
 var
   sDataSetUnits: string;
 begin
-  case FDataSetType of
+  case fDataSetType of
     dstFDMemTable:
-      sDataSetUnits := IndentationText + 'FireDAC.Comp.Client;';
+      sDataSetUnits := fIndentationText + 'FireDAC.Comp.Client;';
     dstClientDataSet:
       sDataSetUnits :=
-      {} IndentationText + 'Datasnap.DBClient;'#13#10 +
-      {} IndentationText + 'MidasLib;';
+      {} fIndentationText + 'Datasnap.DBClient;'#13#10 +
+      {} fIndentationText + 'MidasLib;';
   end;
   Result :=
   {} 'unit ' + aUnitName + ';' + sLineBreak +
@@ -378,10 +378,10 @@ begin
   {} 'interface' + sLineBreak +
   {} sLineBreak +
   {} 'uses' + sLineBreak +
-  {} IndentationText + 'System.Classes,' + sLineBreak +
-  {} IndentationText + 'System.SysUtils,' + sLineBreak +
-  {} IndentationText + 'System.Variants,' + sLineBreak +
-  {} IndentationText + 'Data.DB,' + sLineBreak +
+  {} fIndentationText + 'System.Classes,' + sLineBreak +
+  {} fIndentationText + 'System.SysUtils,' + sLineBreak +
+  {} fIndentationText + 'System.Variants,' + sLineBreak +
+  {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
   {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
@@ -394,7 +394,7 @@ function TDSGenerator.GenerateFunction(): string;
 var
   aClassName: string;
 begin
-  case FDataSetType of
+  case fDataSetType of
     dstFDMemTable:
       aClassName := 'TFDMemTable';
     dstClientDataSet:
@@ -405,8 +405,8 @@ begin
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
-  {} GenerateStructure(FDataSet) +
-  {} GenerateAppendsBlock(FDataSet) +
+  {} GenerateStructure(fDataSet) +
+  {} GenerateAppendsBlock(fDataSet) +
   {} '  Result := ds;' + sLineBreak +
   {} 'end;' + sLineBreak;
 end;
@@ -418,19 +418,19 @@ end;
 
 procedure TDSGenerator.Execute;
 begin
-  case FGeneratorMode of
+  case fGeneratorMode of
     genAll:
-      FCode.Text := GenerateStructure(FDataSet) + GenerateAppendsBlock
-        (FDataSet);
+      fCode.Text := GenerateStructure(fDataSet) + GenerateAppendsBlock
+        (fDataSet);
     genStructure:
-      FCode.Text := GenerateStructure(FDataSet);
+      fCode.Text := GenerateStructure(fDataSet);
     genAppend:
-      FCode.Text := GenerateAppendsBlock(FDataSet);
+      fCode.Text := GenerateAppendsBlock(fDataSet);
     genUnit:
-      FCode.Text := GenerateUnitHeader('uSampleDataSet') + GenerateFunction +
+      fCode.Text := GenerateUnitHeader('uSampleDataSet') + GenerateFunction +
         GenerateUnitFooter;
     genFunction:
-      FCode.Text := GenerateFunction;
+      fCode.Text := GenerateFunction;
   end;
 end;
 
@@ -440,7 +440,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
+    gen.DataSet := ds;
     gen.Execute;
     Result := gen.Code.Text;
   finally
@@ -474,7 +474,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
+    gen.DataSet := ds;
     gen.Execute;
     Result := TStringsToStringDynArray(gen.Code);
   finally
@@ -490,7 +490,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
+    gen.DataSet := ds;
     gen.GeneratorMode := genUnit;
     gen.Execute;
     sCode := Utf8String(gen.Code.Text);
@@ -523,10 +523,8 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
-    gen.GeneratorMode := genFunction;
-    gen.Execute;
-    Clipboard.AsText := gen.Code.Text;
+    gen.DataSet := ds;
+    Clipboard.AsText := gen.GenerateFunction;
   finally
     gen.Free;
   end;
