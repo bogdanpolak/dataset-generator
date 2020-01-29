@@ -32,6 +32,7 @@ type
     procedure GenerateUnit_NilDataSet;
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
+    procedure GenerateToStream_UnitName;
     procedure GenerateUnit_Header;
     procedure GenerateUnit_Header_ClientDataSet;
     procedure GenerateUnit_Footer;
@@ -43,6 +44,7 @@ implementation
 
 uses
   System.Variants,
+  System.IOUtils,
   Data.FmtBcd;
 
 // -----------------------------------------------------------------------
@@ -228,6 +230,52 @@ begin
     (* *) 'end;'#13 +
     (* *) #13 +
     (* *) 'end.'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateToStream_UnitName;
+var
+  actualCode: string;
+  aFileName: string;
+  actual: string;
+begin
+  // fGenerator.dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
+
+  aFileName := System.IOUtils.TPath.GetTempPath + 'FakeDataSet.Historical.pas';
+  TDSGenerator.GenerateAndSaveToFile(nil, aFileName);
+  actual := TFile.ReadAllText(aFileName);
+
+  Assert.AreMemosEqual(
+    {} 'unit FakeDataSet.Historical;'#13#10 +
+    {} #13#10 +
+    {} 'interface'#13#10 +
+    {} #13#10 +
+    {} 'uses'#13#10 +
+    {} '  System.Classes,'#13#10 +
+    {} '  System.SysUtils,'#13#10 +
+    {} '  System.Variants,'#13#10 +
+    {} '  Data.DB,'#13#10 +
+    {} '  FireDAC.Comp.Client;'#13#10 +
+    {} ''#13#10 +
+    {} 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13#10 +
+    {} #13#10 +
+    {} 'implementation'#13#10 +
+    {} ''#13#10 +
+    {} 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13#10 +
+    {} 'var'#13#10 +
+    {} '  ds: TFDMemTable;'#13#10 +
+    {} 'begin'#13#10 +
+    {} '  ds := TFDMemTable.Create(AOwner);'#13#10 +
+    {} '  with ds do'#13#10 +
+    {} '  begin'#13#10 +
+    {} '    CreateDataSet;'#13#10 +
+    {} '  end;'#13#10 +
+    {} '{$REGION ''Append data''}'#13#10 +
+    {} '  ds.First;'#13#10 +
+    {} '{$ENDREGION}'#13#10 +
+    {} '  Result := ds;'#13#10 +
+    {} 'end;'#13#10 +
+    {} #13#10 +
+    {} 'end.',actual);
 end;
 
 procedure TestDSGenerator.GenerateUnit_Header;
