@@ -16,6 +16,7 @@ type
     function TestFormatLongStringLiterals(const Literal: string): string;
     function TestGenUnitHeader(const aUnitName: string): string;
     function TestGenUnitFooter(): string;
+    function TestGenerateOneAppend(aFields: TFields): string;
     function TestGenFunction: string;
   end;
 
@@ -36,6 +37,11 @@ function TDSGeneratorUnderTest.TestGenCodeLineSetFieldValue(
   fld: TField): string;
 begin
   Result := GenerateLine_SetFieldValue(fld);
+end;
+
+function TDSGeneratorUnderTest.TestGenerateOneAppend(aFields: TFields): string;
+begin
+  Result := GenerateOneAppend(aFields);
 end;
 
 function TDSGeneratorUnderTest.TestGenUnitHeader(
