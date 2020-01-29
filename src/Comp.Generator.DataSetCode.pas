@@ -34,7 +34,6 @@ type
     FGeneratorMode: TGeneratorMode;
     FDataSetType: TDataSetType;
     FAppendMode: TAppendMode;
-    procedure Guard;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline(aFields: TFields): string;
     function GenerateOneAppend_Singleline(aFields: TFields): string;
@@ -235,11 +234,6 @@ begin
   end;
 end;
 
-procedure TDSGenerator.Guard;
-begin
-  Assert(dataSet <> nil, 'Property DataSet not assigned!');
-end;
-
 function TDSGenerator.GenerateStructure(dataSet: TDataSet): string;
 var
   fld: TField;
@@ -253,10 +247,11 @@ begin
       sDataSetCreate := 'TClientDataSet.Create(AOwner)';
   end;
   sFieldDefinitions := '';
-  for fld in dataSet.Fields do
-    sFieldDefinitions := sFieldDefinitions +
-    {} IndentationText + IndentationText + GenerateLine_FieldDefAdd(fld) +
-      sLineBreak;
+  if FDataSet <> nil then
+    for fld in FDataSet.Fields do
+      sFieldDefinitions := sFieldDefinitions +
+      {} IndentationText + IndentationText + GenerateLine_FieldDefAdd(fld) +
+        sLineBreak;
   Result :=
   {} IndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
   {} IndentationText + 'with ds do' + sLineBreak +
@@ -344,15 +339,19 @@ function TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet): string;
 var
   sDataAppend: string;
 begin
-  dataSet.DisableControls;
-  dataSet.Open;
-  dataSet.First;
-  while not dataSet.Eof do
+  sDataAppend := '';
+  if dataSet <> nil then
   begin
-    sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
-    dataSet.Next;
+    dataSet.DisableControls;
+    dataSet.Open;
+    dataSet.First;
+    while not dataSet.Eof do
+    begin
+      sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
+      dataSet.Next;
+    end;
+    dataSet.EnableControls;
   end;
-  dataSet.EnableControls;
 
   Result :=
   {} '{$REGION ''Append data''}' + sLineBreak +
@@ -419,7 +418,6 @@ end;
 
 procedure TDSGenerator.Execute;
 begin
-  Guard;
   case FGeneratorMode of
     genAll:
       FCode.Text := GenerateStructure(FDataSet) + GenerateAppendsBlock
