@@ -29,6 +29,7 @@ type
     [TearDown]
     procedure TearDown;
   published
+    procedure GenerateUnit_NilDataSet;
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
     procedure GenerateUnit_Header;
@@ -125,6 +126,15 @@ end;
 // -----------------------------------------------------------------------
 // Tests for: Generate Sample historical events code
 // -----------------------------------------------------------------------
+
+procedure TestDSGenerator.GenerateUnit_NilDataSet;
+var
+  actualCode: string;
+begin
+  TDSGenerator.GenerateAsString(nil);
+
+  Assert.Pass;
+end;
 
 procedure TestDSGenerator.Generate_HistoricalEvents;
 var
