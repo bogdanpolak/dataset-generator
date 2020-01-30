@@ -1,5 +1,25 @@
 ﻿# DataSet to Delphi Code
 
+---------------------------------------------------------------
+PLAN
+
+1) Describe usage scenario (unit tests)
+1) TDSGenerator component usage
+1) Methods:
+   - `GenerateAsString`
+   - `GenerateAsArray`
+   - `GenerateAndSaveToStream / GenerateAndSaveToFile`
+   - `GenerateAndSaveToClipboard`
+1) Options
+   - `IdentationText`
+   - `GenerateCode`
+   - `AppendMode`
+   - `GenerateDataSet`
+1) Component Class `TDSGenerator`
+1) Update project sample
+
+--------------------------------------------------------------
+
 ## Overview
 
 Generate Delphi source code creating a mock dataset (TFDMemTable) based on any TDataSet.
