@@ -21,13 +21,55 @@ PLAN
 
 ## Overview
 
-Generate Delphi source code creating a mock dataset (TFDMemTable) based on any TDataSet.
+DataSet Generator is a component that uses any dataset and creates Delphi code. This code is a function which creating and populating in-memory dataset using structure and data of provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
 
-TBD: Describe usage scenario (unit tests)
+## Generator usage
 
-## DataSet Generator component usage
+To create a fake dataset developer needs to include unit `Comp.Generator.DataSetCode.pas` in uses section:
 
-To generate fake dataset from
+```pas
+uses
+  Comp.Generator.DataSetCode;
+```
+
+Finds a production dataset which need to be faked and call any of generator's class methods like `GenerateAndSaveToFile`:
+
+```pas
+begin
+  aDataSet := fDataSetFactory.ConstructSelectDataset(
+    SQL_SELECT_CustomerOrders_FromOneMonth, 
+    [aYear, aMonth] );
+  // ------------------------------------
+  // injected generator call:
+  TDSGenerator.GenerateAndSaveToFile(
+    aDataSet,
+    'Fake.CustomerOrders.pas');
+  // ------------------------------------
+  fOrdersView.SetMasterDataset(aDataSet);
+end;
+```
+
+Using generated method `CreateDataSet` developer is able to write unit test for the class `TOrdersView`:
+
+```pas
+procedure TestOrdersView.Setup;
+begin
+  fOwner := TComponent.Create;
+  fOrdersView := TOrdersView.Create(
+    TMock<IOrdersModel>.Create);
+  // ...
+end;
+
+procedure TestOrdersView.Test_CalculateCurrentImpact;
+begin
+  fOrdersView.SetMasterDataset(
+    CreateDataSet(fOwner));
+  
+  actual := fOrdersView.GentCurrentImpact;
+
+  Assert.AreEqual(25.5, actual, 0.000001);
+end;
+```
 
 ## Sample - component usage
 
@@ -96,6 +138,10 @@ begin
   Post;
 end;
 ```
+
+## Testing with DataSet Generator
+
+TBD: Describe usage scenario (unit tests)
 
 ## Fakes vs mocks
 
