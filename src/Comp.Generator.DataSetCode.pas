@@ -34,6 +34,7 @@ type
     fGeneratorMode: TGeneratorMode;
     fDataSetType: TDataSetType;
     fAppendMode: TAppendMode;
+    fUnitName: string;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline(aFields: TFields): string;
     function GenerateOneAppend_Singleline(aFields: TFields): string;
@@ -47,6 +48,7 @@ type
     function GenerateUnitHeader(const aUnitName: string): string;
     function GenerateUnitFooter(): string;
     function GenerateFunction: string;
+    class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -66,6 +68,7 @@ type
       write fGeneratorMode;
     property DataSetType: TDataSetType read fDataSetType write fDataSetType;
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
+    property UnitName: string read fUnitName write fUnitName;
   end;
 
 implementation
@@ -83,6 +86,7 @@ begin
   fDataSetType := dstFDMemTable;
   fAppendMode := amMultilineAppends;
   fIndentationText := '  ';
+  fUnitName := 'uSampleDataSet';
   // --------------------------------
   fCode := TStringList.Create;
 end;
@@ -427,7 +431,7 @@ begin
     genAppend:
       fCode.Text := GenerateAppendsBlock(fDataSet);
     genUnit:
-      fCode.Text := GenerateUnitHeader('uSampleDataSet') + GenerateFunction +
+      fCode.Text := GenerateUnitHeader(fUnitName) + GenerateFunction +
         GenerateUnitFooter;
     genFunction:
       fCode.Text := GenerateFunction;
@@ -482,36 +486,61 @@ begin
   end;
 end;
 
-class procedure TDSGenerator.GenerateAndSaveToStream(ds: TDataSet;
-  aStream: TStream);
+class function TDSGenerator.GenetateUnit(ds: TDataSet;
+  const aUnitName: string): string;
 var
   gen: TDSGenerator;
-  sCode: Utf8String;
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.DataSet := ds;
+    gen.dataSet := ds;
     gen.GeneratorMode := genUnit;
+    gen.UnitName := aUnitName;
     gen.Execute;
-    sCode := Utf8String(gen.Code.Text);
-    {
-     aFilePreamble := TEncoding.UTF8.GetPreamble;
-     aStream.Write(aFilePreamble[0], Length(aFilePreamble));
-    }
-    aStream.Write(sCode[1], Length(sCode));
+    Result := Utf8String(gen.Code.Text);
   finally
     gen.Free;
   end;
+end;
+
+class procedure TDSGenerator.GenerateAndSaveToStream(ds: TDataSet;
+  aStream: TStream);
+var
+  sCode: Utf8String;
+begin
+  sCode := Utf8String(GenetateUnit(ds, 'uSampleDataSet'));
+  aStream.Write(sCode[1], Length(sCode));
+end;
+
+function GetUnitName_FromFilePath(aFilePath: string): string;
+var
+  aUnitName: string;
+  aExtentionLen: integer;
+begin
+  aUnitName := ExtractFileName(aFilePath);
+  aExtentionLen := Length(ExtractFileExt(aFilePath));
+  if aExtentionLen > 0 then
+    Result := aUnitName.Substring(0, aUnitName.Length - aExtentionLen)
+  else
+    Result := aUnitName;
 end;
 
 class procedure TDSGenerator.GenerateAndSaveToFile(ds: TDataSet;
   const aFileName: string);
 var
   fs: TFileStream;
+  sCode: Utf8String;
+  aUnitName: string;
 begin
+  aUnitName := GetUnitName_FromFilePath(aFileName);
+  sCode := Utf8String(GenetateUnit(ds, aUnitName));
   fs := TFileStream.Create(aFileName, fmCreate);
   try
-    GenerateAndSaveToStream(ds, fs);
+    {
+     aFilePreamble := TEncoding.UTF8.GetPreamble;
+     aStream.Write(aFilePreamble[0], Length(aFilePreamble));
+    }
+    fs.Write(sCode[1], Length(sCode));
   finally
     fs.Free;
   end;
