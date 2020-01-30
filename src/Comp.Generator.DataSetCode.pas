@@ -60,7 +60,7 @@ type
       const aFileName: string);
     class procedure GenerateAndSaveClipboard(ds: TDataSet);
   published
-    property DataSet: TDataSet read fDataSet write fDataSet;
+    property dataSet: TDataSet read fDataSet write fDataSet;
     property Code: TStrings read fCode;
     property IndentationText: String read fIndentationText
       write fIndentationText;
@@ -444,7 +444,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.DataSet := ds;
+    gen.dataSet := ds;
     gen.Execute;
     Result := gen.Code.Text;
   finally
@@ -478,7 +478,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.DataSet := ds;
+    gen.dataSet := ds;
     gen.Execute;
     Result := TStringsToStringDynArray(gen.Code);
   finally
@@ -552,7 +552,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.DataSet := ds;
+    gen.dataSet := ds;
     Clipboard.AsText := gen.GenerateFunction;
   finally
     gen.Free;
