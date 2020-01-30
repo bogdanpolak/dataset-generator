@@ -3,7 +3,6 @@
 ---------------------------------------------------------------
 PLAN
 
-1) Describe usage scenario (unit tests)
 1) TDSGenerator component usage
 1) Methods:
    - `GenerateAsString`
@@ -23,6 +22,12 @@ PLAN
 ## Overview
 
 Generate Delphi source code creating a mock dataset (TFDMemTable) based on any TDataSet.
+
+TBD: Describe usage scenario (unit tests)
+
+## DataSet Generator component usage
+
+To generate fake dataset from
 
 ## Sample - component usage
 
@@ -91,3 +96,18 @@ begin
   Post;
 end;
 ```
+
+## Fakes vs mocks
+
+TBD:
+
+article: https://blog.pragmatists.com/test-doubles-fakes-mocks-and-stubs-1a7491dfa3da
+
+Fakes are objects that have working implementations, but not same as production one. Usually they take some shortcut and have simplified version of production code.
+
+Mocks are objects that register calls they receive.
+In test assertion we can verify on Mocks that all expected actions were performed.
+
+We use mocks when we don’t want to invoke production code or when there is no easy way to verify, that intended code was executed. There is no return value and no easy way to check system state change. An example can be a functionality that calls e-mail sending service.
+
+We don’t want to send e-mails each time we run a test. Moreover, it is not easy to verify in tests that a right email was send. Only thing we can do is to verify the outputs of the functionality that is exercised in our test. In other worlds, verify that e-mail sending service was called.
