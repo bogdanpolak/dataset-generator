@@ -29,8 +29,10 @@ type
     [TearDown]
     procedure TearDown;
   published
+    procedure GenerateUnit_NilDataSet;
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
+    procedure GenerateToFile_UnitName;
     procedure GenerateUnit_Header;
     procedure GenerateUnit_Header_ClientDataSet;
     procedure GenerateUnit_Footer;
@@ -42,7 +44,32 @@ implementation
 
 uses
   System.Variants,
+  System.IOUtils,
   Data.FmtBcd;
+
+// -----------------------------------------------------------------------
+// Setup and TearDown section
+// -----------------------------------------------------------------------
+
+function GetFirstLineFromMemo ( const sMemoText: string): string;
+var
+  i1: Integer;
+  i2: Integer;
+  idx: Integer;
+begin
+  i1 :=  sMemoText.IndexOf(#10);
+  i2 :=  sMemoText.IndexOf(#13);
+  if i1=-1 then
+    idx := i2
+  else if i2=-1 then
+    idx := i1
+  else
+    idx := Min(i1,i2);
+  if idx=-1 then
+    Result := ''
+  else
+    Result := sMemoText.Substring(0,idx);
+end;
 
 // -----------------------------------------------------------------------
 // Setup and TearDown section
@@ -125,6 +152,15 @@ end;
 // -----------------------------------------------------------------------
 // Tests for: Generate Sample historical events code
 // -----------------------------------------------------------------------
+
+procedure TestDSGenerator.GenerateUnit_NilDataSet;
+var
+  actualCode: string;
+begin
+  TDSGenerator.GenerateAsString(nil);
+
+  Assert.Pass;
+end;
 
 procedure TestDSGenerator.Generate_HistoricalEvents;
 var
@@ -218,6 +254,19 @@ begin
     (* *) 'end;'#13 +
     (* *) #13 +
     (* *) 'end.'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateToFile_UnitName;
+var
+  aFileName: string;
+  actualLine: string;
+begin
+  aFileName := System.IOUtils.TPath.GetTempPath + 'FakeDataSet.Historical.pas';
+
+  TDSGenerator.GenerateAndSaveToFile(nil, aFileName);
+  actualLine := GetFirstLineFromMemo(TFile.ReadAllText(aFileName));
+
+  Assert.AreEqual('unit FakeDataSet.Historical;',actualLine);
 end;
 
 procedure TestDSGenerator.GenerateUnit_Header;
