@@ -1,4 +1,4 @@
-﻿# DataSet to Delphi Code
+# DataSet to Delphi Code
 
 ---------------------------------------------------------------
 PLAN
@@ -21,7 +21,7 @@ PLAN
 
 ## Overview
 
-DataSet Generator is a component that uses any dataset and creates Delphi code. This code is a function which creating and populating in-memory dataset using structure and data of provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
+DataSet Generator is a component that generates a Delphi code using any dataset provided as an input parameter. Component output is a function which creates and populates in-memory dataset according to structure and content of the provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
 
 ## Generator usage
 
