@@ -25,15 +25,16 @@ DataSet Generator is a component that generates a Delphi code using any dataset 
 
 ## Generator usage
 
-To create a fake dataset developer needs to include unit `Comp.Generator.DataSetCode.pas` in uses section:
+DataSet Generator is used to create a fake in-memory dataset to bypass usage of SQL datasets in a test code. This scenario is quite straightforward: 
+
+**Step 1.** Create a new fake factory:
+
+Find a production dataset which need to be faked and run generator, the easiest way is to call one of its class methods:
 
 ```pas
 uses
   Comp.Generator.DataSetCode;
 ```
-
-Finds a production dataset which need to be faked and call any of generator's class methods like `GenerateAndSaveToFile`:
-
 ```pas
 begin
   aDataSet := fDataSetFactory.ConstructSelectDataset(
@@ -49,25 +50,30 @@ begin
 end;
 ```
 
-Using generated method `CreateDataSet` developer is able to write unit test for the class `TOrdersView`:
+**Step 2)** Use this fake:
+
+In the sample code above was used a view object: `fOrdersView` of the class `TOrdersView`. This view class uses a dataset injected via method `SetMasterDataset` to calculate a date (period of the year) impact on a total monthly sale value. Because above code is dependent on a SQL connection and a SQL database (dataset provided by `fDataSetFactory`) you need a fake to put a method `TOrdersView.GetCurrentImpact` into unit test harness:
 
 ```pas
 procedure TestOrdersView.Setup;
 begin
   fOwner := TComponent.Create;
-  fOrdersView := TOrdersView.Create(
-    TMock<IOrdersModel>.Create);
+  fOrderModelMock := TMock<IOrdersModel>.Create;
+  fOrdersView := TOrdersView.Create(fOrderModelMock);
   // ...
 end;
 
 procedure TestOrdersView.Test_CalculateCurrentImpact;
+var
+  aDataSet: TDataSet;
+  actualImpact: Extended;
 begin
-  fOrdersView.SetMasterDataset(
-    CreateDataSet(fOwner));
+  aDataSet := CreateDataSet(fOwner);
+  fOrdersView.SetMasterDataset(aDataSet);
   
-  actual := fOrdersView.GentCurrentImpact;
+  actualImpact := fOrdersView.GetCurrentImpact;
 
-  Assert.AreEqual(25.5, actual, 0.000001);
+  Assert.AreEqual(0.054, actualImpact, 0.0000001);
 end;
 ```
 
