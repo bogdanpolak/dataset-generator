@@ -1,4 +1,4 @@
-# DataSet to Delphi Code
+﻿# DataSet to Delphi Code
 
 ---------------------------------------------------------------
 PLAN
@@ -77,71 +77,29 @@ begin
 end;
 ```
 
-## Sample - component usage
+## Sample generated fake factory
 
 ```pas
-function CreateDataSet (AOwner: TComponent): Data.DB.TDataSet;
+function CreateDataSet (aOwner: TComponent): TDataSet;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(AOwner);
   with ds do
   begin
-    FieldDefs.Add('id', ftInteger);
-    FieldDefs.Add('text1', ftWideString, 30);
-    FieldDefs.Add('date1', ftDate);
-    FieldDefs.Add('float1', ftFloat);
-    FieldDefs.Add('currency1', ftCurrency);
+    FieldDefs.Add('Id', ftInteger);
+    FieldDefs.Add('Name', ftWideString, 30);
+    FieldDefs.Add('RegistrationDate', ftDate);
+    FieldDefs.Add('Balance', ftFloat);
+    FieldDefs.Add('Budget', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
   end;
+{$REGION ''Append data''}
+  ds.AppendRecord([1, 'Team integration', EncodeDate(2019, 09, 16), 1.2, 1200]);
+  ds.AppendRecord([2, 'Progress retrospective', Null, Null, 950]);
   ds.First;
+{$ENDREGION}
   Result := ds;
-end;
-
-procedure TForm1.Button1Click(Sender: TObject);
-var
-  Generator: TGenerateDataSetCode;
-begin
-  Generator := TGenerateDataSetCode.Create(Self);
-  Generator.DataSet := CreateDataSet(Generator);
-  GenerateDataSetCode.Execute;
-  Memo1.Lines := GenerateDataSetCode.Code;
-  Generator.Free;
-end;
-```
-
-Event `Button1Click` will generate the following code in the Memo1 control:
-
-```pas
-ds := TFDMemTable.Create(AOwner);
-with ds do
-begin
-  FieldDefs.Add('id', ftInteger);
-  FieldDefs.Add('text1', ftWideString, 30);
-  FieldDefs.Add('date1', ftDate);
-  FieldDefs.Add('float1', ftFloat);
-  FieldDefs.Add('currency1', ftCurrency);
-  CreateDataSet;
-end;
-with ds do
-begin
-  Append;
-  FieldByName('id').Value := 1;
-  FieldByName('text1').Value := 'Ala ma kota';
-  FieldByName('date1').Value := EncodeDate(2019,9,16);
-  FieldByName('float1').Value := 1.2;
-  FieldByName('currency1').Value := 1200;
-  Post;
-end;
-with ds do
-begin
-  Append;
-  FieldByName('id').Value := 2;
-  FieldByName('text1').Value := 'Ala ma kota';
-  FieldByName('currency1').Value := 950;
-  Post;
 end;
 ```
 
