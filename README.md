@@ -50,7 +50,7 @@ begin
 end;
 ```
 
-**Step 2)** Use this fake:
+**Step 2)** Use generated fake:
 
 In the sample code above was used a view object: `fOrdersView` of the class `TOrdersView`. This view class uses a dataset injected via method `SetMasterDataset` to calculate a date (period of the year) impact on a total monthly sale value. Because above code is dependent on a SQL connection and a SQL database (dataset provided by `fDataSetFactory`) you need a fake to put a method `TOrdersView.GetCurrentImpact` into unit test harness:
 
@@ -65,11 +65,11 @@ end;
 
 procedure TestOrdersView.Test_CalculateCurrentImpact;
 var
-  aDataSet: TDataSet;
+  aFakeOrdersDataSet: TDataSet;
   actualImpact: Extended;
 begin
-  aDataSet := CreateDataSet(fOwner);
-  fOrdersView.SetMasterDataset(aDataSet);
+  aFakeOrdersDataSet := CreateDataSet(fOwner);
+  fOrdersView.SetMasterDataset(aFakeOrdersDataSet);
   
   actualImpact := fOrdersView.GetCurrentImpact;
 
