@@ -119,9 +119,12 @@ begin
   Result := ds;
 end;
 
-function GivenDataSet_Sample_WithTwoRows(aOwner: TComponent): TDataSet;
+function GivenSampleDataSet(aOwner: TComponent;
+  aData: TArray < TArray < Variant >> ): TDataSet;
 var
   ds: TFDMemTable;
+  idxRow: integer;
+  idxField: integer;
 begin
   ds := TFDMemTable.Create(aOwner);
   with ds do
@@ -132,10 +135,15 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
-    First;
   end;
+  for idxRow := 0 to High(aData) do
+  begin
+    ds.Append;
+    for idxField := 0 to High(aData[idxRow]) do
+      ds.Fields[idxField].Value := aData[idxRow][idxField];
+    ds.Post;
+  end;
+  ds.First;
   Result := ds;
 end;
 
@@ -360,7 +368,9 @@ procedure TestGenerateAppends.GenSampleDataset_Appends;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.DataSet := GivenSampleDataSet(fOwner, [
+    {} [1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200],
+    {} [2, 'Eva has a dog', System.Variants.Null, Null, 950]]);
   fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
@@ -394,7 +404,9 @@ procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.DataSet := GivenSampleDataSet(fOwner, [
+    {} [1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200],
+    {} [2, 'Eva has a dog', System.Variants.Null, Null, 950]]);
   fGenerator.GeneratorMode := genAppend;
   fGenerator.AppendMode := amSinglelineAppends;
 
@@ -420,13 +432,13 @@ procedure TestGenerateAppends.GenMultipleRowDataset_PersistDatasetPosition;
 var
   aDataSet: TDataSet;
 begin
-  aDataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
-  aDataSet.AppendRecord([3,'Last data row']);
+  aDataSet := GivenSampleDataSet(fOwner, [[1, 'FirstRow'], [2, 'MiddleRow'],
+    [3, 'LastRow']]);
   aDataSet.RecNo := 2;
 
   fGenerator.TestGenerateAppendsBlock(aDataSet);
 
-  Assert.AreEqual('Eva has a dog', aDataSet.FieldByName('text1').AsString);
+  Assert.AreEqual('MiddleRow', aDataSet.FieldByName('text1').AsString);
 end;
 
 initialization
