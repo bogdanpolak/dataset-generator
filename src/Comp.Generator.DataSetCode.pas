@@ -45,7 +45,7 @@ type
     function GenerateOneAppend(aFields: TFields): string;
     function GenerateAppendsBlock(dataSet: TDataSet): string;
     function FormatLongStringLiterals(const Literal: string): string;
-    function GenerateUnitHeader(const aDataName: string): string;
+    function GenerateUnitHeader(const aUnitName: string): string;
     function GenerateUnitFooter(): string;
     function GenerateFunction: string;
     class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
@@ -375,7 +375,7 @@ begin
   {} '{$ENDREGION}' + sLineBreak;
 end;
 
-function TDSGenerator.GenerateUnitHeader(const aDataName: string): string;
+function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
 var
   sDataSetUnits: string;
 begin
@@ -388,7 +388,7 @@ begin
       {} fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit Fake.' + aDataName + ';' + sLineBreak +
+  {} 'unit ' + aUnitName + ';' + sLineBreak +
   {} sLineBreak +
   {} 'interface' + sLineBreak +
   {} sLineBreak +
@@ -399,7 +399,7 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function CreateFake_' + aDataName + ' (aOwner: TComponent): TDataSet;' +
+  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' +
     sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
@@ -417,7 +417,7 @@ begin
       aClassName := 'TClientDataSet';
   end;
   Result :=
-  {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
