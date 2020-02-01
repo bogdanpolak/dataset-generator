@@ -200,6 +200,10 @@ begin
   actualCode := TDSGenerator.GenerateAsString(ds);
 
   Assert.AreMemosEqual(
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'var'#13 +
+    {} '  ds: TFDMemTable;'#13 +
+    {} 'begin'#13 +
     {} '  ds := TFDMemTable.Create(AOwner);'#13 +
     {} '  with ds do'#13 +
     {} '  begin'#13 +
@@ -230,7 +234,9 @@ begin
     {} '    Post;'#13 +
     {} '  end;'#13 +
     {} '  ds.First;'#13 +
-    {} '{$ENDREGION}'#13, actualCode);
+    {} '{$ENDREGION}'#13 +
+    {} '  Result := ds;'#13 +
+    {} 'end;'#13, actualCode);
 end;
 
 procedure TestDSGenerator.GenerateToStream_StringDataSet;
