@@ -350,7 +350,7 @@ begin
   begin
     dataSet.DisableControls;
     try
-      dataSet.Active := True;
+      dataSet.Active := true;
       aBookmark := dataSet.GetBookmark;
       try
         dataSet.First;
@@ -360,8 +360,8 @@ begin
           dataSet.Next;
         end;
       finally
-        dataSet.GotoBookmark (aBookmark);
-        dataSet.FreeBookmark (aBookmark);
+        dataSet.GotoBookmark(aBookmark);
+        dataSet.FreeBookmark(aBookmark);
       end;
     finally
       dataSet.EnableControls;
@@ -399,7 +399,8 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' +
+    sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
   {} sLineBreak;
@@ -416,7 +417,7 @@ begin
       aClassName := 'TClientDataSet';
   end;
   Result :=
-  {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
