@@ -54,7 +54,7 @@ type
     destructor Destroy; override;
     procedure Execute;
     class function GenerateAsString(ds: TDataSet): string;
-    class function GenerateAsArray(ds: TDataSet): TStringDynArray;
+    class function GenerateAsArray(ds: TDataSet): TArray<String>;
     class procedure GenerateAndSaveToStream(ds: TDataSet; aStream: TStream);
     class procedure GenerateAndSaveToFile(ds: TDataSet;
       const aFileName: string);
@@ -399,8 +399,7 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' +
-    sLineBreak +
+  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
   {} sLineBreak;
@@ -464,18 +463,7 @@ begin
   end;
 end;
 
-(* This function replace (fix) standard  Delphi RTL TStrings.ToStringArray
-  .    method, because ot the following issue (in Delphi XE8 and older ones):
- Delphi 10.3 Rio:
- .   - TStringDynArray = TArray<string>;
- .   - function TStrings.ToStringArray: TArray<string>;
- .   - can assign: TArray<string> --> TStringDynArray
- Delphi XE8:
- .   - TStringDynArray = array of string;
- .   - function TStrings.ToStringArray: array of string;
- .   - not able to assign: array of string --> TStringDynArray
-*)
-function TStringsToStringDynArray(sl: TStrings): TStringDynArray;
+function TStringsToArray(sl: TStrings): TArray<String>;
 var
   i: integer;
 begin
@@ -484,7 +472,7 @@ begin
     Result[i] := sl[i];
 end;
 
-class function TDSGenerator.GenerateAsArray(ds: TDataSet): TStringDynArray;
+class function TDSGenerator.GenerateAsArray(ds: TDataSet): TArray<String>;
 var
   gen: TDSGenerator;
 begin
@@ -492,7 +480,7 @@ begin
   try
     gen.dataSet := ds;
     gen.Execute;
-    Result := TStringsToStringDynArray(gen.Code);
+    Result := TStringsToArray(gen.Code);
   finally
     gen.Free;
   end;
