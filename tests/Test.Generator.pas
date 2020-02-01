@@ -184,7 +184,7 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
     {} + ''#13 +
     {} 'implementation'#13 +
     {} ''#13, actualCode);
@@ -200,6 +200,10 @@ begin
   actualCode := TDSGenerator.GenerateAsString(ds);
 
   Assert.AreMemosEqual(
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'var'#13 +
+    {} '  ds: TFDMemTable;'#13 +
+    {} 'begin'#13 +
     {} '  ds := TFDMemTable.Create(AOwner);'#13 +
     {} '  with ds do'#13 +
     {} '  begin'#13 +
@@ -230,7 +234,9 @@ begin
     {} '    Post;'#13 +
     {} '  end;'#13 +
     {} '  ds.First;'#13 +
-    {} '{$ENDREGION}'#13, actualCode);
+    {} '{$ENDREGION}'#13 +
+    {} '  Result := ds;'#13 +
+    {} 'end;'#13, actualCode);
 end;
 
 procedure TestDSGenerator.GenerateToStream_StringDataSet;
@@ -255,11 +261,11 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TFDMemTable;'#13 +
     {} 'begin'#13 +
@@ -314,7 +320,7 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13, actualCode);
@@ -340,7 +346,7 @@ begin
     {} '  Datasnap.DBClient;'#13 +
     {} '  MidasLib;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13, actualCode);
@@ -367,7 +373,7 @@ begin
   actualCode := fGenerator.TestGenFunction;
 
   Assert.AreMemosEqual(
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TFDMemTable;'#13 +
     {} 'begin'#13 +
@@ -402,7 +408,7 @@ begin
   actualCode := fGenerator.TestGenFunction;
 
   Assert.AreMemosEqual(
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TClientDataSet;'#13 +
     {} 'begin'#13 +

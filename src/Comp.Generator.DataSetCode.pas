@@ -16,7 +16,7 @@ uses
   FireDAC.Comp.Client;
 
 type
-  TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
+  TGeneratorMode = (genStructure, genAppend, genFunction, genUnit);
   TDataSetType = (dstFDMemTable, dstClientDataSet);
   TAppendMode = (amMultilineAppends, amSinglelineAppends);
 
@@ -82,7 +82,7 @@ begin
   inherited;
   // --------------------------------
   // Default options
-  fGeneratorMode := genAll;
+  fGeneratorMode := genFunction;
   fDataSetType := dstFDMemTable;
   fAppendMode := amMultilineAppends;
   fIndentationText := '  ';
@@ -399,7 +399,7 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
   {} sLineBreak;
@@ -416,7 +416,7 @@ begin
       aClassName := 'TClientDataSet';
   end;
   Result :=
-  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
@@ -434,9 +434,6 @@ end;
 procedure TDSGenerator.Execute;
 begin
   case fGeneratorMode of
-    genAll:
-      fCode.Text := GenerateStructure(fDataSet) + GenerateAppendsBlock
-        (fDataSet);
     genStructure:
       fCode.Text := GenerateStructure(fDataSet);
     genAppend:
