@@ -30,6 +30,7 @@ type
     procedure TearDown;
   published
     procedure GenerateUnit_NilDataSet;
+    procedure Generate_UnitHeader;
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
     procedure GenerateToFile_UnitName;
@@ -160,6 +161,33 @@ begin
   TDSGenerator.GenerateAsString(nil);
 
   Assert.Pass;
+end;
+
+procedure TestDSGenerator.Generate_UnitHeader;
+var
+  ds: TDataSet;
+  actualCode: string;
+begin
+  ds := GivenDataSet_HistoricalEvents(fOwner);
+
+  actualCode := fGenerator.TestGenUnitHeader('HistoricalEvents');
+
+  Assert.AreMemosEqual(
+    {} 'unit Fake.HistoricalEvents;'#13 +
+    {} #13 +
+    {} 'interface'#13 +
+    {} #13 +
+    {} 'uses'#13 +
+    {} '  System.Classes,'#13 +
+    {} '  System.SysUtils,'#13 +
+    {} '  System.Variants,'#13 +
+    {} '  Data.DB,'#13 +
+    {} '  FireDAC.Comp.Client;'#13 +
+    {} #13 +
+    {} 'function CreateFake_HistoricalEvents (aOwner: TComponent): TDataSet;'#13
+    {} + ''#13 +
+    {} 'implementation'#13 +
+    {} ''#13, actualCode);
 end;
 
 procedure TestDSGenerator.Generate_HistoricalEvents;
