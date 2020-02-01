@@ -44,6 +44,8 @@ type
     // -------------
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
+    // -------------
+    procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
 
 implementation
@@ -401,10 +403,30 @@ begin
 
   Assert.AreMemosEqual(
     (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13 +
+    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13
+    +
     (* *) '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
+end;
+
+// -----------------------------------------------------------------------
+// Bug proofs
+// -----------------------------------------------------------------------
+
+// Bug: #35 - Generator is not persisting dataset position
+
+procedure TestGenerateAppends.GenMultipleRowDataset_PersistDatasetPosition;
+var
+  aDataSet: TDataSet;
+begin
+  aDataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  aDataSet.AppendRecord([3,'Last data row']);
+  aDataSet.RecNo := 2;
+
+  fGenerator.TestGenerateAppendsBlock(aDataSet);
+
+  Assert.AreEqual('Eva has a dog', aDataSet.FieldByName('text1').AsString);
 end;
 
 initialization

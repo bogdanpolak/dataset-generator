@@ -17,6 +17,7 @@ type
     function TestGenUnitHeader(const aUnitName: string): string;
     function TestGenUnitFooter(): string;
     function TestGenerateOneAppend(aFields: TFields): string;
+    function TestGenerateAppendsBlock(aDataSet: TDataSet): string;
     function TestGenFunction: string;
   end;
 
@@ -42,6 +43,11 @@ end;
 function TDSGeneratorUnderTest.TestGenerateOneAppend(aFields: TFields): string;
 begin
   Result := GenerateOneAppend(aFields);
+end;
+
+function TDSGeneratorUnderTest.TestGenerateAppendsBlock(aDataSet: TDataSet): string;
+begin
+  Result := GenerateAppendsBlock(aDataSet);
 end;
 
 function TDSGeneratorUnderTest.TestGenUnitHeader(
