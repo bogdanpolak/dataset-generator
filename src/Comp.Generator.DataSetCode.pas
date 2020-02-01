@@ -350,7 +350,7 @@ begin
   begin
     dataSet.DisableControls;
     try
-      dataSet.Active := True;
+      dataSet.Active := true;
       aBookmark := dataSet.GetBookmark;
       try
         dataSet.First;
@@ -360,8 +360,8 @@ begin
           dataSet.Next;
         end;
       finally
-        dataSet.GotoBookmark (aBookmark);
-        dataSet.FreeBookmark (aBookmark);
+        dataSet.GotoBookmark(aBookmark);
+        dataSet.FreeBookmark(aBookmark);
       end;
     finally
       dataSet.EnableControls;
