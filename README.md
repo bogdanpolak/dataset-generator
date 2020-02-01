@@ -94,7 +94,7 @@ begin
     FieldDefs.Add('Budget', ftCurrency);
     CreateDataSet;
   end;
-{$REGION ''Append data''}
+{$REGION 'Append data'}
   ds.AppendRecord([1, 'Team integration', EncodeDate(2019, 09, 16), 1.2, 1200]);
   ds.AppendRecord([2, 'Progress retrospective', Null, Null, 950]);
   ds.First;
@@ -107,7 +107,7 @@ end;
 
 `TDSGenerator` class methods:
 
-| Method | Function |
+| Class method | Description |
 | --- | --- |
 | `GenerateAsString` | Receives `aDataSet` as a parameter and generates fake dataset factory function as the result |
 | `GenerateAndSaveToFile` | Receives `aDataSet` an `aFileName`, generates whole unit containing factory function and save it into file |
@@ -118,17 +118,53 @@ All class methods are using default set of options:
 - `AppendMode` = append one data row in multiple lines
 - `DataSetType` = fake based on FireDAC memory table
 
-Class `TDSGenerator` options:
+**Using `Execute` method**
 
-- `IdentationText`
-- `GeneratorMode` 
-   - TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
-- `DataSetType: TDataSetType read fDataSetType write fDataSetType;
-   - TDataSetType = (dstFDMemTable, dstClientDataSet);
-- `AppendMode: TAppendMode read fAppendMode write fAppendMode;
-   - TAppendMode = (amMultilineAppends, amSinglelineAppends);
-- `UnitName: string read fUnitName write fUnitName;`
+Although class methods are the fastest way to generate fake dataset, it's sometimes better to use object method `Execute`. To call object method you have to construct object of class `TDSGenerator`:
 
+```pas
+aGenerator := TDSGenerator.Create(Self);  // owner
+aGenerator.AppendMode := amSinglelineAppends;
+aGenerator.GeneratorMode := genUnit;
+aGenerator.UnitName := 'Sample.FakeDataset';
+aGenerator.Execute;
+Memo1.Lines := aGenerator.Code;
+aGenerator.Free;
+```
+
+In code sample above after generator construction and before execute call the generator options are defined. After execution, the generated code is available through the `Code` property (internal string list).
+
+`TDSGenerator` options:
+
+| Option | Definition and description |
+| --- | --- |
+| `IdentationText` | `String` Used as one level of code indentation |
+| `GeneratorMode` | `TGeneratorMode` = `(genStructure, genAppend, genFunction, genUnit)`. When using Execute defines sections of the code to be generated |
+| `DataSetType` | `TDataSetType` = `(dstFDMemTable, dstClientDataSet)`. Which in-memory dataset to use as fake. |
+| `AppendMode` | `TAppendMode` = `(amMultilineAppends, amSinglelineAppends)` Described bellow |
+| `UnitName` | `String` Used as unit name when generating whole unit |
+
+**AppendMode option: multi-line and single-line**
+
+Generator is able to create more compact or more detailed append section. Compact mode is using `AppendRecord` with open array of variants and detailed mode is using multiple calls: `Append`, `FieldByName` and `Post`.
+
+Sample code generated in single-line mode. `AppendMode` = `amSinglelineAppends`:
+
+```pas
+ds.AppendRecord([1, 'Team integration', EncodeDate(2019, 09, 16), 1.2, 1200]);
+```
+
+Sample code generated in multi-line mode. `AppendMode` = `amMultilineAppends`:
+
+```pas
+ds.Append;
+ds.FieldByName('Id').Value := 1;
+ds.FieldByName('Name').Value := 'Team integration';
+ds.FieldByName('RegistrationDate').Value := EncodeDate(2019, 09, 16);
+ds.FieldByName('Balance')Value := 1.2;
+ds.FieldByName('Budget').Value := 1200;
+ds.Post;
+```
 
 ## Fakes vs mocks
 
