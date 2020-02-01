@@ -44,6 +44,8 @@ type
     // -------------
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
+    // -------------
+    procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
 
 implementation
@@ -117,9 +119,12 @@ begin
   Result := ds;
 end;
 
-function GivenDataSet_Sample_WithTwoRows(aOwner: TComponent): TDataSet;
+function GivenSampleDataSet(aOwner: TComponent;
+  aData: TArray < TArray < Variant >> ): TDataSet;
 var
   ds: TFDMemTable;
+  idxRow: integer;
+  idxField: integer;
 begin
   ds := TFDMemTable.Create(aOwner);
   with ds do
@@ -130,10 +135,15 @@ begin
     FieldDefs.Add('float1', ftFloat);
     FieldDefs.Add('currency1', ftCurrency);
     CreateDataSet;
-    AppendRecord([1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Eva has a dog', System.Variants.Null, Null, 950]);
-    First;
   end;
+  for idxRow := 0 to High(aData) do
+  begin
+    ds.Append;
+    for idxField := 0 to High(aData[idxRow]) do
+      ds.Fields[idxField].Value := aData[idxRow][idxField];
+    ds.Post;
+  end;
+  ds.First;
   Result := ds;
 end;
 
@@ -358,7 +368,9 @@ procedure TestGenerateAppends.GenSampleDataset_Appends;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.DataSet := GivenSampleDataSet(fOwner, [
+    {} [1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200],
+    {} [2, 'Eva has a dog', System.Variants.Null, Null, 950]]);
   fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
@@ -392,7 +404,9 @@ procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_Sample_WithTwoRows(fOwner);
+  fGenerator.DataSet := GivenSampleDataSet(fOwner, [
+    {} [1, 'Alice has a cat', EncodeDate(2019, 09, 16), 1.2, 1200],
+    {} [2, 'Eva has a dog', System.Variants.Null, Null, 950]]);
   fGenerator.GeneratorMode := genAppend;
   fGenerator.AppendMode := amSinglelineAppends;
 
@@ -401,10 +415,30 @@ begin
 
   Assert.AreMemosEqual(
     (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13 +
+    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13
+    +
     (* *) '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
+end;
+
+// -----------------------------------------------------------------------
+// Bug proofs
+// -----------------------------------------------------------------------
+
+// Bug: #35 - Generator is not persisting dataset position
+
+procedure TestGenerateAppends.GenMultipleRowDataset_PersistDatasetPosition;
+var
+  aDataSet: TDataSet;
+begin
+  aDataSet := GivenSampleDataSet(fOwner, [[1, 'FirstRow'], [2, 'MiddleRow'],
+    [3, 'LastRow']]);
+  aDataSet.RecNo := 2;
+
+  fGenerator.TestGenerateAppendsBlock(aDataSet);
+
+  Assert.AreEqual('MiddleRow', aDataSet.FieldByName('text1').AsString);
 end;
 
 initialization

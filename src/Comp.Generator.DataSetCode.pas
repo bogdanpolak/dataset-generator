@@ -342,19 +342,30 @@ end;
 function TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet): string;
 var
   sDataAppend: string;
+  aBookmark: TBookmark;
+  isDataSetActive: Boolean;
 begin
   sDataAppend := '';
   if dataSet <> nil then
   begin
     dataSet.DisableControls;
-    dataSet.Open;
-    dataSet.First;
-    while not dataSet.Eof do
-    begin
-      sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
-      dataSet.Next;
+    try
+      dataSet.Active := True;
+      aBookmark := dataSet.GetBookmark;
+      try
+        dataSet.First;
+        while not dataSet.Eof do
+        begin
+          sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
+          dataSet.Next;
+        end;
+      finally
+        dataSet.GotoBookmark (aBookmark);
+        dataSet.FreeBookmark (aBookmark);
+      end;
+    finally
+      dataSet.EnableControls;
     end;
-    dataSet.EnableControls;
   end;
 
   Result :=
