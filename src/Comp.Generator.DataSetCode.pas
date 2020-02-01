@@ -45,7 +45,7 @@ type
     function GenerateOneAppend(aFields: TFields): string;
     function GenerateAppendsBlock(dataSet: TDataSet): string;
     function FormatLongStringLiterals(const Literal: string): string;
-    function GenerateUnitHeader(const aUnitName: string): string;
+    function GenerateUnitHeader(const aDataName: string): string;
     function GenerateUnitFooter(): string;
     function GenerateFunction: string;
     class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
@@ -375,7 +375,7 @@ begin
   {} '{$ENDREGION}' + sLineBreak;
 end;
 
-function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
+function TDSGenerator.GenerateUnitHeader(const aDataName: string): string;
 var
   sDataSetUnits: string;
 begin
@@ -388,7 +388,7 @@ begin
       {} fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit ' + aUnitName + ';' + sLineBreak +
+  {} 'unit Fake.' + aDataName + ';' + sLineBreak +
   {} sLineBreak +
   {} 'interface' + sLineBreak +
   {} sLineBreak +
@@ -399,7 +399,8 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function CreateDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function CreateFake_' + aDataName + ' (aOwner: TComponent): TDataSet;' +
+    sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
   {} sLineBreak;
