@@ -184,7 +184,7 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
     {} + ''#13 +
     {} 'implementation'#13 +
     {} ''#13, actualCode);
@@ -255,11 +255,11 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TFDMemTable;'#13 +
     {} 'begin'#13 +
@@ -314,7 +314,7 @@ begin
     {} '  Data.DB,'#13 +
     {} '  FireDAC.Comp.Client;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13, actualCode);
@@ -340,7 +340,7 @@ begin
     {} '  Datasnap.DBClient;'#13 +
     {} '  MidasLib;'#13 +
     {} #13 +
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
     {} #13, actualCode);
@@ -367,7 +367,7 @@ begin
   actualCode := fGenerator.TestGenFunction;
 
   Assert.AreMemosEqual(
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TFDMemTable;'#13 +
     {} 'begin'#13 +
@@ -402,7 +402,7 @@ begin
   actualCode := fGenerator.TestGenFunction;
 
   Assert.AreMemosEqual(
-    {} 'function GivienDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TClientDataSet;'#13 +
     {} 'begin'#13 +

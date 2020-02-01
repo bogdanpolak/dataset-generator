@@ -399,7 +399,7 @@ begin
   {} fIndentationText + 'Data.DB,' + sLineBreak +
   {} sDataSetUnits + sLineBreak +
   {} sLineBreak +
-  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} sLineBreak +
   {} 'implementation' + sLineBreak +
   {} sLineBreak;
@@ -416,7 +416,7 @@ begin
       aClassName := 'TClientDataSet';
   end;
   Result :=
-  {} 'function GivienDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
