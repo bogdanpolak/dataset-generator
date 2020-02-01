@@ -103,9 +103,32 @@ begin
 end;
 ```
 
-## Testing with DataSet Generator
+## TDSGenerator documentation
 
-TBD: Describe usage scenario (unit tests)
+`TDSGenerator` class methods:
+
+| Method | Function |
+| --- | --- |
+| `GenerateAsString` | Receives `aDataSet` as a parameter and generates fake dataset factory function as the result |
+| `GenerateAndSaveToFile` | Receives `aDataSet` an `aFileName`, generates whole unit containing factory function and save it into file |
+| `GenerateAndSaveToClipboard` | Receives `aDataSet`, generates fake dataset factory function and copies generated code to the clipboard |
+
+All class methods are using default set of options:
+- `IdentationText` = two spaces 
+- `AppendMode` = append one data row in multiple lines
+- `DataSetType` = fake based on FireDAC memory table
+
+Class `TDSGenerator` options:
+
+- `IdentationText`
+- `GeneratorMode` 
+   - TGeneratorMode = (genAll, genStructure, genAppend, genUnit, genFunction);
+- `DataSetType: TDataSetType read fDataSetType write fDataSetType;
+   - TDataSetType = (dstFDMemTable, dstClientDataSet);
+- `AppendMode: TAppendMode read fAppendMode write fAppendMode;
+   - TAppendMode = (amMultilineAppends, amSinglelineAppends);
+- `UnitName: string read fUnitName write fUnitName;`
+
 
 ## Fakes vs mocks
 
