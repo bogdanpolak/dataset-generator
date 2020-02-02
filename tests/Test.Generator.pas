@@ -155,8 +155,6 @@ end;
 // -----------------------------------------------------------------------
 
 procedure TestDSGenerator.GenerateUnit_NilDataSet;
-var
-  actualCode: string;
 begin
   TDSGenerator.GenerateAsString(nil);
 
@@ -165,11 +163,8 @@ end;
 
 procedure TestDSGenerator.Generate_UnitHeader;
 var
-  ds: TDataSet;
   actualCode: string;
 begin
-  ds := GivenDataSet_HistoricalEvents(fOwner);
-
   actualCode := fGenerator.TestGenUnitHeader('Fake.HistoricalEvents');
 
   Assert.AreMemosEqual(

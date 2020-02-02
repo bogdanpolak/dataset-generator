@@ -343,7 +343,6 @@ function TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet): string;
 var
   sDataAppend: string;
   aBookmark: TBookmark;
-  isDataSetActive: Boolean;
 begin
   sDataAppend := '';
   if dataSet <> nil then
@@ -494,7 +493,7 @@ begin
     gen.GeneratorMode := genUnit;
     gen.UnitName := aUnitName;
     gen.Execute;
-    Result := Utf8String(gen.Code.Text);
+    Result := gen.Code.Text;
   finally
     gen.Free;
   end;
