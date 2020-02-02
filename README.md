@@ -1,23 +1,7 @@
 ﻿# DataSet to Delphi Code
 
----------------------------------------------------------------
-PLAN
-
-1) TDSGenerator component usage
-1) Methods:
-   - `GenerateAsString`
-   - `GenerateAsArray`
-   - `GenerateAndSaveToStream / GenerateAndSaveToFile`
-   - `GenerateAndSaveToClipboard`
-1) Options
-   - `IdentationText`
-   - `GenerateCode`
-   - `AppendMode`
-   - `GenerateDataSet`
-1) Component Class `TDSGenerator`
-1) Update project sample
-
---------------------------------------------------------------
+![ Delphi Support ](https://img.shields.io/badge/Delphi%20Support-%20XE8%20..%2010.3%20Rio-blue.svg)
+![ version ](https://img.shields.io/badge/version-%201.3-yellow.svg)
 
 ## Overview
 
