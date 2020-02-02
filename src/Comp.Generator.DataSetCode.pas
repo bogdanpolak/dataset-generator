@@ -89,6 +89,7 @@ begin
   fAppendMode := amMultilineAppends;
   fIndentationText := '  ';
   fUnitName := 'uSampleDataSet';
+  fMaxRows := 100;
   // --------------------------------
   fCode := TStringList.Create;
 end;
@@ -345,7 +346,12 @@ function TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet): string;
 var
   sDataAppend: string;
   aBookmark: TBookmark;
+  aRowCounter: Integer;
 begin
+  if fMaxRows=0 then
+    aRowCounter := MaxInt
+  else
+    aRowCounter := fMaxRows;
   sDataAppend := '';
   if dataSet <> nil then
   begin
@@ -355,9 +361,10 @@ begin
       aBookmark := dataSet.GetBookmark;
       try
         dataSet.First;
-        while not dataSet.Eof do
+        while not dataSet.Eof and (aRowCounter>0) do
         begin
           sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
+          dec(aRowCounter);
           dataSet.Next;
         end;
       finally
