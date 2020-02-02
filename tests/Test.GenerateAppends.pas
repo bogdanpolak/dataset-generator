@@ -405,27 +405,19 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    {} '{$REGION ''Append data''}'#13 +
-    {} '  with ds do'#13 +
-    {} '  begin'#13 +
-    {} '    Append;'#13 +
-    {} '    FieldByName(''id'').Value := 1;'#13 +
-    {} '    FieldByName(''text1'').Value := ''Alice has a cat'';'#13 +
-    {} '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);'#13 +
-    {} '    FieldByName(''float1'').Value := 1.2;'#13 +
-    {} '    FieldByName(''currency1'').Value := 1200;'#13 +
-    {} '    Post;'#13 +
-    {} '  end;'#13 +
-    {} '  with ds do'#13 +
-    {} '  begin'#13 +
-    {} '    Append;'#13 +
-    {} '    FieldByName(''id'').Value := 2;'#13 +
-    {} '    FieldByName(''text1'').Value := ''Eva has a dog'';'#13 +
-    {} '    FieldByName(''currency1'').Value := 950;'#13 +
-    {} '    Post;'#13 +
-    {} '  end;'#13 +
-    {} '  ds.First;'#13 +
-    {} '{$ENDREGION}'#13, actualCode);
+    {} '  ds.Append;'#13 +
+    {} '  ds.FieldByName(''id'').Value := 1;'#13 +
+    {} '  ds.FieldByName(''text1'').Value := ''Alice has a cat'';'#13 +
+    {} '  ds.FieldByName(''date1'').Value := EncodeDate(2019,9,16);'#13 +
+    {} '  ds.FieldByName(''float1'').Value := 1.2;'#13 +
+    {} '  ds.FieldByName(''currency1'').Value := 1200;'#13 +
+    {} '  ds.Post;'#13 +
+    {} '  ds.Append;'#13 +
+    {} '  ds.FieldByName(''id'').Value := 2;'#13 +
+    {} '  ds.FieldByName(''text1'').Value := ''Eva has a dog'';'#13 +
+    {} '  ds.FieldByName(''currency1'').Value := 950;'#13 +
+    {} '  ds.Post;'#13 +
+    {} '  ds.First;'#13, actualCode);
 end;
 
 procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
