@@ -14,10 +14,10 @@ type
     function TestGenCodeLineFieldDefAdd(fld: TField): string;
     function TestGenCodeLineSetFieldValue(fld: TField): string;
     function TestFormatLongStringLiterals(const Literal: string): string;
-    function TestGenUnitHeader(const aUnitName: string): string;
-    function TestGenUnitFooter(): string;
-    function TestGenerateOneAppend(aFields: TFields): string;
-    function TestGenerateAppendsBlock(aDataSet: TDataSet): string;
+    function TestGenUnitHeader: string;
+    function TestGenUnitFooter: string;
+    function TestGenerateOneAppend: string;
+    function TestGenerateAppendsBlock: string;
     function TestGenFunction: string;
   end;
 
@@ -40,20 +40,19 @@ begin
   Result := GenerateLine_SetFieldValue(fld);
 end;
 
-function TDSGeneratorUnderTest.TestGenerateOneAppend(aFields: TFields): string;
+function TDSGeneratorUnderTest.TestGenerateOneAppend: string;
 begin
-  Result := GenerateOneAppend(aFields);
+  Result := GenerateOneAppend;
 end;
 
-function TDSGeneratorUnderTest.TestGenerateAppendsBlock(aDataSet: TDataSet): string;
+function TDSGeneratorUnderTest.TestGenerateAppendsBlock: string;
 begin
-  Result := GenerateAppendsBlock(aDataSet);
+  Result := GenerateAppendsBlock;
 end;
 
-function TDSGeneratorUnderTest.TestGenUnitHeader(
-  const aUnitName: string): string;
+function TDSGeneratorUnderTest.TestGenUnitHeader: string;
 begin
-  Result := GenerateUnitHeader(aUnitName);
+  Result := GenerateUnitHeader;
 end;
 
 function TDSGeneratorUnderTest.TestGenFunction: string;

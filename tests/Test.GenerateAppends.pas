@@ -499,16 +499,14 @@ end;
 // Bug: #35 - Generator is not persisting dataset position
 
 procedure TestGenerateAppends.GenMultipleRowDataset_PersistDatasetPosition;
-var
-  aDataSet: TDataSet;
 begin
-  aDataSet := GivenSampleDataSet(fOwner, [[1, 'FirstRow'], [2, 'MiddleRow'],
-    [3, 'LastRow']]);
-  aDataSet.RecNo := 2;
+  fGenerator.DataSet := GivenSampleDataSet(fOwner,
+    [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'aRow'], [4, 'LastRow']]);
+  fGenerator.DataSet.RecNo := 3;
 
-  fGenerator.TestGenerateAppendsBlock(aDataSet);
+  fGenerator.TestGenerateAppendsBlock;
 
-  Assert.AreEqual('MiddleRow', aDataSet.FieldByName('text1').AsString);
+  Assert.AreEqual(3, fGenerator.DataSet.RecNo);
 end;
 
 initialization

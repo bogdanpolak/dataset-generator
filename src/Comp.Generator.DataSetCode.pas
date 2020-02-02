@@ -37,17 +37,17 @@ type
     fUnitName: string;
     fMaxRows: integer;
     function GetDataFieldPrecision(fld: TField): integer;
-    function GenerateOneAppend_Multiline(aFields: TFields): string;
-    function GenerateOneAppend_Singleline(aFields: TFields): string;
+    function GenerateOneAppend_Multiline: string;
+    function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
     function GenerateLine_SetFieldValue(fld: TField): string;
-    function GenerateStructure(dataSet: TDataSet): string;
-    function GenerateOneAppend(aFields: TFields): string;
-    function GenerateAppendsBlock(dataSet: TDataSet): string;
+    function GenerateStructure: string;
+    function GenerateOneAppend: string;
+    function GenerateAppendsBlock: string;
     function FormatLongStringLiterals(const Literal: string): string;
-    function GenerateUnitHeader(const aUnitName: string): string;
-    function GenerateUnitFooter(): string;
+    function GenerateUnitHeader: string;
+    function GenerateUnitFooter: string;
     function GenerateFunction: string;
     class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
   public
@@ -241,7 +241,7 @@ begin
   end;
 end;
 
-function TDSGenerator.GenerateStructure(dataSet: TDataSet): string;
+function TDSGenerator.GenerateStructure: string;
 var
   fld: TField;
   sDataSetCreate: string;
@@ -268,18 +268,20 @@ begin
   {} fIndentationText + 'end;' + sLineBreak
 end;
 
-function TDSGenerator.GenerateOneAppend_Multiline(aFields: TFields): string;
+function TDSGenerator.GenerateOneAppend_Multiline: string;
 var
   fld: TField;
   s1: string;
   sl: TStringList;
 begin
+  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+    Exit('');
   sl := TStringList.Create;
   try
     sl.Add(fIndentationText + 'with ds do');
     sl.Add(fIndentationText + 'begin');
     sl.Add(fIndentationText + fIndentationText + 'Append;');
-    for fld in aFields do
+    for fld in fDataSet.Fields do
     begin
       s1 := GenerateLine_SetFieldValue(fld);
       if s1 <> '' then
@@ -293,14 +295,16 @@ begin
   end;
 end;
 
-function TDSGenerator.GenerateOneAppend_Singleline(aFields: TFields): string;
+function TDSGenerator.GenerateOneAppend_Singleline: string;
 var
   sFieldsValues: string;
   fld: TField;
   s1: string;
 begin
+  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+    Exit('');
   sFieldsValues := '';
-  for fld in aFields do
+  for fld in fDataSet.Fields do
   begin
     if fld.IsNull then
       s1 := 'Null'
@@ -330,24 +334,26 @@ begin
     sLineBreak;
 end;
 
-function TDSGenerator.GenerateOneAppend(aFields: TFields): string;
+function TDSGenerator.GenerateOneAppend: string;
 begin
   case fAppendMode of
     amMultilineAppends:
-      Result := GenerateOneAppend_Multiline(aFields);
+      Result := GenerateOneAppend_Multiline;
     amSinglelineAppends:
-      Result := GenerateOneAppend_Singleline(aFields);
+      Result := GenerateOneAppend_Singleline;
   else
     Result := '';
   end;
 end;
 
-function TDSGenerator.GenerateAppendsBlock(dataSet: TDataSet): string;
+function TDSGenerator.GenerateAppendsBlock: string;
 var
   sDataAppend: string;
   aBookmark: TBookmark;
   aRowCounter: Integer;
 begin
+  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+    Exit('');
   if fMaxRows=0 then
     aRowCounter := MaxInt
   else
@@ -363,7 +369,7 @@ begin
         dataSet.First;
         while not dataSet.Eof and (aRowCounter>0) do
         begin
-          sDataAppend := sDataAppend + GenerateOneAppend(dataSet.Fields);
+          sDataAppend := sDataAppend + GenerateOneAppend;
           dec(aRowCounter);
           dataSet.Next;
         end;
@@ -383,7 +389,7 @@ begin
   {} '{$ENDREGION}' + sLineBreak;
 end;
 
-function TDSGenerator.GenerateUnitHeader(const aUnitName: string): string;
+function TDSGenerator.GenerateUnitHeader: string;
 var
   sDataSetUnits: string;
 begin
@@ -396,7 +402,7 @@ begin
       {} fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit ' + aUnitName + ';' + sLineBreak +
+  {} 'unit ' + fUnitName + ';' + sLineBreak +
   {} sLineBreak +
   {} 'interface' + sLineBreak +
   {} sLineBreak +
@@ -413,7 +419,7 @@ begin
   {} sLineBreak;
 end;
 
-function TDSGenerator.GenerateFunction(): string;
+function TDSGenerator.GenerateFunction: string;
 var
   aClassName: string;
 begin
@@ -428,8 +434,8 @@ begin
   {} 'var' + sLineBreak +
   {} '  ds: ' + aClassName + ';' + sLineBreak +
   {} 'begin' + sLineBreak +
-  {} GenerateStructure(fDataSet) +
-  {} GenerateAppendsBlock(fDataSet) +
+  {} GenerateStructure() +
+  {} GenerateAppendsBlock() +
   {} '  Result := ds;' + sLineBreak +
   {} 'end;' + sLineBreak;
 end;
@@ -443,11 +449,11 @@ procedure TDSGenerator.Execute;
 begin
   case fGeneratorMode of
     genStructure:
-      fCode.Text := GenerateStructure(fDataSet);
+      fCode.Text := GenerateStructure();
     genAppend:
-      fCode.Text := GenerateAppendsBlock(fDataSet);
+      fCode.Text := GenerateAppendsBlock();
     genUnit:
-      fCode.Text := GenerateUnitHeader(fUnitName) + GenerateFunction +
+      fCode.Text := GenerateUnitHeader + GenerateFunction +
         GenerateUnitFooter;
     genFunction:
       fCode.Text := GenerateFunction;
