@@ -278,17 +278,14 @@ begin
     Exit('');
   sl := TStringList.Create;
   try
-    sl.Add(fIndentationText + 'with ds do');
-    sl.Add(fIndentationText + 'begin');
-    sl.Add(fIndentationText + fIndentationText + 'Append;');
+    sl.Add(fIndentationText + 'ds.Append;');
     for fld in fDataSet.Fields do
     begin
       s1 := GenerateLine_SetFieldValue(fld);
       if s1 <> '' then
-        sl.Add(fIndentationText + fIndentationText + s1);
+        sl.Add(fIndentationText + 'ds.' + s1);
     end;
-    sl.Add(fIndentationText + fIndentationText + 'Post;');
-    sl.Add(fIndentationText + 'end;');
+    sl.Add(fIndentationText + 'ds.Post;');
     Result := sl.Text;
   finally
     sl.Free;
@@ -383,10 +380,8 @@ begin
   end;
 
   Result :=
-  {} '{$REGION ''Append data''}' + sLineBreak +
   {} sDataAppend +
-  {} fIndentationText + 'ds.First;' + sLineBreak +
-  {} '{$ENDREGION}' + sLineBreak;
+  {} fIndentationText + 'ds.First;' + sLineBreak;
 end;
 
 function TDSGenerator.GenerateUnitHeader: string;
