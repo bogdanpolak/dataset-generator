@@ -275,11 +275,11 @@ begin
 
   actualCode := fGenerator._FormatLongStringLiterals(longText);
 
-  Assert.AreMemosEqual( //.
-    #13 //.
-    + '      Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
-    + '      '', Property Injection, and Method Injection and about the right and w''+'#13
-    + '      ''rong way to use it'#13, actualCode);
+  Assert.AreMemosEqual(
+    {} #13
+    {} + '    Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
+    {} + '    '', Property Injection, and Method Injection and about the right and w''+'#13
+    {} + '    ''rong way to use it'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -299,9 +299,9 @@ begin
   Assert.AreMemosEqual_FullReport(
     {} '  ds.Append;'#13
     {} + '  ds.FieldByName(''Info'').Value := '#13
-    {} + '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    {} + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
-    {} + '      '' wrong way to use it'';'#13
+    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    {} + '    ''on, Property Injection, and Method Injection and about the right and''+'#13
+    {} + '    '' wrong way to use it'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;
