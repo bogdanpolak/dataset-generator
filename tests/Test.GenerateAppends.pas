@@ -46,6 +46,7 @@ type
     procedure GenSampleDataset_OnelineAppends;
     // -------------
     procedure GenMultipleRowDataset_MaxRows_Zero;
+    procedure GenMultipleRowDataset_MaxRows_2;
     // -------------
     procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
@@ -468,6 +469,25 @@ begin
     {} '  ds.AppendRecord([4, ''FourthRow'']);'#13 +
     {} '  ds.AppendRecord([5, ''FifthRow'']);'#13 +
     {} '  ds.AppendRecord([6, ''LastRow'']);'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, fGenerator.Code.Text);
+end;
+
+procedure TestGenerateAppends.GenMultipleRowDataset_MaxRows_2;
+begin
+  fGenerator.DataSet := Given_ID_Text_DataSet(fOwner,
+    [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'ThirdRow'], [4, 'FourthRow'],
+    [5, 'FifthRow'], [6, 'LastRow']]);
+  fGenerator.AppendMode := amSinglelineAppends;
+  fGenerator.GeneratorMode := genAppend;
+
+  fGenerator.MaxRows := 2;
+  fGenerator.Execute;
+
+  Assert.AreMemosEqual(
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  ds.AppendRecord([1, ''FirstRow'']);'#13 +
+    {} '  ds.AppendRecord([2, ''MiddleRow'']);'#13 +
     {} '  ds.First;'#13 +
     {} '{$ENDREGION}'#13, fGenerator.Code.Text);
 end;
