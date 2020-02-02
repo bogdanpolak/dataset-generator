@@ -35,6 +35,7 @@ type
     fDataSetType: TDataSetType;
     fAppendMode: TAppendMode;
     fUnitName: string;
+    fMaxRows: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline(aFields: TFields): string;
     function GenerateOneAppend_Singleline(aFields: TFields): string;
@@ -69,6 +70,7 @@ type
     property DataSetType: TDataSetType read fDataSetType write fDataSetType;
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
     property UnitName: string read fUnitName write fUnitName;
+    property MaxRows: integer read fMaxRows write fMaxRows;
   end;
 
 implementation

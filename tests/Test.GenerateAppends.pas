@@ -45,6 +45,8 @@ type
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
     // -------------
+    procedure GenMultipleRowDataset_MaxRows_Zero;
+    // -------------
     procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
 
@@ -116,6 +118,31 @@ begin
     AppendRecord([5]);
     First;
   end;
+  Result := ds;
+end;
+
+function Given_ID_Text_DataSet(aOwner: TComponent;
+  aData: TArray < TArray < Variant >> ): TDataSet;
+var
+  ds: TFDMemTable;
+  idxRow: integer;
+  idxField: integer;
+begin
+  ds := TFDMemTable.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add('ID', ftInteger);
+    FieldDefs.Add('Text', ftWideString, 30);
+    CreateDataSet;
+  end;
+  for idxRow := 0 to High(aData) do
+  begin
+    ds.Append;
+    for idxField := 0 to High(aData[idxRow]) do
+      ds.Fields[idxField].Value := aData[idxRow][idxField];
+    ds.Post;
+  end;
+  ds.First;
   Result := ds;
 end;
 
@@ -420,6 +447,29 @@ begin
     (* *) '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
     (* *) '  ds.First;'#13 +
     (* *) '{$ENDREGION}'#13, actualCode);
+end;
+
+procedure TestGenerateAppends.GenMultipleRowDataset_MaxRows_Zero;
+begin
+  fGenerator.DataSet := Given_ID_Text_DataSet(fOwner,
+    [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'ThirdRow'], [4, 'FourthRow'],
+    [5, 'FifthRow'], [6, 'LastRow']]);
+  fGenerator.AppendMode := amSinglelineAppends;
+  fGenerator.GeneratorMode := genAppend;
+
+  fGenerator.MaxRows := 0;
+  fGenerator.Execute;
+
+  Assert.AreMemosEqual(
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  ds.AppendRecord([1, ''FirstRow'']);'#13 +
+    {} '  ds.AppendRecord([2, ''MiddleRow'']);'#13 +
+    {} '  ds.AppendRecord([3, ''ThirdRow'']);'#13 +
+    {} '  ds.AppendRecord([4, ''FourthRow'']);'#13 +
+    {} '  ds.AppendRecord([5, ''FifthRow'']);'#13 +
+    {} '  ds.AppendRecord([6, ''LastRow'']);'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, fGenerator.Code.Text);
 end;
 
 // -----------------------------------------------------------------------
