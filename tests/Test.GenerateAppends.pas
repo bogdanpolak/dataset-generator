@@ -297,18 +297,18 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''Info'').Value := '#13 +
-    (* *) '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    (* *) + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
-    (* *) + '      '' wrong way to use it'';'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  with ds do'#13 +
+    {} '  begin'#13 +
+    {} '    Append;'#13 +
+    {} '    FieldByName(''Info'').Value := '#13 +
+    {} '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    {} + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
+    {} + '      '' wrong way to use it'';'#13 +
+    {} '    Post;'#13 +
+    {} '  end;'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -327,15 +327,15 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) ' with ds do'#13 +
-    (* *) ' begin'#13 +
-    (* *) '  Append;'#13 +
-    (* *) '  FieldByName(''Stage'').Value := 5;'#13 +
-    (* *) '  Post;'#13 +
-    (* *) ' end;'#13 +
-    (* *) ' ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} ' with ds do'#13 +
+    {} ' begin'#13 +
+    {} '  Append;'#13 +
+    {} '  FieldByName(''Stage'').Value := 5;'#13 +
+    {} '  Post;'#13 +
+    {} ' end;'#13 +
+    {} ' ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 procedure TestGenerateAppends.GenIndentation_Empty;
@@ -351,15 +351,15 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) 'with ds do'#13 +
-    (* *) 'begin'#13 +
-    (* *) 'Append;'#13 +
-    (* *) 'FieldByName(''Degree'').Value := 5;'#13 +
-    (* *) 'Post;'#13 +
-    (* *) 'end;'#13 +
-    (* *) 'ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} 'with ds do'#13 +
+    {} 'begin'#13 +
+    {} 'Append;'#13 +
+    {} 'FieldByName(''Degree'').Value := 5;'#13 +
+    {} 'Post;'#13 +
+    {} 'end;'#13 +
+    {} 'ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 procedure TestGenerateAppends.GenIndentation_LongLiteral;
@@ -374,18 +374,18 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual( //.
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''LongDescription'').Value := '#13 +
-    (* *) '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    (* *) + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
-    (* *) + '      '' wrong way to use it'';'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  with ds do'#13 +
+    {} '  begin'#13 +
+    {} '    Append;'#13 +
+    {} '    FieldByName(''LongDescription'').Value := '#13 +
+    {} '      ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    {} + '      ''on, Property Injection, and Method Injection and about the right and''+'#13
+    {} + '      '' wrong way to use it'';'#13 +
+    {} '    Post;'#13 +
+    {} '  end;'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -405,27 +405,27 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''id'').Value := 1;'#13 +
-    (* *) '    FieldByName(''text1'').Value := ''Alice has a cat'';'#13 +
-    (* *) '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);'#13 +
-    (* *) '    FieldByName(''float1'').Value := 1.2;'#13 +
-    (* *) '    FieldByName(''currency1'').Value := 1200;'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''id'').Value := 2;'#13 +
-    (* *) '    FieldByName(''text1'').Value := ''Eva has a dog'';'#13 +
-    (* *) '    FieldByName(''currency1'').Value := 950;'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  with ds do'#13 +
+    {} '  begin'#13 +
+    {} '    Append;'#13 +
+    {} '    FieldByName(''id'').Value := 1;'#13 +
+    {} '    FieldByName(''text1'').Value := ''Alice has a cat'';'#13 +
+    {} '    FieldByName(''date1'').Value := EncodeDate(2019,9,16);'#13 +
+    {} '    FieldByName(''float1'').Value := 1.2;'#13 +
+    {} '    FieldByName(''currency1'').Value := 1200;'#13 +
+    {} '    Post;'#13 +
+    {} '  end;'#13 +
+    {} '  with ds do'#13 +
+    {} '  begin'#13 +
+    {} '    Append;'#13 +
+    {} '    FieldByName(''id'').Value := 2;'#13 +
+    {} '    FieldByName(''text1'').Value := ''Eva has a dog'';'#13 +
+    {} '    FieldByName(''currency1'').Value := 950;'#13 +
+    {} '    Post;'#13 +
+    {} '  end;'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
@@ -442,12 +442,12 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  ds.AppendRecord([1, ''Alice has a cat'', EncodeDate(2019,9,16), 1.2, 1200]);'#13
-    +
-    (* *) '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} '{$REGION ''Append data''}'#13 +
+    {} '  ds.AppendRecord([1, ''Alice has a cat'',' +
+    ' EncodeDate(2019,9,16), 1.2, 1200]);'#13 +
+    {} '  ds.AppendRecord([2, ''Eva has a dog'', Null, Null, 950]);'#13 +
+    {} '  ds.First;'#13 +
+    {} '{$ENDREGION}'#13, actualCode);
 end;
 
 procedure TestGenerateAppends.GenMultipleRowDataset_MaxRows_Zero;
