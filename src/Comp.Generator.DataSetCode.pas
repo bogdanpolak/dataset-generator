@@ -274,7 +274,7 @@ var
   s1: string;
   sl: TStringList;
 begin
-  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
   sl := TStringList.Create;
   try
@@ -298,7 +298,7 @@ var
   fld: TField;
   s1: string;
 begin
-  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
   sFieldsValues := '';
   for fld in fDataSet.Fields do
@@ -347,11 +347,11 @@ function TDSGenerator.GenerateAppendsBlock: string;
 var
   sDataAppend: string;
   aBookmark: TBookmark;
-  aRowCounter: Integer;
+  aRowCounter: integer;
 begin
-  if (fDataSet=nil) or (fDataSet.Fields.Count=0) then
+  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
-  if fMaxRows=0 then
+  if fMaxRows = 0 then
     aRowCounter := MaxInt
   else
     aRowCounter := fMaxRows;
@@ -364,7 +364,7 @@ begin
       aBookmark := dataSet.GetBookmark;
       try
         dataSet.First;
-        while not dataSet.Eof and (aRowCounter>0) do
+        while not dataSet.Eof and (aRowCounter > 0) do
         begin
           sDataAppend := sDataAppend + GenerateOneAppend;
           dec(aRowCounter);
@@ -448,8 +448,7 @@ begin
     genAppend:
       fCode.Text := GenerateAppendsBlock();
     genUnit:
-      fCode.Text := GenerateUnitHeader + GenerateFunction +
-        GenerateUnitFooter;
+      fCode.Text := GenerateUnitHeader + GenerateFunction + GenerateUnitFooter;
     genFunction:
       fCode.Text := GenerateFunction;
   end;
