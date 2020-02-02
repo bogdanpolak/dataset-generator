@@ -21,11 +21,9 @@ type
   TAppendMode = (amMultilineAppends, amSinglelineAppends);
 
   TDSGenerator = class(TComponent)
-  const
-    // * --------------------------------------------------------------------
-    // * Signature
-    ReleaseVersion = '1.3';
-    // * --------------------------------------------------------------------
+  public const
+    Version = '1.3';
+  private const
     MaxLiteralLenght = 70;
   private
     fCode: TStrings;
