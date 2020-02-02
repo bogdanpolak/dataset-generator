@@ -11,59 +11,60 @@ uses
 type
   TDSGeneratorUnderTest = class(TDSGenerator)
   public
-    function TestGenCodeLineFieldDefAdd(fld: TField): string;
-    function TestGenCodeLineSetFieldValue(fld: TField): string;
-    function TestFormatLongStringLiterals(const Literal: string): string;
-    function TestGenUnitHeader(const aUnitName: string): string;
-    function TestGenUnitFooter(): string;
-    function TestGenerateOneAppend(aFields: TFields): string;
-    function TestGenerateAppendsBlock(aDataSet: TDataSet): string;
-    function TestGenFunction: string;
+    // ----
+    function _FormatLongStringLiterals(const Literal: string): string;
+    // ----
+    function _GenerateLine_FieldDefAdd(fld: TField): string;
+    function _GenerateLine_SetFieldValue(fld: TField): string;
+    function _GenerateUnitHeader: string;
+    function _GenerateUnitFooter: string;
+    function _GenerateOneAppend: string;
+    function _GenerateAppendsBlock: string;
+    function _GenerateFunction: string;
   end;
 
 implementation
 
-function TDSGeneratorUnderTest.TestFormatLongStringLiterals(
+function TDSGeneratorUnderTest._FormatLongStringLiterals(
   const Literal: string): string;
 begin
   Result := FormatLongStringLiterals(Literal);
 end;
 
-function TDSGeneratorUnderTest.TestGenCodeLineFieldDefAdd(fld: TField): string;
+function TDSGeneratorUnderTest._GenerateLine_FieldDefAdd(fld: TField): string;
 begin
   Result := GenerateLine_FieldDefAdd(fld);
 end;
 
-function TDSGeneratorUnderTest.TestGenCodeLineSetFieldValue(
+function TDSGeneratorUnderTest._GenerateLine_SetFieldValue(
   fld: TField): string;
 begin
   Result := GenerateLine_SetFieldValue(fld);
 end;
 
-function TDSGeneratorUnderTest.TestGenerateOneAppend(aFields: TFields): string;
+function TDSGeneratorUnderTest._GenerateUnitHeader: string;
 begin
-  Result := GenerateOneAppend(aFields);
+  Result := GenerateUnitHeader;
 end;
 
-function TDSGeneratorUnderTest.TestGenerateAppendsBlock(aDataSet: TDataSet): string;
-begin
-  Result := GenerateAppendsBlock(aDataSet);
-end;
-
-function TDSGeneratorUnderTest.TestGenUnitHeader(
-  const aUnitName: string): string;
-begin
-  Result := GenerateUnitHeader(aUnitName);
-end;
-
-function TDSGeneratorUnderTest.TestGenFunction: string;
-begin
-  Result := GenerateFunction;
-end;
-
-function TDSGeneratorUnderTest.TestGenUnitFooter: string;
+function TDSGeneratorUnderTest._GenerateUnitFooter: string;
 begin
   Result := GenerateUnitFooter;
+end;
+
+function TDSGeneratorUnderTest._GenerateOneAppend: string;
+begin
+  Result := GenerateOneAppend;
+end;
+
+function TDSGeneratorUnderTest._GenerateAppendsBlock: string;
+begin
+  Result := GenerateAppendsBlock;
+end;
+
+function TDSGeneratorUnderTest._GenerateFunction: string;
+begin
+  Result := GenerateFunction;
 end;
 
 end.

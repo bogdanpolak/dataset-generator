@@ -155,8 +155,6 @@ end;
 // -----------------------------------------------------------------------
 
 procedure TestDSGenerator.GenerateUnit_NilDataSet;
-var
-  actualCode: string;
 begin
   TDSGenerator.GenerateAsString(nil);
 
@@ -165,12 +163,11 @@ end;
 
 procedure TestDSGenerator.Generate_UnitHeader;
 var
-  ds: TDataSet;
   actualCode: string;
 begin
-  ds := GivenDataSet_HistoricalEvents(fOwner);
+  fGenerator.UnitName := 'Fake.HistoricalEvents';
 
-  actualCode := fGenerator.TestGenUnitHeader('Fake.HistoricalEvents');
+  actualCode := fGenerator._GenerateUnitHeader;
 
   Assert.AreMemosEqual(
     {} 'unit Fake.HistoricalEvents;'#13 +
@@ -307,7 +304,9 @@ procedure TestDSGenerator.GenerateUnit_Header;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator.TestGenUnitHeader('Unit1');
+  fGenerator.UnitName := 'Unit1';
+
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
     {} 'unit Unit1;'#13 +
     {} #13 +
@@ -332,9 +331,9 @@ var
   actualCode: string;
 begin
   fGenerator.DataSetType := dstClientDataSet;
-  actualCode := fGenerator.TestGenUnitHeader('Unit1');
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
-    {} 'unit Unit1;'#13 +
+    {} 'unit uSampleDataSet;'#13 +
     {} #13 +
     {} 'interface'#13 +
     {} #13 +
@@ -357,7 +356,7 @@ procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator.TestGenUnitFooter;
+  actualCode := fGenerator._GenerateUnitFooter;
   Assert.AreMemosEqual(
     {} #13 +
     {} 'end.'#13, actualCode);
@@ -370,7 +369,7 @@ begin
   fGenerator.dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
 
-  actualCode := fGenerator.TestGenFunction;
+  actualCode := fGenerator._GenerateFunction;
 
   Assert.AreMemosEqual(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
@@ -405,9 +404,9 @@ begin
   fGenerator.DataSetType := dstClientDataSet;
   fGenerator.AppendMode := amSinglelineAppends;
 
-  actualCode := fGenerator.TestGenFunction;
+  actualCode := fGenerator._GenerateFunction;
 
-  Assert.AreMemosEqual(
+  Assert.AreMemosEqual_FullReport(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TClientDataSet;'#13 +
