@@ -406,7 +406,7 @@ begin
 
   actualCode := fGenerator._GenerateFunction;
 
-  Assert.AreMemosEqual(
+  Assert.AreMemosEqual_FullReport(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} 'var'#13 +
     {} '  ds: TClientDataSet;'#13 +
