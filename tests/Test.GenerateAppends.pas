@@ -187,7 +187,7 @@ begin
   fld := GivenField(fOwner, 'Level', ftInteger);
   fld.DataSet.AppendRecord([1]);
 
-  actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
+  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual('FieldByName(''Level'').Value := 1;', actualCode);
 end;
@@ -200,7 +200,7 @@ begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
   fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
+  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual('FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
     actualCode);
@@ -215,7 +215,7 @@ begin
   fld.DataSet.AppendRecord( //.
     [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
+  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual( //.
     'FieldByName(''ChangeDate'').Value := EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);',
@@ -230,7 +230,7 @@ begin
   fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
   fld.DataSet.AppendRecord(['Alice has a cat']);
 
-  actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
+  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual( //.
     'FieldByName(''ChangeDate'').Value := ''Alice has a cat'';', //.
@@ -255,7 +255,7 @@ begin
   ds.AppendRecord([1.01]);
   fld := ds.Fields[0];
 
-  actualCode := fGenerator.TestGenCodeLineSetFieldValue(fld);
+  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual('FieldByName(''abc123'').Value := 1.01;', actualCode);
 end;
@@ -273,7 +273,7 @@ begin
     ' Constructor Injection, Property Injection, and Method Injection' +
     ' and about the right and wrong way to use it';
 
-  actualCode := fGenerator.TestFormatLongStringLiterals(longText);
+  actualCode := fGenerator._FormatLongStringLiterals(longText);
 
   Assert.AreMemosEqual( //.
     #13 //.
@@ -504,7 +504,7 @@ begin
     [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'aRow'], [4, 'LastRow']]);
   fGenerator.DataSet.RecNo := 3;
 
-  fGenerator.TestGenerateAppendsBlock;
+  fGenerator._GenerateAppendsBlock;
 
   Assert.AreEqual(3, fGenerator.DataSet.RecNo);
 end;

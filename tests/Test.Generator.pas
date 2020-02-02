@@ -167,7 +167,7 @@ var
 begin
   fGenerator.UnitName := 'Fake.HistoricalEvents';
 
-  actualCode := fGenerator.TestGenUnitHeader;
+  actualCode := fGenerator._GenerateUnitHeader;
 
   Assert.AreMemosEqual(
     {} 'unit Fake.HistoricalEvents;'#13 +
@@ -306,7 +306,7 @@ var
 begin
   fGenerator.UnitName := 'Unit1';
 
-  actualCode := fGenerator.TestGenUnitHeader;
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
     {} 'unit Unit1;'#13 +
     {} #13 +
@@ -331,7 +331,7 @@ var
   actualCode: string;
 begin
   fGenerator.DataSetType := dstClientDataSet;
-  actualCode := fGenerator.TestGenUnitHeader;
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
     {} 'unit uSampleDataSet;'#13 +
     {} #13 +
@@ -356,7 +356,7 @@ procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator.TestGenUnitFooter;
+  actualCode := fGenerator._GenerateUnitFooter;
   Assert.AreMemosEqual(
     {} #13 +
     {} 'end.'#13, actualCode);
@@ -369,7 +369,7 @@ begin
   fGenerator.dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
 
-  actualCode := fGenerator.TestGenFunction;
+  actualCode := fGenerator._GenerateFunction;
 
   Assert.AreMemosEqual(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
@@ -404,7 +404,7 @@ begin
   fGenerator.DataSetType := dstClientDataSet;
   fGenerator.AppendMode := amSinglelineAppends;
 
-  actualCode := fGenerator.TestGenFunction;
+  actualCode := fGenerator._GenerateFunction;
 
   Assert.AreMemosEqual(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
