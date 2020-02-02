@@ -49,6 +49,7 @@ type
     function GenerateUnitHeader: string;
     function GenerateUnitFooter: string;
     function GenerateFunction: string;
+    function GenerateAll(aMode: TGeneratorMode): string;
     class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
   public
     constructor Create(AOwner: TComponent); override;
@@ -61,7 +62,7 @@ type
       const aFileName: string);
     class procedure GenerateAndSaveClipboard(ds: TDataSet);
   published
-    property dataSet: TDataSet read fDataSet write fDataSet;
+    property DataSet: TDataSet read fDataSet write fDataSet;
     property Code: TStrings read fCode;
     property IndentationText: String read fIndentationText
       write fIndentationText;
@@ -204,7 +205,7 @@ begin
       end
       else
       begin
-        s2 := s2 + fIndentationText  + fIndentationText +
+        s2 := s2 + fIndentationText + fIndentationText +
           s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
         s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
       end;
@@ -356,26 +357,26 @@ begin
   else
     aRowCounter := fMaxRows;
   sDataAppend := '';
-  if dataSet <> nil then
+  if DataSet <> nil then
   begin
-    dataSet.DisableControls;
+    DataSet.DisableControls;
     try
-      dataSet.Active := true;
-      aBookmark := dataSet.GetBookmark;
+      DataSet.Active := true;
+      aBookmark := DataSet.GetBookmark;
       try
-        dataSet.First;
-        while not dataSet.Eof and (aRowCounter > 0) do
+        DataSet.First;
+        while not DataSet.Eof and (aRowCounter > 0) do
         begin
           sDataAppend := sDataAppend + GenerateOneAppend;
           dec(aRowCounter);
-          dataSet.Next;
+          DataSet.Next;
         end;
       finally
-        dataSet.GotoBookmark(aBookmark);
-        dataSet.FreeBookmark(aBookmark);
+        DataSet.GotoBookmark(aBookmark);
+        DataSet.FreeBookmark(aBookmark);
       end;
     finally
-      dataSet.EnableControls;
+      DataSet.EnableControls;
     end;
   end;
 
@@ -440,18 +441,25 @@ begin
   Result := sLineBreak + 'end.' + sLineBreak;
 end;
 
+function TDSGenerator.GenerateAll(aMode: TGeneratorMode): string;
+begin
+  case aMode of
+    genStructure:
+      Result := GenerateStructure();
+    genAppend:
+      Result := GenerateAppendsBlock();
+    genUnit:
+      Result := GenerateUnitHeader + GenerateFunction + GenerateUnitFooter;
+    genFunction:
+      Result := GenerateFunction;
+  else
+    Result := '// Unsupported generator mode';
+  end;
+end;
+
 procedure TDSGenerator.Execute;
 begin
-  case fGeneratorMode of
-    genStructure:
-      fCode.Text := GenerateStructure();
-    genAppend:
-      fCode.Text := GenerateAppendsBlock();
-    genUnit:
-      fCode.Text := GenerateUnitHeader + GenerateFunction + GenerateUnitFooter;
-    genFunction:
-      fCode.Text := GenerateFunction;
-  end;
+  fCode.Text := GenerateAll(fGeneratorMode);
 end;
 
 class function TDSGenerator.GenerateAsString(ds: TDataSet): string;
@@ -460,7 +468,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
+    gen.DataSet := ds;
     gen.Execute;
     Result := gen.Code.Text;
   finally
@@ -483,7 +491,7 @@ var
 begin
   gen := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
+    gen.DataSet := ds;
     gen.Execute;
     Result := TStringsToArray(gen.Code);
   finally
@@ -494,17 +502,15 @@ end;
 class function TDSGenerator.GenetateUnit(ds: TDataSet;
   const aUnitName: string): string;
 var
-  gen: TDSGenerator;
+  aGenerator: TDSGenerator;
 begin
-  gen := TDSGenerator.Create(nil);
+  aGenerator := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
-    gen.GeneratorMode := genUnit;
-    gen.UnitName := aUnitName;
-    gen.Execute;
-    Result := gen.Code.Text;
+    aGenerator.DataSet := ds;
+    aGenerator.UnitName := aUnitName;
+    Result := aGenerator.GenerateAll(genUnit);
   finally
-    gen.Free;
+    aGenerator.Free;
   end;
 end;
 
@@ -553,14 +559,14 @@ end;
 
 class procedure TDSGenerator.GenerateAndSaveClipboard(ds: TDataSet);
 var
-  gen: TDSGenerator;
+  aGenerator: TDSGenerator;
 begin
-  gen := TDSGenerator.Create(nil);
+  aGenerator := TDSGenerator.Create(nil);
   try
-    gen.dataSet := ds;
-    Clipboard.AsText := gen.GenerateFunction;
+    aGenerator.DataSet := ds;
+    Clipboard.AsText := aGenerator.GenerateFunction;
   finally
-    gen.Free;
+    aGenerator.Free;
   end;
 end;
 
