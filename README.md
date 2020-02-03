@@ -5,9 +5,7 @@
 
 -------------------------------------------------------------
 PLAN:
-
 1. Add section "Fakes vs mocks"
-3. Update docs and samples to - [Pack Append Section - remove `with`]
 -------------------------------------------------------------
  
 ## Overview
@@ -89,11 +87,9 @@ begin
     FieldDefs.Add('Budget', ftCurrency);
     CreateDataSet;
   end;
-{$REGION 'Append data'}
   ds.AppendRecord([1, 'Team integration', EncodeDate(2019, 09, 16), 1.2, 1200]);
   ds.AppendRecord([2, 'Progress retrospective', Null, Null, 950]);
   ds.First;
-{$ENDREGION}
   Result := ds;
 end;
 ```
