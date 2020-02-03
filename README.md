@@ -3,6 +3,15 @@
 ![ Delphi Support ](https://img.shields.io/badge/Delphi%20Support-%20XE8%20..%2010.3%20Rio-blue.svg)
 ![ version ](https://img.shields.io/badge/version-%201.3-yellow.svg)
 
+-----------------------------------------------------------------------
+PLAN:
+
+1. Add section "Fakes vs mocks"
+2. MaxRows property
+   - default = 100
+3. Update docs and samples to - [Pack Append Section - remove `with`]
+-----------------------------------------------------------------------
+
 ## Overview
 
 DataSet Generator is a component that generates a Delphi code using any dataset provided as an input parameter. Component output is a function which creates and populates in-memory dataset according to structure and content of the provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
@@ -34,7 +43,7 @@ begin
 end;
 ```
 
-**Step 2)** Use generated fake:
+Step 2)** Use generated fake:
 
 In the sample code above was used a view object: `fOrdersView` of the class `TOrdersView`. This view class uses a dataset injected via method `SetMasterDataset` to calculate a date (period of the year) impact on a total monthly sale value. Because above code is dependent on a SQL connection and a SQL database (dataset provided by `fDataSetFactory`) you need a fake to put a method `TOrdersView.GetCurrentImpact` into unit test harness:
 
