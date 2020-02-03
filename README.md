@@ -96,7 +96,7 @@ begin
 end;
 ```
 
-## TDSGenerator documentation
+## TDSGenerator methods
 
 `TDSGenerator` class methods:
 
@@ -127,7 +127,7 @@ aGenerator.Free;
 
 In code sample above after generator construction and before execute call the generator options are defined. After execution, the generated code is available through the `Code` property (internal string list).
 
-`TDSGenerator` options:
+## TDSGenerator options
 
 | Option | Definition and description |
 | --- | --- |
@@ -138,15 +138,19 @@ In code sample above after generator construction and before execute call the ge
 | `MaxRows` | `Integer` Maximum number of a rows from input dataset which are used to generate append section *(default value = `100`)* |
 | `UnitName` | `String` Used as unit name when the whole unit is generated, (not used in other generator modes) |
 
-**AppendMode option: multi-line and single-line**
+### Option: `AppendMode`
 
-Generator is able to create more compact or more detailed append section. Compact mode is using `AppendRecord` with open array of variants and detailed mode is using multiple calls: `Append`, `FieldByName` and `Post`.
+What is difference between two values of AppendMode: multi-line append and single-line append?
+
+Generator is able to create more compact or more detailed append section for each of a data rows. With single-line / compact mode generator is creating one append using `ds.AppendRecord` method (where `ds: TDataSet`). This method receiving all row's data in one open array of variants, what makes this code more compact. 
 
 Sample code generated in single-line mode. `AppendMode` = `amSinglelineAppends`:
 
 ```pas
 ds.AppendRecord([1, 'Team integration', EncodeDate(2019, 09, 16), 1.2, 1200]);
 ```
+
+In a second multi-line / detailed  mode generator is creating code with multiple calls: `ds.Append`, `ds.FieldByName`, ..., `ds.FieldByName`. and `ds.Post`. This mode is allow to fill data in some selected fields, fill blob fields and keeps better control over the code.
 
 Sample code generated in multi-line mode. `AppendMode` = `amMultilineAppends`:
 
