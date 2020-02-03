@@ -131,11 +131,12 @@ In code sample above after generator construction and before execute call the ge
 
 | Option | Definition and description |
 | --- | --- |
-| `IdentationText` | `String` Used as one level of code indentation |
-| `GeneratorMode` | `TGeneratorMode` = `(genStructure, genAppend, genFunction, genUnit)`. When using Execute defines sections of the code to be generated |
-| `DataSetType` | `TDataSetType` = `(dstFDMemTable, dstClientDataSet)`. Which in-memory dataset to use as fake. |
-| `AppendMode` | `TAppendMode` = `(amMultilineAppends, amSinglelineAppends)` Described bellow |
-| `UnitName` | `String` Used as unit name when generating whole unit |
+| `IndentationText` | `String` Used as a code indentation text (defined text is used a an one level of the indentation) |
+| `GeneratorMode` | `TGeneratorMode` Decides which section of code are generated when using Execute command. Values: `genStructure`, `genAppend`, `genFunction`, `genUnit`. |
+| `DataSetType` | `TDataSetType` Decides which in-memory dataset component is used as a fake. Values: `dstFDMemTable`, `dstClientDataSet`. |
+| `AppendMode` | `TAppendMode` Defines Code format of append data section (described bellow). Values: `amMultilineAppends`, `amSinglelineAppends`. |
+| `MaxRows` | `Integer` Maximum number of a rows from input dataset which are used to generate append section *(default value = `100`)* |
+| `UnitName` | `String` Used as unit name when the whole unit is generated, (not used in other generator modes) |
 
 **AppendMode option: multi-line and single-line**
 
