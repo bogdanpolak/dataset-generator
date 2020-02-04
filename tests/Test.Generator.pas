@@ -29,19 +29,48 @@ type
     [TearDown]
     procedure TearDown;
   published
+    procedure GenerateUnit_NilDataSet;
+    procedure Generate_UnitHeader;
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
+    procedure GenerateToFile_UnitName;
     procedure GenerateUnit_Header;
     procedure GenerateUnit_Header_ClientDataSet;
     procedure GenerateUnit_Footer;
     procedure GenerateFunction;
+    procedure GenerateFunction_ClientDataSet;
   end;
 
 implementation
 
 uses
   System.Variants,
+  System.IOUtils,
   Data.FmtBcd;
+
+// -----------------------------------------------------------------------
+// Setup and TearDown section
+// -----------------------------------------------------------------------
+
+function GetFirstLineFromMemo(const sMemoText: string): string;
+var
+  i1: Integer;
+  i2: Integer;
+  idx: Integer;
+begin
+  i1 := sMemoText.IndexOf(#10);
+  i2 := sMemoText.IndexOf(#13);
+  if i1 = -1 then
+    idx := i2
+  else if i2 = -1 then
+    idx := i1
+  else
+    idx := Min(i1, i2);
+  if idx = -1 then
+    Result := ''
+  else
+    Result := sMemoText.Substring(0, idx);
+end;
 
 // -----------------------------------------------------------------------
 // Setup and TearDown section
@@ -87,6 +116,24 @@ begin
   Result := memTable;
 end;
 
+function GivenDataSet_MiniHistoricalEvents(aOwner: TComponent): TDataSet;
+var
+  memTable: TFDMemTable;
+begin
+  memTable := TFDMemTable.Create(aOwner);
+  with memTable do
+  begin
+    FieldDefs.Add('EventID', ftInteger);
+    FieldDefs.Add('Event', ftWideString, 50);
+    FieldDefs.Add('Date', ftDate);
+    CreateDataSet;
+    AppendRecord([1, 'Liberation of Poland', EncodeDate(1989, 06, 04)]);
+    AppendRecord([2, 'Battle of Vienna', EncodeDate(1683, 09, 12)]);
+    First;
+  end;
+  Result := memTable;
+end;
+
 function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
   const aDataValue: string): TDataSet;
 var
@@ -104,8 +151,41 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Tests for: Generate Sample historical events code
+// Tests for: Generate Header / Unit / Function
 // -----------------------------------------------------------------------
+
+procedure TestDSGenerator.GenerateUnit_NilDataSet;
+begin
+  TDSGenerator.GenerateAsString(nil);
+
+  Assert.Pass;
+end;
+
+procedure TestDSGenerator.Generate_UnitHeader;
+var
+  actualCode: string;
+begin
+  fGenerator.UnitName := 'Fake.HistoricalEvents';
+
+  actualCode := fGenerator._GenerateUnitHeader;
+
+  Assert.AreMemosEqual(
+    {} 'unit Fake.HistoricalEvents;'#13 +
+    {} #13 +
+    {} 'interface'#13 +
+    {} #13 +
+    {} 'uses'#13 +
+    {} '  System.Classes,'#13 +
+    {} '  System.SysUtils,'#13 +
+    {} '  System.Variants,'#13 +
+    {} '  Data.DB,'#13 +
+    {} '  FireDAC.Comp.Client;'#13 +
+    {} #13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + ''#13 +
+    {} 'implementation'#13 +
+    {} ''#13, actualCode);
+end;
 
 procedure TestDSGenerator.Generate_HistoricalEvents;
 var
@@ -117,37 +197,35 @@ begin
   actualCode := TDSGenerator.GenerateAsString(ds);
 
   Assert.AreMemosEqual(
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
-    (* *) '    FieldDefs.Add(''Event'', ftWideString, 50);'#13 +
-    (* *) '    FieldDefs.Add(''Date'', ftDate);'#13 +
-    (* *) '    FieldDefs.Add(''Expirence'', ftFloat);'#13 +
-    (* *) '    FieldDefs.Add(''Income'', ftCurrency);'#13 +
-    (* *) '    CreateDataSet;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''EventID'').Value := 1;'#13 +
-    (* *) '    FieldByName(''Event'').Value := ''Liberation of Poland'';'#13 +
-    (* *) '    FieldByName(''Date'').Value := EncodeDate(1989,6,4);'#13 +
-    (* *) '    FieldByName(''Expirence'').Value := 1.2;'#13 +
-    (* *) '    FieldByName(''Income'').Value := 120;'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''EventID'').Value := 2;'#13 +
-    (* *) '    FieldByName(''Event'').Value := ''Battle of Vienna'';'#13 +
-    (* *) '    FieldByName(''Date'').Value := EncodeDate(1683,9,12);'#13 +
-    (* *) '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13, actualCode);
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} 'var'#13 +
+    {} '  ds: TFDMemTable;'#13 +
+    {} 'begin'#13 +
+    {} '  ds := TFDMemTable.Create(AOwner);'#13 +
+    {} '  with ds do'#13 +
+    {} '  begin'#13 +
+    {} '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
+    {} '    FieldDefs.Add(''Event'', ftWideString, 50);'#13 +
+    {} '    FieldDefs.Add(''Date'', ftDate);'#13 +
+    {} '    FieldDefs.Add(''Expirence'', ftFloat);'#13 +
+    {} '    FieldDefs.Add(''Income'', ftCurrency);'#13 +
+    {} '    CreateDataSet;'#13 +
+    {} '  end;'#13 +
+    {} '  ds.Append;'#13#10 +
+    {} '  ds.FieldByName(''EventID'').Value := 1;'#13#10 +
+    {} '  ds.FieldByName(''Event'').Value := ''Liberation of Poland'';'#13#10 +
+    {} '  ds.FieldByName(''Date'').Value := EncodeDate(1989,6,4);'#13#10 +
+    {} '  ds.FieldByName(''Expirence'').Value := 1.2;'#13#10 +
+    {} '  ds.FieldByName(''Income'').Value := 120;'#13#10 +
+    {} '  ds.Post;'#13#10 +
+    {} '  ds.Append;'#13 +
+    {} '  ds.FieldByName(''EventID'').Value := 2;'#13 +
+    {} '  ds.FieldByName(''Event'').Value := ''Battle of Vienna'';'#13 +
+    {} '  ds.FieldByName(''Date'').Value := EncodeDate(1683,9,12);'#13 +
+    {} '  ds.Post;'#13 +
+    {} '  ds.First;'#13 +
+    {} '  Result := ds;'#13 +
+    {} 'end;'#13, actualCode);
 end;
 
 procedure TestDSGenerator.GenerateToStream_StringDataSet;
@@ -160,68 +238,79 @@ begin
 
   TDSGenerator.GenerateAndSaveToStream(ds, fStringStream);
   actualCode := fStringStream.DataString;
+
   Assert.AreMemosEqual(
-    (* *) 'unit uSampleDataSet;'#13 +
-    (* *) #13 +
-    (* *) 'interface'#13 +
-    (* *) #13 +
-    (* *) 'uses'#13 +
-    (* *) '  System.Classes,'#13 +
-    (* *) '  System.SysUtils,'#13 +
-    (* *) '  System.Variants,'#13 +
-    (* *) '  Data.DB,'#13 +
-    (* *) '  FireDAC.Comp.Client;'#13 +
-    (* *) #13 +
-    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
-    (* *) #13 +
-    (* *) 'implementation'#13 +
-    (* *) #13 +
-    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
-    (* *) 'var'#13 +
-    (* *) '  ds: TFDMemTable;'#13 +
-    (* *) 'begin'#13 +
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13 +
-    (* *) '    CreateDataSet;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
-    (* *) + '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13 +
-    (* *) '  Result := ds;'#13 +
-    (* *) 'end;'#13 +
-    (* *) #13 +
-    (* *) 'end.'#13, actualCode);
+    {} 'unit uSampleDataSet;'#13
+    {} + #13
+    {} + 'interface'#13
+    {} + #13
+    {} + 'uses'#13
+    {} + '  System.Classes,'#13
+    {} + '  System.SysUtils,'#13
+    {} + '  System.Variants,'#13
+    {} + '  Data.DB,'#13
+    {} + '  FireDAC.Comp.Client;'#13
+    {} + #13
+    {} + 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + #13
+    {} + 'implementation'#13
+    {} + #13
+    {} + 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + 'var'#13
+    {} + '  ds: TFDMemTable;'#13
+    {} + 'begin'#13
+    {} + '  ds := TFDMemTable.Create(AOwner);'#13
+    {} + '  with ds do'#13
+    {} + '  begin'#13
+    {} + '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13
+    {} + '    CreateDataSet;'#13
+    {} + '  end;'#13
+    {} + '  ds.Append;'#13
+    {} + '  ds.FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13
+    {} + '  Result := ds;'#13
+    {} + 'end;'#13
+    {} + #13
+    {} + 'end.'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateToFile_UnitName;
+var
+  aFileName: string;
+  actualLine: string;
+begin
+  aFileName := System.IOUtils.TPath.GetTempPath + 'FakeDataSet.Historical.pas';
+
+  TDSGenerator.GenerateAndSaveToFile(nil, aFileName);
+  actualLine := GetFirstLineFromMemo(TFile.ReadAllText(aFileName));
+
+  Assert.AreEqual('unit FakeDataSet.Historical;', actualLine);
 end;
 
 procedure TestDSGenerator.GenerateUnit_Header;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator.TestGenUnitHeader('Unit1');
+  fGenerator.UnitName := 'Unit1';
+
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
-    (* *) 'unit Unit1;'#13 +
-    (* *) #13 +
-    (* *) 'interface'#13 +
-    (* *) #13 +
-    (* *) 'uses'#13 +
-    (* *) '  System.Classes,'#13 +
-    (* *) '  System.SysUtils,'#13 +
-    (* *) '  System.Variants,'#13 +
-    (* *) '  Data.DB,'#13 +
-    (* *) '  FireDAC.Comp.Client;'#13 +
-    (* *) #13 +
-    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
-    (* *) #13 +
-    (* *) 'implementation'#13 +
-    (* *) #13, actualCode);
+    {} 'unit Unit1;'#13 +
+    {} #13 +
+    {} 'interface'#13 +
+    {} #13 +
+    {} 'uses'#13 +
+    {} '  System.Classes,'#13 +
+    {} '  System.SysUtils,'#13 +
+    {} '  System.Variants,'#13 +
+    {} '  Data.DB,'#13 +
+    {} '  FireDAC.Comp.Client;'#13 +
+    {} #13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} #13 +
+    {} 'implementation'#13 +
+    {} #13, actualCode);
   // MidasLib, Datasnap.DBClient
 end;
 
@@ -230,24 +319,24 @@ var
   actualCode: string;
 begin
   fGenerator.DataSetType := dstClientDataSet;
-  actualCode := fGenerator.TestGenUnitHeader('Unit1');
+  actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(
-    (* *) 'unit Unit1;'#13 +
-    (* *) #13 +
-    (* *) 'interface'#13 +
-    (* *) #13 +
-    (* *) 'uses'#13 +
-    (* *) '  System.Classes,'#13 +
-    (* *) '  System.SysUtils,'#13 +
-    (* *) '  System.Variants,'#13 +
-    (* *) '  Data.DB,'#13 +
-    (* *) '  Datasnap.DBClient;'#13 +
-    (* *) '  MidasLib;'#13 +
-    (* *) #13 +
-    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
-    (* *) #13 +
-    (* *) 'implementation'#13 +
-    (* *) #13, actualCode);
+    {} 'unit uSampleDataSet;'#13 +
+    {} #13 +
+    {} 'interface'#13 +
+    {} #13 +
+    {} 'uses'#13 +
+    {} '  System.Classes,'#13 +
+    {} '  System.SysUtils,'#13 +
+    {} '  System.Variants,'#13 +
+    {} '  Data.DB,'#13 +
+    {} '  Datasnap.DBClient;'#13 +
+    {} '  MidasLib;'#13 +
+    {} #13 +
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
+    {} #13 +
+    {} 'implementation'#13 +
+    {} #13, actualCode);
   //
 end;
 
@@ -255,10 +344,10 @@ procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator.TestGenUnitFooter;
+  actualCode := fGenerator._GenerateUnitFooter;
   Assert.AreMemosEqual(
-    (* *) #13 +
-    (* *) 'end.'#13, actualCode);
+    {} #13 +
+    {} 'end.'#13, actualCode);
 end;
 
 procedure TestDSGenerator.GenerateFunction;
@@ -267,34 +356,56 @@ var
 begin
   fGenerator.dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
-  fGenerator.GeneratorMode := genUnit;
 
-
-  fGenerator.Execute;
-  actualCode := fGenerator.TestGenFunction;
+  actualCode := fGenerator._GenerateFunction;
 
   Assert.AreMemosEqual(
-    (* *) 'function CreateDataSet (aOwner: TComponent): TDataSet;'#13 +
-    (* *) 'var'#13 +
-    (* *) '  ds: TFDMemTable;'#13 +
-    (* *) 'begin'#13 +
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13 +
-    (* *) '    CreateDataSet;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '{$REGION ''Append data''}'#13 +
-    (* *) '  with ds do'#13 +
-    (* *) '  begin'#13 +
-    (* *) '    Append;'#13 +
-    (* *) '    FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
-    (* *) + '    Post;'#13 +
-    (* *) '  end;'#13 +
-    (* *) '  ds.First;'#13 +
-    (* *) '{$ENDREGION}'#13 +
-    (* *) '  Result := ds;'#13 +
-    (* *) 'end;'#13, actualCode);
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + 'var'#13
+    {} + '  ds: TFDMemTable;'#13
+    {} + 'begin'#13
+    {} + '  ds := TFDMemTable.Create(AOwner);'#13
+    {} + '  with ds do'#13
+    {} + '  begin'#13
+    {} + '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13
+    {} + '    CreateDataSet;'#13
+    {} + '  end;'#13
+    {} + '  ds.Append;'#13
+    {} + '  ds.FieldByName(''CyrlicText'').Value := ''Все люди рождаются свободными'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13
+    {} + '  Result := ds;'#13
+    {} + 'end;'#13, actualCode);
+end;
+
+procedure TestDSGenerator.GenerateFunction_ClientDataSet;
+var
+  actualCode: string;
+begin
+  fGenerator.dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
+  fGenerator.DataSetType := dstClientDataSet;
+  fGenerator.AppendMode := amSinglelineAppends;
+
+  actualCode := fGenerator._GenerateFunction;
+
+  Assert.AreMemosEqual_FullReport(
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + 'var'#13
+    {} + '  ds: TClientDataSet;'#13
+    {} + 'begin'#13
+    {} + '  ds := TClientDataSet.Create(AOwner);'#13
+    {} + '  with ds do'#13
+    {} + '  begin'#13
+    {} + '    FieldDefs.Add(''EventID'', ftInteger);'#13
+    {} + '    FieldDefs.Add(''Event'', ftWideString, 50);'#13
+    {} + '    FieldDefs.Add(''Date'', ftDate);'#13
+    {} + '    CreateDataSet;'#13
+    {} + '  end;'#13
+    {} + '  ds.AppendRecord([1, ''Liberation of Poland'', EncodeDate(1989,6,4)]);'#13
+    {} + '  ds.AppendRecord([2, ''Battle of Vienna'', EncodeDate(1683,9,12)]);'#13
+    {} + '  ds.First;'#13
+    {} + '  Result := ds;'#13
+    {} + 'end;'#13, actualCode);
 end;
 
 end.

@@ -158,7 +158,7 @@ var
 begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
 
-  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
 
   Assert.AreEqual('FieldDefs.Add(''Birthday'', ftDate);', actualCode);
 end;
@@ -170,7 +170,7 @@ var
 begin
   fld := GivenField(fOwner, 'Created', ftDateTime);
 
-  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
 
   Assert.AreEqual('FieldDefs.Add(''Created'', ftDateTime);', actualCode);
 end;
@@ -182,7 +182,7 @@ var
 begin
   fld := GivenField(fOwner, 'Rating', ftInteger);
 
-  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
 
   Assert.AreEqual('FieldDefs.Add(''Rating'', ftInteger);', actualCode);
 end;
@@ -194,7 +194,7 @@ var
 begin
   fld := GivenField(fOwner, 'Description', ftWideString, 30);
 
-  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
 
   Assert.AreEqual('FieldDefs.Add(''Description'', ftWideString, 30);',
     actualCode);
@@ -207,7 +207,7 @@ var
 begin
   fld := GivenField_BCD_10_4(fOwner, 'Price');
 
-  actualCode := fGenerator.TestGenCodeLineFieldDefAdd(fld);
+  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
 
   Assert.AreMemosEqual(
     (* *) 'with FieldDefs.AddFieldDef do begin'#13 +
