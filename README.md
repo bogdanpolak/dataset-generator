@@ -163,13 +163,13 @@ Testing objects which using datasets internally is challenging. Many teams gave 
 
 Delphi event driven / component approach makes this task even more challenging. Why? For two reasons: (1) many not fully compatible dataset implementation and (2) implementation of business code in dataset events. Datasets can have many very specific implementation like (BDE, dbExpress, FireDAC and many others) and production code can highly coupled to the only one implementation. Developers can use universal, general and quite powerful `TDataSet` class, but usually production code is very dependent on the one implementation. Furthermore injecting production code into dataset events looks like very productive approach and many times was suggested as winning approach, but within the time such code is really difficult to understand, maintain and put into test harness (unit testing process).
 
-article: https://blog.pragmatists.com/test-doubles-fakes-mocks-and-stubs-1a7491dfa3da
+According to automated test practices there are 3 ways of replace or remove heavy dependencies:
+1. Mocks 
+   - simplified implementation of dependency which can be injected instead of a heavy class (DB access, network communication, etc.)
+   - developer is able to verify is a particual method was called, what parameters was provided or how many times it was called (developer can define and check expectations)
+1. Stubs 
+   - more advanced then mocks, in addition to expectation developer can define a behavior - what values methods are returning with which parameters 
+1. Fakes 
+   - replacement implementation of the dependency, including almost full functionality of object, boy working in-memory.
 
-Fakes are objects that have working implementations, but not same as production one. Usually they take some shortcut and have simplified version of production code. 
-
-Mocks are objects that register calls they receive.
-In test assertion we can verify on Mocks that all expected actions were performed.
-
-We use mocks when we don’t want to invoke production code or when there is no easy way to verify, that intended code was executed. There is no return value and no easy way to check system state change. An example can be a functionality that calls e-mail sending service.
-
-We don’t want to send e-mails each time we run a test. Moreover, it is not easy to verify in tests that a right email was send. Only thing we can do is to verify the outputs of the functionality that is exercised in our test. In other worlds, verify that e-mail sending service was called.
+Using dataset fakes developers can much easier decouple code from actual implementation and put production code into test harness. In long term fakes can be refactored into stubs and then into fakes. It will be much more easy and much less stressful to provide complex refactoring after delivering unit test safety net for the production code.
