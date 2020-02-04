@@ -22,7 +22,7 @@ type
 
   TDSGenerator = class(TComponent)
   public const
-    Version = '1.3';
+    Version = '1.4';
   private const
     MaxLiteralLenght = 70;
   private
