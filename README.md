@@ -3,11 +3,6 @@
 ![ Delphi Support ](https://img.shields.io/badge/Delphi%20Support-%20XE8%20..%2010.3%20Rio-blue.svg)
 ![ version ](https://img.shields.io/badge/version-%201.3-yellow.svg)
 
--------------------------------------------------------------
-PLAN:
-1. Add section "Fakes vs mocks"
--------------------------------------------------------------
- 
 ## Overview
 
 DataSet Generator is a component that generates a Delphi code using any dataset provided as an input parameter. Component output is a function which creates and populates in-memory dataset according to structure and content of the provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
@@ -164,11 +159,13 @@ ds.Post;
 
 ## Fakes vs mocks
 
-TBD:
+Testing objects which using datasets internally is challenging. Many teams gave up with introduction unit tests to their projects because of such dependencies.
+
+Delphi event driven / component approach makes this task even more challenging. Why? For two reasons: (1) many not fully compatible dataset implementation and (2) implementation of business code in dataset events. Datasets can have many very specific implementation like (BDE, dbExpress, FireDAC and many others) and production code can highly coupled to the only one implementation. Developers can use universal, general and quite powerful `TDataSet` class, but usually production code is very dependent on the one implementation. Furthermore injecting production code into dataset events looks like very productive approach and many times was suggested as winning approach, but within the time such code is really difficult to understand, maintain and put into test harness (unit testing process).
 
 article: https://blog.pragmatists.com/test-doubles-fakes-mocks-and-stubs-1a7491dfa3da
 
-Fakes are objects that have working implementations, but not same as production one. Usually they take some shortcut and have simplified version of production code.
+Fakes are objects that have working implementations, but not same as production one. Usually they take some shortcut and have simplified version of production code. 
 
 Mocks are objects that register calls they receive.
 In test assertion we can verify on Mocks that all expected actions were performed.
