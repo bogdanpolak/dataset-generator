@@ -86,7 +86,7 @@ var
   ADataSet: TDataSet;
 begin
   ADataSet := CreateSimpleMemTable;
-  Memo1.Lines.Text := TGenerateDataSetCode.GenerateAsString (ADataSet);
+  Memo1.Lines.Text := TDSGenerator.GenerateAsString (ADataSet);
 end;
 
 procedure TFormMain.Button2Click(Sender: TObject);
@@ -94,7 +94,7 @@ var
   ADataSet: TDataSet;
 begin
   ADataSet := CreateSqlQuery;
-  Memo1.Lines.Text := TGenerateDataSetCode.GenerateAsString(ADataSet);
+  Memo1.Lines.Text := TDSGenerator.GenerateAsString(ADataSet);
 end;
 
 end.
