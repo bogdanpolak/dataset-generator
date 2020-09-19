@@ -32,7 +32,7 @@ type
     fGeneratorMode: TGeneratorMode;
     fDataSetType: TDataSetType;
     fAppendMode: TAppendMode;
-    fUnitName: string;
+    fNameOfUnit: string;
     fMaxRows: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline: string;
@@ -68,7 +68,7 @@ type
       write fGeneratorMode;
     property DataSetType: TDataSetType read fDataSetType write fDataSetType;
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
-    property UnitName: string read fUnitName write fUnitName;
+    property NameOfUnit: string read fNameOfUnit write fNameOfUnit;
     property MaxRows: integer read fMaxRows write fMaxRows;
   end;
 
@@ -87,7 +87,7 @@ begin
   fDataSetType := dstFDMemTable;
   fAppendMode := amMultilineAppends;
   fIndentationText := '  ';
-  fUnitName := 'uSampleDataSet';
+  fNameOfUnit := 'uSampleDataSet';
   fMaxRows := 100;
   // --------------------------------
   fCode := TStringList.Create;
@@ -396,7 +396,7 @@ begin
       {} fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit ' + fUnitName + ';' + sLineBreak +
+  {} 'unit ' + fNameOfUnit + ';' + sLineBreak +
   {} sLineBreak +
   {} 'interface' + sLineBreak +
   {} sLineBreak +
@@ -505,7 +505,7 @@ begin
   aGenerator := TDSGenerator.Create(nil);
   try
     aGenerator.DataSet := ds;
-    aGenerator.UnitName := aUnitName;
+    aGenerator.NameOfUnit := aUnitName;
     Result := aGenerator.GenerateAll(genUnit);
   finally
     aGenerator.Free;
