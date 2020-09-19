@@ -68,7 +68,7 @@ type
       write fGeneratorMode;
     property DataSetType: TDataSetType read fDataSetType write fDataSetType;
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
-    property UnitName: string read fNameOfUnit write fNameOfUnit;
+    property NameOfUnit: string read fNameOfUnit write fNameOfUnit;
     property MaxRows: integer read fMaxRows write fMaxRows;
   end;
 
@@ -505,7 +505,7 @@ begin
   aGenerator := TDSGenerator.Create(nil);
   try
     aGenerator.DataSet := ds;
-    aGenerator.UnitName := aUnitName;
+    aGenerator.NameOfUnit := aUnitName;
     Result := aGenerator.GenerateAll(genUnit);
   finally
     aGenerator.Free;
