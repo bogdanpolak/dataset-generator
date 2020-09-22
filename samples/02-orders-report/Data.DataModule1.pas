@@ -5,7 +5,12 @@ interface
 uses
   System.SysUtils,
   System.Classes,
+  System.Variants,
+  System.DateUtils,
   Data.DB,
+  Spring,
+  Spring.Collections,
+  {FireDAC}
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Stan.ExprFuncs, FireDAC.Stan.Param,
@@ -20,10 +25,9 @@ type
     fdqOrdersInMonth: TFDQuery;
     fdqEmployees: TFDQuery;
     fdqDetailsInMonth: TFDQuery;
-  private
-    { Private declarations }
   public
-    { Public declarations }
+    function GetActiveMonths: IList<Tuple<String,Word,Word>>;
+    procedure Connect();
   end;
 
 var
@@ -34,5 +38,35 @@ implementation
 {%CLASSGROUP 'Vcl.Controls.TControl'}
 
 {$R *.dfm}
+
+procedure TDataModule1.Connect();
+begin
+  FDConnection1.Open();
+end;
+
+
+function TDataModule1.GetActiveMonths: IList<Tuple<String, Word, Word>>;
+var
+  varMinDate: Variant;
+  varMaxDate: Variant;
+  aDate: TDateTime;
+  aEndDate: TDateTime;
+begin
+  Result := TCollections.CreateList<Tuple<String, Word, Word>>();
+  varMinDate := FDConnection1.ExecSQLScalar('SELECT Min(OrderDate) FROM {id Orders}');
+  varMaxDate := FDConnection1.ExecSQLScalar('SELECT Max(OrderDate) FROM {id Orders}');
+  if varMinDate=System.Variants.Null then
+    Exit;
+  if varMaxDate=System.Variants.Null then
+    Exit;
+  aDate := RecodeDay(VarToDateTime(varMinDate),1);
+  aEndDate := VarToDateTime(varMaxDate);
+  while aDate<=aEndDate do
+  begin
+    Result.Add( Tuple<String, Word, Word>.Create(
+      FormatDateTime('yyyy-mm',aDate),YearOf(aDate),MonthOf(aDate)) );
+    aDate := IncMonth(aDate, 1);
+  end;
+end;
 
 end.
