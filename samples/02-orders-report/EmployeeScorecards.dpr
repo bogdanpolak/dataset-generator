@@ -1,4 +1,4 @@
-program OrdersReport;
+program EmployeeScorecards;
 
 uses
   Vcl.Forms,
