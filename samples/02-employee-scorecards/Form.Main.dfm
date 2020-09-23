@@ -76,6 +76,7 @@ object Form1: TForm1
         Align = alClient
         ItemHeight = 13
         TabOrder = 0
+        OnClick = lbxMonthsClick
         ExplicitLeft = 4
         ExplicitTop = 4
         ExplicitWidth = 251

@@ -29,6 +29,7 @@ type
     procedure ActionList1Update(Action: TBasicAction; var Handled: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure lbxMonthsClick(Sender: TObject);
   private
     procedure FillListBoxWithMonths(const aListBox: TListBox);
   public
@@ -44,8 +45,9 @@ implementation
 uses
   Spring,
   Spring.Collections,
-
-  Data.DataModule1;
+  {-}
+  Data.DataModule1,
+  Logic.Scorecards;
 
 
 procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
@@ -82,6 +84,21 @@ end;
 procedure TForm1.FormShow(Sender: TObject);
 begin
   actDatabaseConnect.Execute;
+end;
+
+procedure TForm1.lbxMonthsClick(Sender: TObject);
+var
+  strMonth: string;
+  aYear: word;
+  aMonth: word;
+  aScorecards: TScorecards;
+begin
+  if lbxMonths.ItemIndex<0 then
+    Exit;
+  strMonth := lbxMonths.Items[lbxMonths.ItemIndex];
+  aYear := strMonth.Substring(0,4).ToInteger();
+  aMonth := strMonth.Substring(5,2).ToInteger();
+  aScorecards := TScorecards.Create(aYear, aMonth);
 end;
 
 end.
