@@ -13,13 +13,24 @@ uses
   Vcl.Graphics,
   Vcl.Controls,
   Vcl.Forms,
-  Vcl.Dialogs, Vcl.StdCtrls;
+  Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList;
 
 type
   TForm1 = class(TForm)
+    gboxConnect: TGroupBox;
+    btnConnect: TButton;
+    gboxScorecards: TGroupBox;
+    lbxMonths: TListBox;
+    Panel1: TPanel;
+    Label1: TLabel;
+    ActionList1: TActionList;
+    actDatabaseConnect: TAction;
+    procedure actDatabaseConnectExecute(Sender: TObject);
+    procedure ActionList1Update(Action: TBasicAction; var Handled: Boolean);
+    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    procedure TestMonths;
+    procedure FillListBoxWithMonths(const aListBox: TListBox);
   public
   end;
 
@@ -37,28 +48,40 @@ uses
   Data.DataModule1;
 
 
-procedure TForm1.TestMonths();
+procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
+begin
+  DataModule1.Connect();
+  FillListBoxWithMonths(lbxMonths);
+end;
+
+procedure TForm1.ActionList1Update(Action: TBasicAction; var Handled: Boolean);
+begin
+  gboxScorecards.Visible := DataModule1.IsConnected();
+  actDatabaseConnect.Enabled := not DataModule1.IsConnected();
+end;
+
+procedure TForm1.FillListBoxWithMonths(const aListBox: TListBox);
 var
-  aListBox: TListBox;
   activeMonths: IList<Tuple<String, Word, Word>>;
   aMonth: Tuple<String, Word, Word>;
 begin
-  aListBox := TListBox.Create(self);
-  aListBox.Align := alLeft;
-  aListBox.AlignWithMargins := True;
-  aListBox.Parent := Self;
-  DataModule1.Connect();
   activeMonths := DataModule1.GetActiveMonths();
   aListBox.Clear;
   for aMonth in activeMonths do
   begin
-    aListBox.AddItem(aMonth.Value1,nil);
+    aListBox.Items.Insert(0, aMonth.Value1);
   end;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  gboxScorecards.Visible := False;
+  gboxScorecards.Align := alClient;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-  TestMonths();
+  actDatabaseConnect.Execute;
 end;
 
 end.
