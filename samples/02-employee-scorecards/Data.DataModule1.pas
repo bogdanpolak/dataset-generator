@@ -25,10 +25,13 @@ type
     fdqOrdersInMonth: TFDQuery;
     fdqEmployees: TFDQuery;
     fdqDetailsInMonth: TFDQuery;
+  private
   public
     function GetActiveMonths: IList<Tuple<String,Word,Word>>;
     procedure Connect();
     function IsConnected(): boolean;
+    function GetDataSet_OrdersInMonth(aYear, aMonth: Word): TDataSet;
+    function GetDataSet_DetailsInMonth(aYear, aMonth: Word): TDataSet;
   end;
 
 var
@@ -68,6 +71,22 @@ begin
       FormatDateTime('yyyy-mm',aDate),YearOf(aDate),MonthOf(aDate)) );
     aDate := IncMonth(aDate, 1);
   end;
+end;
+
+function TDataModule1.GetDataSet_OrdersInMonth(aYear: Word; aMonth: Word): TDataSet;
+begin
+  fdqOrdersInMonth.ParamByName('YEAR').Value := aYear;
+  fdqOrdersInMonth.ParamByName('MONTH').Value := aMonth;
+  fdqOrdersInMonth.Open();
+  Result := fdqOrdersInMonth;
+end;
+
+function TDataModule1.GetDataSet_DetailsInMonth(aYear: Word; aMonth: Word): TDataSet;
+begin
+  fdqDetailsInMonth.ParamByName('YEAR').Value := aYear;
+  fdqDetailsInMonth.ParamByName('MONTH').Value := aMonth;
+  fdqDetailsInMonth.Open();
+  Result := fdqDetailsInMonth;
 end;
 
 function TDataModule1.IsConnected: boolean;
