@@ -28,6 +28,7 @@ type
   public
     function GetActiveMonths: IList<Tuple<String,Word,Word>>;
     procedure Connect();
+    function IsConnected(): boolean;
   end;
 
 var
@@ -67,6 +68,11 @@ begin
       FormatDateTime('yyyy-mm',aDate),YearOf(aDate),MonthOf(aDate)) );
     aDate := IncMonth(aDate, 1);
   end;
+end;
+
+function TDataModule1.IsConnected: boolean;
+begin
+  Result := FDConnection1.Connected;
 end;
 
 end.
