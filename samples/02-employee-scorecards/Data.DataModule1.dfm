@@ -5,6 +5,7 @@ object DataModule1: TDataModule1
   object FDConnection1: TFDConnection
     Params.Strings = (
       'ConnectionDef=SQLite_Demo')
+    Connected = True
     LoginPrompt = False
     Left = 40
     Top = 8
@@ -15,10 +16,23 @@ object DataModule1: TDataModule1
       'SELECT OrderID, EmployeeID, CustomerID, OrderDate,'
       '  {Year(OrderDate)} OrderYear, {Month(OrderDate)} OrderMonth '
       'FROM {id Orders}'
-      'WHERE OrderYear = 1997 and OrderMonth = 1'
+      'WHERE OrderYear = :YEAR and OrderMonth = :MONTH'
       'ORDER BY EmployeeID')
     Left = 128
     Top = 8
+    ParamData = <
+      item
+        Name = 'YEAR'
+        DataType = ftString
+        ParamType = ptInput
+        Value = '1998'
+      end
+      item
+        Name = 'MONTH'
+        DataType = ftString
+        ParamType = ptInput
+        Value = '1'
+      end>
   end
   object fdqEmployees: TFDQuery
     Connection = FDConnection1
@@ -38,9 +52,22 @@ object DataModule1: TDataModule1
       '  {Year(OrderDate)} OrderYear, {Month(OrderDate)} OrderMonth'
       '  from {id Order Details} as OrderDetails'
       '  inner join Orders on Orders.OrderID = OrderDetails.OrderID'
-      '  WHERE OrderYear=1997 and OrderMonth=1'
+      '  WHERE OrderYear = :YEAR and OrderMonth = :MONTH'
       '  ORDER BY CustomerID, OrderDetails.OrderID')
     Left = 128
     Top = 120
+    ParamData = <
+      item
+        Name = 'YEAR'
+        DataType = ftString
+        ParamType = ptInput
+        Value = '1998'
+      end
+      item
+        Name = 'MONTH'
+        DataType = ftString
+        ParamType = ptInput
+        Value = '1'
+      end>
   end
 end
