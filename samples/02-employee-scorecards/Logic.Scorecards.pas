@@ -27,6 +27,7 @@ type
     fMonth: Integer;
     procedure FillUsingOrders(const dsOrders: TDataSet);
     procedure FillUsingDetails(const dsDetails: TDataSet);
+    procedure FillUsingEmployee(const dsEmployee: TDataSet);
   public
     fEmployeeScores: IDictionary<Integer, TEmployeeScore>;
     constructor Create(aYear: word; aMonth: word);
@@ -77,6 +78,21 @@ begin
   end;
 end;
 
+procedure TScorecards.FillUsingEmployee(const dsEmployee: TDataSet);
+var
+  employeeID: Integer;
+  scorecards: TEmployeeScore;
+begin
+  dsEmployee.First;
+  while not dsEmployee.Eof do
+  begin
+    employeeID := dsEmployee.FieldByName('EmployeeId').AsInteger;
+    if fEmployeeScores.TryGetValue(employeeID,scorecards) then
+      scorecards.fEmployeeName := dsEmployee.FieldByName('FullName').AsString;
+    dsEmployee.Next;
+  end;
+end;
+
 procedure TScorecards.FillUsingDetails(const dsDetails: TDataSet);
 begin
 
@@ -86,9 +102,11 @@ constructor TScorecards.Create(aYear: word; aMonth: word);
 begin
   fEmployeeScores := Spring.Collections.TCollections.CreateDictionary<Integer,
       TEmployeeScore>([doOwnsValues]);
+  DataModule1.fdqEmployees.Open();
   fYear := aYear;
   fMonth := aMonth;
   FillUsingOrders(DataModule1.GetDataSet_OrdersInMonth(aYear,aMonth));
+  FillUsingEmployee(DataModule1.fdqEmployees);
   FillUsingDetails(DataModule1.GetDataSet_DetailsInMonth(aYear,aMonth));
 end;
 

@@ -93,6 +93,7 @@ procedure TForm1.ShowData(const aScorecards: TScorecards);
 var
   employeeScore: TEmployeeScore;
 begin
+  MemoTest.Clear;
   for employeeScore in aScorecards.fEmployeeScores.Values do
   begin
     MemoTest.Lines.Add(Format('%s (%d) - %d orders',
