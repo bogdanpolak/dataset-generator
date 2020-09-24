@@ -13,7 +13,9 @@ uses
   Vcl.Graphics,
   Vcl.Controls,
   Vcl.Forms,
-  Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList;
+  Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList,
+  {-}
+  Logic.Scorecards;
 
 type
   TForm1 = class(TForm)
@@ -25,6 +27,7 @@ type
     Label1: TLabel;
     ActionList1: TActionList;
     actDatabaseConnect: TAction;
+    MemoTest: TMemo;
     procedure actDatabaseConnectExecute(Sender: TObject);
     procedure ActionList1Update(Action: TBasicAction; var Handled: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -32,6 +35,7 @@ type
     procedure lbxMonthsClick(Sender: TObject);
   private
     procedure FillListBoxWithMonths(const aListBox: TListBox);
+    procedure ShowData(const aScorecards: TScorecards);
   public
   end;
 
@@ -46,8 +50,7 @@ uses
   Spring,
   Spring.Collections,
   {-}
-  Data.DataModule1,
-  Logic.Scorecards;
+  Data.DataModule1;
 
 
 procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
@@ -86,6 +89,17 @@ begin
   actDatabaseConnect.Execute;
 end;
 
+procedure TForm1.ShowData(const aScorecards: TScorecards);
+var
+  employeeScore: TEmployeeScore;
+begin
+  for employeeScore in aScorecards.fEmployeeScores.Values do
+  begin
+    MemoTest.Lines.Add(Format('%s (%d) - %d orders',
+    [employeeScore.fEmployeeName, employeeScore.fEmployeeId, employeeScore.fOrderCount]));
+  end;
+end;
+
 procedure TForm1.lbxMonthsClick(Sender: TObject);
 var
   strMonth: string;
@@ -99,6 +113,7 @@ begin
   aYear := strMonth.Substring(0,4).ToInteger();
   aMonth := strMonth.Substring(5,2).ToInteger();
   aScorecards := TScorecards.Create(aYear, aMonth);
+  ShowData(aScorecards);
 end;
 
 end.

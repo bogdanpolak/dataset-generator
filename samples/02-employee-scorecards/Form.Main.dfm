@@ -83,6 +83,28 @@ object Form1: TForm1
         ExplicitHeight = 121
       end
     end
+    object MemoTest: TMemo
+      AlignWithMargins = True
+      Left = 135
+      Top = 18
+      Width = 499
+      Height = 195
+      Align = alClient
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Consolas'
+      Font.Style = []
+      Lines.Strings = (
+        'MemoTest')
+      ParentFont = False
+      ScrollBars = ssVertical
+      TabOrder = 1
+      ExplicitLeft = 132
+      ExplicitTop = 15
+      ExplicitWidth = 505
+      ExplicitHeight = 201
+    end
   end
   object ActionList1: TActionList
     OnUpdate = ActionList1Update
