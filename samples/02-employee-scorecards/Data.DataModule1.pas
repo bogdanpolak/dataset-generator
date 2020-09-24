@@ -75,6 +75,7 @@ end;
 
 function TDataModule1.GetDataSet_OrdersInMonth(aYear: Word; aMonth: Word): TDataSet;
 begin
+  fdqOrdersInMonth.Close;
   fdqOrdersInMonth.ParamByName('YEAR').Value := aYear;
   fdqOrdersInMonth.ParamByName('MONTH').Value := aMonth;
   fdqOrdersInMonth.Open();
@@ -83,6 +84,7 @@ end;
 
 function TDataModule1.GetDataSet_DetailsInMonth(aYear: Word; aMonth: Word): TDataSet;
 begin
+  fdqDetailsInMonth.Close;
   fdqDetailsInMonth.ParamByName('YEAR').Value := aYear;
   fdqDetailsInMonth.ParamByName('MONTH').Value := aMonth;
   fdqDetailsInMonth.Open();
