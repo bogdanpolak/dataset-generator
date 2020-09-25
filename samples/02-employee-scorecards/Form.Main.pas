@@ -9,6 +9,7 @@ uses
   System.SysUtils,
   System.Variants,
   System.Classes,
+  Spring.Collections,
 
   Vcl.Graphics,
   Vcl.Controls,
@@ -35,7 +36,7 @@ type
     procedure lbxMonthsClick(Sender: TObject);
   private
     procedure FillListBoxWithMonths(const aListBox: TListBox);
-    procedure ShowData(const aScorecards: TScorecards);
+    procedure ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
   public
   end;
 
@@ -48,7 +49,6 @@ implementation
 
 uses
   Spring,
-  Spring.Collections,
   {-}
   Data.DataModule1;
 
@@ -89,12 +89,12 @@ begin
   actDatabaseConnect.Execute;
 end;
 
-procedure TForm1.ShowData(const aScorecards: TScorecards);
+procedure TForm1.ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
 var
   employeeScore: TEmployeeScore;
 begin
   MemoTest.Clear;
-  for employeeScore in aScorecards.fEmployeeScores.Values do
+  for employeeScore in aEmployeeScores do
   begin
     MemoTest.Lines.Add(Format('%s (%d) - %d orders',
     [employeeScore.fEmployeeName, employeeScore.fEmployeeId, employeeScore.fOrderCount]));
@@ -107,6 +107,7 @@ var
   aYear: word;
   aMonth: word;
   aScorecards: TScorecards;
+  aEmployeeScores: IReadOnlyCollection<TEmployeeScore>;
 begin
   if lbxMonths.ItemIndex<0 then
     Exit;
@@ -114,7 +115,8 @@ begin
   aYear := strMonth.Substring(0,4).ToInteger();
   aMonth := strMonth.Substring(5,2).ToInteger();
   aScorecards := TScorecards.Create(aYear, aMonth);
-  ShowData(aScorecards);
+  aEmployeeScores := aScorecards.GenerateData(DataModule1);
+  ShowData(aEmployeeScores);
 end;
 
 end.
