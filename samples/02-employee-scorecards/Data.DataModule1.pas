@@ -29,7 +29,7 @@ type
   public
     constructor Create(aOwner: TComponent); override;
     procedure Connect();
-    function GetActiveMonths: IList<Tuple<String,Word,Word>>;
+    function GetActiveMonths: IList<Tuple<String, Word, Word>>;
     function IsConnected(): boolean;
     function GetDataSet_OrdersInMonth(aYear, aMonth: Word): TDataSet;
     function GetDataSet_DetailsInMonth(aYear, aMonth: Word): TDataSet;
@@ -38,21 +38,19 @@ type
 implementation
 
 {%CLASSGROUP 'Vcl.Controls.TControl'}
-
 {$R *.dfm}
 
 constructor TDataModule1.Create(aOwner: TComponent);
 begin
   inherited;
-  Assert(FDConnection1.Connected=False,
-    'Error! Connection to database was active before opening');
+  Assert(FDConnection1.Connected = False,
+      'Error! Connection to database was active before opening');
 end;
 
 procedure TDataModule1.Connect();
 begin
   FDConnection1.Open();
 end;
-
 
 function TDataModule1.GetActiveMonths: IList<Tuple<String, Word, Word>>;
 var
@@ -61,19 +59,19 @@ var
   aDate: TDateTime;
   aEndDate: TDateTime;
 begin
-  Result := TCollections.CreateList<Tuple<String, Word, Word>>();
+  Result := TCollections.CreateList < Tuple < String, Word, Word >> ();
   varMinDate := FDConnection1.ExecSQLScalar('SELECT Min(OrderDate) FROM {id Orders}');
   varMaxDate := FDConnection1.ExecSQLScalar('SELECT Max(OrderDate) FROM {id Orders}');
-  if varMinDate=System.Variants.Null then
+  if varMinDate = System.Variants.Null then
     Exit;
-  if varMaxDate=System.Variants.Null then
+  if varMaxDate = System.Variants.Null then
     Exit;
-  aDate := RecodeDay(VarToDateTime(varMinDate),1);
+  aDate := RecodeDay(VarToDateTime(varMinDate), 1);
   aEndDate := VarToDateTime(varMaxDate);
-  while aDate<=aEndDate do
+  while aDate <= aEndDate do
   begin
-    Result.Add( Tuple<String, Word, Word>.Create(
-      FormatDateTime('yyyy-mm',aDate),YearOf(aDate),MonthOf(aDate)) );
+    Result.Add(Tuple<String, Word, Word>.Create(FormatDateTime('yyyy-mm', aDate),
+        YearOf(aDate), MonthOf(aDate)));
     aDate := IncMonth(aDate, 1);
   end;
 end;

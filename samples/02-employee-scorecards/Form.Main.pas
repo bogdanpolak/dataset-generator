@@ -52,7 +52,6 @@ implementation
 uses
   Spring;
 
-
 procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
 begin
   fDataModule1.Connect();
@@ -90,7 +89,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   gboxScorecards.Visible := False;
   gboxScorecards.Align := alClient;
-  fDataModule1 := TDataModule1.Create( Application);
+  fDataModule1 := TDataModule1.Create(Application);
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
@@ -105,24 +104,24 @@ begin
   MemoTest.Clear;
   for employeeScore in aEmployeeScores do
   begin
-    MemoTest.Lines.Add(Format('%s (%d) - %d orders',
-    [employeeScore.fEmployeeName, employeeScore.fEmployeeId, employeeScore.fOrderCount]));
+    MemoTest.Lines.Add(Format('%s (%d) - %d orders', [employeeScore.fEmployeeName,
+        employeeScore.fEmployeeId, employeeScore.fOrderCount]));
   end;
 end;
 
 procedure TForm1.lbxMonthsClick(Sender: TObject);
 var
   strMonth: string;
-  aYear: word;
-  aMonth: word;
+  aYear: Word;
+  aMonth: Word;
   aScorecards: TScorecards;
   aEmployeeScores: IReadOnlyCollection<TEmployeeScore>;
 begin
-  if lbxMonths.ItemIndex<0 then
+  if lbxMonths.ItemIndex < 0 then
     Exit;
   strMonth := lbxMonths.Items[lbxMonths.ItemIndex];
-  aYear := strMonth.Substring(0,4).ToInteger();
-  aMonth := strMonth.Substring(5,2).ToInteger();
+  aYear := strMonth.Substring(0, 4).ToInteger();
+  aMonth := strMonth.Substring(5, 2).ToInteger();
   aScorecards := TScorecards.Create(aYear, aMonth);
   aEmployeeScores := aScorecards.GenerateData(fDataModule1);
   ShowData(aEmployeeScores);

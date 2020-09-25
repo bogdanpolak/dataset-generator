@@ -31,7 +31,8 @@ type
     procedure FillUsingEmployee(const dsEmployee: TDataSet);
   public
     constructor Create(aYear: word; aMonth: word);
-    function GenerateData(const aDataModule: TDataModule1): IReadOnlyCollection<TEmployeeScore>;
+    function GenerateData(const aDataModule: TDataModule1)
+        : IReadOnlyCollection<TEmployeeScore>;
   end;
 
 implementation
@@ -45,7 +46,7 @@ begin
   while not dsOrders.Eof do
   begin
     employeeId := dsOrders.FieldByName('EmployeeID').AsInteger;
-    if fEmployeeScores.TryGetValue( employeeId, employeeScore) then
+    if fEmployeeScores.TryGetValue(employeeId, employeeScore) then
     begin
       employeeScore.fOrderCount := employeeScore.fOrderCount + 1;
     end
@@ -62,15 +63,15 @@ end;
 
 procedure TScorecards.FillUsingEmployee(const dsEmployee: TDataSet);
 var
-  employeeID: Integer;
-  scorecards: TEmployeeScore;
+  employeeId: Integer;
+  Scorecards: TEmployeeScore;
 begin
   dsEmployee.First;
   while not dsEmployee.Eof do
   begin
-    employeeID := dsEmployee.FieldByName('EmployeeId').AsInteger;
-    if fEmployeeScores.TryGetValue(employeeID,scorecards) then
-      scorecards.fEmployeeName := dsEmployee.FieldByName('FullName').AsString;
+    employeeId := dsEmployee.FieldByName('EmployeeId').AsInteger;
+    if fEmployeeScores.TryGetValue(employeeId, Scorecards) then
+      Scorecards.fEmployeeName := dsEmployee.FieldByName('FullName').AsString;
     dsEmployee.Next;
   end;
 end;
@@ -88,13 +89,13 @@ begin
   fMonth := aMonth;
 end;
 
-
-function TScorecards.GenerateData(const aDataModule:TDataModule1): IReadOnlyCollection<TEmployeeScore>;
+function TScorecards.GenerateData(const aDataModule: TDataModule1)
+    : IReadOnlyCollection<TEmployeeScore>;
 begin
-  FillUsingOrders(aDataModule.GetDataSet_OrdersInMonth(fYear,fMonth));
+  FillUsingOrders(aDataModule.GetDataSet_OrdersInMonth(fYear, fMonth));
   aDataModule.fdqEmployees.Open();
   FillUsingEmployee(aDataModule.fdqEmployees);
-  FillUsingDetails(aDataModule.GetDataSet_DetailsInMonth(fYear,fMonth));
+  FillUsingDetails(aDataModule.GetDataSet_DetailsInMonth(fYear, fMonth));
   Result := fEmployeeScores.Values;
 end;
 
