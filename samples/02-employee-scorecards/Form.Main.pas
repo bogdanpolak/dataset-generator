@@ -74,15 +74,14 @@ end;
 
 procedure TForm1.FillListBoxWithMonths(const aListBox: TListBox);
 var
-  activeMonths: IList<Tuple<String, Word, Word>>;
-  aMonth: Tuple<String, Word, Word>;
+  activeMonths: IList<String>;
+  aMonth: String;
 begin
   activeMonths := fDataModule1.GetActiveMonths();
   aListBox.Clear;
+  activeMonths.Reverse;
   for aMonth in activeMonths do
-  begin
-    aListBox.Items.Insert(0, aMonth.Value1);
-  end;
+    aListBox.AddItem(aMonth, nil);
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);

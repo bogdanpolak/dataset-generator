@@ -29,7 +29,7 @@ type
   public
     constructor Create(aOwner: TComponent); override;
     procedure Connect();
-    function GetActiveMonths: IList<Tuple<String, Word, Word>>;
+    function GetActiveMonths: IList<String>;
     function IsConnected(): boolean;
     function GetDataSet_OrdersInMonth(aYear, aMonth: Word): TDataSet;
     function GetDataSet_DetailsInMonth(aYear, aMonth: Word): TDataSet;
@@ -52,14 +52,14 @@ begin
   FDConnection1.Open();
 end;
 
-function TDataModule1.GetActiveMonths: IList<Tuple<String, Word, Word>>;
+function TDataModule1.GetActiveMonths: IList<String>;
 var
   varMinDate: Variant;
   varMaxDate: Variant;
   aDate: TDateTime;
   aEndDate: TDateTime;
 begin
-  Result := TCollections.CreateList < Tuple < String, Word, Word >> ();
+  Result := TCollections.CreateList<String>();
   varMinDate := FDConnection1.ExecSQLScalar('SELECT Min(OrderDate) FROM {id Orders}');
   varMaxDate := FDConnection1.ExecSQLScalar('SELECT Max(OrderDate) FROM {id Orders}');
   if varMinDate = System.Variants.Null then
@@ -70,8 +70,7 @@ begin
   aEndDate := VarToDateTime(varMaxDate);
   while aDate <= aEndDate do
   begin
-    Result.Add(Tuple<String, Word, Word>.Create(FormatDateTime('yyyy-mm', aDate),
-        YearOf(aDate), MonthOf(aDate)));
+    Result.Add(FormatDateTime('yyyy-mm', aDate));
     aDate := IncMonth(aDate, 1);
   end;
 end;
