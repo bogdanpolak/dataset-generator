@@ -27,8 +27,9 @@ type
     fdqDetailsInMonth: TFDQuery;
   private
   public
-    function GetActiveMonths: IList<Tuple<String,Word,Word>>;
+    constructor Create(aOwner: TComponent); override;
     procedure Connect();
+    function GetActiveMonths: IList<Tuple<String,Word,Word>>;
     function IsConnected(): boolean;
     function GetDataSet_OrdersInMonth(aYear, aMonth: Word): TDataSet;
     function GetDataSet_DetailsInMonth(aYear, aMonth: Word): TDataSet;
@@ -39,6 +40,13 @@ implementation
 {%CLASSGROUP 'Vcl.Controls.TControl'}
 
 {$R *.dfm}
+
+constructor TDataModule1.Create(aOwner: TComponent);
+begin
+  inherited;
+  Assert(FDConnection1.Connected=False,
+    'Error! Connection to database was active before opening');
+end;
 
 procedure TDataModule1.Connect();
 begin

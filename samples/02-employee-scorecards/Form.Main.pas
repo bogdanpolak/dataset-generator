@@ -61,8 +61,16 @@ end;
 
 procedure TForm1.ActionList1Update(Action: TBasicAction; var Handled: Boolean);
 begin
-  gboxScorecards.Visible := fDataModule1.IsConnected();
-  actDatabaseConnect.Enabled := not fDataModule1.IsConnected();
+  if fDataModule1 = nil then
+  begin
+    gboxScorecards.Visible := False;
+    actDatabaseConnect.Enabled := False;
+  end
+  else
+  begin
+    gboxScorecards.Visible := fDataModule1.IsConnected();
+    actDatabaseConnect.Enabled := not fDataModule1.IsConnected();
+  end;
 end;
 
 procedure TForm1.FillListBoxWithMonths(const aListBox: TListBox);
