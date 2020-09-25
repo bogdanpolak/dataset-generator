@@ -35,25 +35,6 @@ type
 
 implementation
 
-type
-  TDataSetHelper = class helper for TDataSet
-  public
-    procedure WhileNotEof(proc: TProc);
-  end;
-
-procedure TDataSetHelper.WhileNotEof(proc: TProc);
-var
-  Bookmark: TBookmark;
-begin
-  Bookmark := self.GetBookmark;
-  try
-  finally
-    if self.BookmarkValid(Bookmark) then
-      self.GotoBookmark(Bookmark);
-    self.FreeBookmark(Bookmark);
-  end;
-end;
-
 procedure TScorecards.FillUsingOrders(const dsOrders: TDataSet);
 var
   employeeId: Integer;
