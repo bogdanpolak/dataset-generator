@@ -103,8 +103,9 @@ begin
   MemoTest.Clear;
   for employeeScore in aEmployeeScores do
   begin
-    MemoTest.Lines.Add(Format('%s (%d) - %d orders', [employeeScore.fEmployeeName,
-        employeeScore.fEmployeeId, employeeScore.fOrderCount]));
+    MemoTest.Lines.Add(Format('%s (%d) - %d orders - %s', [employeeScore.fEmployeeName,
+        employeeScore.fEmployeeId, employeeScore.fOrderCount,
+        employeeScore.fOrderValues]));
   end;
 end;
 
