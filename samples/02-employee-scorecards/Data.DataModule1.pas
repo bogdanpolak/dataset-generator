@@ -34,9 +34,6 @@ type
     function GetDataSet_DetailsInMonth(aYear, aMonth: Word): TDataSet;
   end;
 
-var
-  DataModule1: TDataModule1;
-
 implementation
 
 {%CLASSGROUP 'Vcl.Controls.TControl'}

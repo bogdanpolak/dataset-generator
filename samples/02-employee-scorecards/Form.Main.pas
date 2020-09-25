@@ -16,7 +16,8 @@ uses
   Vcl.Forms,
   Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList,
   {-}
-  Logic.Scorecards;
+  Logic.Scorecards,
+  Data.DataModule1;
 
 type
   TForm1 = class(TForm)
@@ -35,6 +36,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure lbxMonthsClick(Sender: TObject);
   private
+    fDataModule1: TDataModule1;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
     procedure ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
   public
@@ -48,21 +50,19 @@ implementation
 {$R *.dfm}
 
 uses
-  Spring,
-  {-}
-  Data.DataModule1;
+  Spring;
 
 
 procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
 begin
-  DataModule1.Connect();
+  fDataModule1.Connect();
   FillListBoxWithMonths(lbxMonths);
 end;
 
 procedure TForm1.ActionList1Update(Action: TBasicAction; var Handled: Boolean);
 begin
-  gboxScorecards.Visible := DataModule1.IsConnected();
-  actDatabaseConnect.Enabled := not DataModule1.IsConnected();
+  gboxScorecards.Visible := fDataModule1.IsConnected();
+  actDatabaseConnect.Enabled := not fDataModule1.IsConnected();
 end;
 
 procedure TForm1.FillListBoxWithMonths(const aListBox: TListBox);
@@ -70,7 +70,7 @@ var
   activeMonths: IList<Tuple<String, Word, Word>>;
   aMonth: Tuple<String, Word, Word>;
 begin
-  activeMonths := DataModule1.GetActiveMonths();
+  activeMonths := fDataModule1.GetActiveMonths();
   aListBox.Clear;
   for aMonth in activeMonths do
   begin
@@ -82,6 +82,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   gboxScorecards.Visible := False;
   gboxScorecards.Align := alClient;
+  fDataModule1 := TDataModule1.Create( Application);
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
@@ -115,7 +116,7 @@ begin
   aYear := strMonth.Substring(0,4).ToInteger();
   aMonth := strMonth.Substring(5,2).ToInteger();
   aScorecards := TScorecards.Create(aYear, aMonth);
-  aEmployeeScores := aScorecards.GenerateData(DataModule1);
+  aEmployeeScores := aScorecards.GenerateData(fDataModule1);
   ShowData(aEmployeeScores);
 end;
 
