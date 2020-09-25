@@ -46,13 +46,13 @@ object DataModule1: TDataModule1
     Connection = FDConnection1
     SQL.Strings = (
       
-        'select OrderDetails.OrderID, ProductId, UnitPrice, Quantity, Dis' +
-        'count, CustomerID,'
+        'select OrderDetails.OrderID, EmployeeId, ProductId, UnitPrice, Q' +
+        'uantity, Discount,'
       '  {Year(OrderDate)} OrderYear, {Month(OrderDate)} OrderMonth'
       '  from {id Order Details} as OrderDetails'
       '  inner join Orders on Orders.OrderID = OrderDetails.OrderID'
       '  WHERE OrderYear = :YEAR and OrderMonth = :MONTH'
-      '  ORDER BY CustomerID, OrderDetails.OrderID')
+      '  ORDER BY EmployeeId, OrderDetails.OrderID')
     Left = 128
     Top = 120
     ParamData = <
