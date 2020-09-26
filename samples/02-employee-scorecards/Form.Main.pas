@@ -35,11 +35,12 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lbxMonthsClick(Sender: TObject);
+  public const
+    Version = '1.4';
   private
     fDataModule1: TDataModule1;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
     procedure ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
-  public
   end;
 
 var
