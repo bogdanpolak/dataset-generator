@@ -28,11 +28,11 @@ type
     Button2: TButton;
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+  public const
+    Version = '1.4';
   private
     function CreateSimpleMemTable: TDataSet;
     function CreateSqlQuery: TDataSet;
-  public
-    { Public declarations }
   end;
 
 var
