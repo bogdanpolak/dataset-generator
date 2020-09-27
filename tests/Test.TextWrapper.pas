@@ -25,6 +25,11 @@ type
     [Test]
     [TestCase('Dot','.')]
     [TestCase('Comma',',','_')]
+    [TestCase('ExclamationMark','!')]
+    [TestCase('QuestionMark','?')]
+    [TestCase('Semicolon',';')]
+    [TestCase('Colon',':')]
+    [TestCase('Hyphen','-')]
     procedure Wrap_SeparatedBy(const separator: char);
   end;
 
