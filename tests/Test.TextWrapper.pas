@@ -34,9 +34,9 @@ procedure AssertStringArrays(const expected: TArray<string>;
 var
   i: Integer;
 begin
-  Assert.AreEqual(Length(expected), Length(actual),'Incorrect array sizes');
-  for i := 0 to Length(actual)-1 do
-    Assert.AreEqual(expected[i], actual[i],Format('Line %d',[i+1]));
+  Assert.AreEqual(Length(expected), Length(actual), 'Incorrect array sizes');
+  for i := 0 to Length(actual) - 1 do
+    Assert.AreEqual(expected[i], actual[i], Format('Line %d', [i + 1]));
 end;
 
 // ---------1---------2---------3---------4---------5---------6
@@ -59,7 +59,7 @@ var
 begin
   fText := 'Lorem ipsum dolor sit amet,';
   actual := TTextWrapper.WrapTextWholeWords(fText, 20);
-  AssertStringArrays(['Lorem ipsum dolor ','sit amet,'],actual);
+  AssertStringArrays(['Lorem ipsum dolor ', 'sit amet,'], actual);
 end;
 
 procedure TTestTextWrapper.Wrap_3Lines;
@@ -68,7 +68,7 @@ var
 begin
   fText := 'Lorem ipsum dolor sit amet,';
   actual := TTextWrapper.WrapTextWholeWords(fText, 13);
-  AssertStringArrays(['Lorem ipsum ','dolor sit ','amet,'],actual);
+  AssertStringArrays(['Lorem ipsum ', 'dolor sit ', 'amet,'], actual);
 end;
 
 procedure TTestTextWrapper.Wrap_4Lines;
@@ -77,7 +77,8 @@ var
 begin
   fText := 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
   actual := TTextWrapper.WrapTextWholeWords(fText, 20);
-  AssertStringArrays(['Lorem ipsum dolor ','sit amet, ','consectetur ','adipiscing elit.'],actual);
+  AssertStringArrays(['Lorem ipsum dolor ', 'sit amet, ', 'consectetur ',
+    'adipiscing elit.'], actual);
 end;
 
 procedure TTestTextWrapper.Wrap_LongContinousText;
@@ -85,8 +86,8 @@ var
   actual: TArray<string>;
 begin
   fText := 'LoremIpsumDolorSit';
-  actual := TTextWrapper.WrapTextWholeWords(fText,10);
-  AssertStringArrays(['LoremIpsum','DolorSit'],actual);
+  actual := TTextWrapper.WrapTextWholeWords(fText, 10);
+  AssertStringArrays(['LoremIpsum', 'DolorSit'], actual);
 end;
 
 end.
