@@ -22,8 +22,10 @@ type
     procedure Wrap_3Lines;
     procedure Wrap_4Lines;
     procedure Wrap_LongContinousText;
-    procedure Wrap_SeparatedBy_Dot;
-    procedure Wrap_SeparatedBy_Comma;
+    [Test]
+    [TestCase('Dot','.')]
+    [TestCase('Comma',',','_')]
+    procedure Wrap_SeparatedBy(const separator: char);
   end;
 
 implementation
@@ -92,22 +94,13 @@ begin
   AssertStringArrays(['LoremIpsum', 'DolorSit'], actual);
 end;
 
-procedure TTestTextWrapper.Wrap_SeparatedBy_Dot;
+procedure TTestTextWrapper.Wrap_SeparatedBy(const separator: char);
 var
   actual: TArray<string>;
 begin
-  fText := 'Lorem.Ipsum';
+  fText := 'Lorem'+separator+'Ipsum';
   actual := TTextWrapper.WrapTextWholeWords(fText, 8);
-  AssertStringArrays(['Lorem.', 'Ipsum'], actual);
-end;
-
-procedure TTestTextWrapper.Wrap_SeparatedBy_Comma;
-var
-  actual: TArray<string>;
-begin
-  fText := 'Lorem,Ipsum';
-  actual := TTextWrapper.WrapTextWholeWords(fText, 8);
-  AssertStringArrays(['Lorem,', 'Ipsum'], actual);
+  AssertStringArrays(['Lorem'+separator, 'Ipsum'], actual);
 end;
 
 end.
