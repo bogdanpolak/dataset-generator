@@ -21,6 +21,7 @@ type
     procedure Wrap_2Lines;
     procedure Wrap_3Lines;
     procedure Wrap_4Lines;
+    procedure Wrap_LongContinousText;
   end;
 
 implementation
@@ -79,5 +80,13 @@ begin
   AssertStringArrays(['Lorem ipsum dolor ','sit amet, ','consectetur ','adipiscing elit.'],actual);
 end;
 
+procedure TTestTextWrapper.Wrap_LongContinousText;
+var
+  actual: TArray<string>;
+begin
+  fText := 'LoremIpsumDolorSit';
+  actual := TTextWrapper.WrapTextWholeWords(fText,10);
+  AssertStringArrays(['LoremIpsum','DolorSit'],actual);
+end;
 
 end.

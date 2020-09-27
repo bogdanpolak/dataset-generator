@@ -587,8 +587,10 @@ begin
   Result:=[];
   while j<aText.Length do
   begin
-    while (j<aText.Length) and (aText[j]<>' ') do
+    while (j>i) and (aText[j]<>' ') do
       dec(j);
+    if j=i then
+      j:=i+aMaxWidth;
     SetLength(Result,count+1);
     Result[count] := aText.Substring(i,j-i);
     i := j;
