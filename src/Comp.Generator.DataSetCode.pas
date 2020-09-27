@@ -587,7 +587,7 @@ begin
   Result:=[];
   while j<aText.Length do
   begin
-    while (j>i) and (aText[j]<>' ') do
+    while (j>i) and not(CharInSet(aText[j],[' ','.'])) do
       dec(j);
     if j=i then
       j:=i+aMaxWidth;
