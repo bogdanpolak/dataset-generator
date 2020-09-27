@@ -26,9 +26,19 @@ implementation
 uses
   Comp.Generator.DataSetCode;
 
-//  ---------1---------2---------3---------4---------5---------6
-//  123456789012345678901234567890123456789012345678901234567890
-//  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+procedure AssertStringArrays(const expected: TArray<string>;
+  const actual: TArray<string>);
+var
+  i: Integer;
+begin
+  Assert.AreEqual(Length(expected), Length(actual),'Incorrect array sizes');
+  for i := 0 to Length(actual) do
+    Assert.AreEqual(expected[i], actual[i],Format('Line %d',[i+1]));
+end;
+
+// ---------1---------2---------3---------4---------5---------6
+// 123456789012345678901234567890123456789012345678901234567890
+// Lorem ipsum dolor sit amet, consectetur adipiscing elit.
 
 procedure TTestTextWrapper.NoWrapText;
 var
@@ -46,9 +56,7 @@ var
 begin
   fText := 'Lorem ipsum dolor sit amet,';
   actual := TTextWrapper.WrapTextWholeWords(fText, 20);
-  Assert.AreEqual(2, Length(actual));
-  Assert.AreEqual('Lorem ipsum dolor ', actual[0]);
-  Assert.AreEqual('sit amet,', actual[1]);
+  AssertStringArrays(['Lorem ipsum dolor ','sit amet,'],actual);
 end;
 
 end.
