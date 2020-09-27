@@ -74,7 +74,7 @@ type
 
   TTextWrapper = class
     class function WrapTextWholeWords(const aText: string;
-      wMaxWidth: integer): TArray<string>;
+      aMaxWidth: integer): TArray<string>;
   end;
 
 implementation
@@ -576,12 +576,12 @@ end;
 { TTextWrapper }
 
 class function TTextWrapper.WrapTextWholeWords(const aText: string;
-  wMaxWidth: integer): TArray<string>;
+  aMaxWidth: integer): TArray<string>;
 var
   i: Integer;
   j: Integer;
 begin
-  i:=0; j:=wMaxWidth;
+  i:=0; j:=aMaxWidth;
   while (j<aText.Length) and (aText[j]<>' ') do
     dec(j);
   if j<aText.Length then
