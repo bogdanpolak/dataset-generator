@@ -23,6 +23,7 @@ type
     procedure Wrap_4Lines;
     procedure Wrap_LongContinousText;
     procedure Wrap_SeparatedBy_Dot;
+    procedure Wrap_SeparatedBy_Comma;
   end;
 
 implementation
@@ -98,6 +99,15 @@ begin
   fText := 'Lorem.Ipsum';
   actual := TTextWrapper.WrapTextWholeWords(fText, 8);
   AssertStringArrays(['Lorem.', 'Ipsum'], actual);
+end;
+
+procedure TTestTextWrapper.Wrap_SeparatedBy_Comma;
+var
+  actual: TArray<string>;
+begin
+  fText := 'Lorem,Ipsum';
+  actual := TTextWrapper.WrapTextWholeWords(fText, 8);
+  AssertStringArrays(['Lorem,', 'Ipsum'], actual);
 end;
 
 end.
