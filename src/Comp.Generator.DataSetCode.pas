@@ -578,27 +578,29 @@ end;
 class function TTextWrapper.WrapTextWholeWords(const aText: string;
   aMaxWidth: integer): TArray<string>;
 var
-  i: Integer;
-  j: Integer;
-  count: Integer;
+  i: integer;
+  j: integer;
+  Count: integer;
 begin
-  i:=0; j:=aMaxWidth;
-  count:=0;
-  Result:=[];
-  while j<aText.Length do
+  i := 0;
+  j := aMaxWidth;
+  Count := 0;
+  Result := [];
+  while j < aText.Length do
   begin
-    while (j>i) and not(CharInSet(aText[j],[' ','.',',','!','?',':',';','-'])) do
+    while (j > i) and not(CharInSet(aText[j], [' ', '.', ',', '!', '?', ':',
+      ';', '-'])) do
       dec(j);
-    if j=i then
-      j:=i+aMaxWidth;
-    SetLength(Result,count+1);
-    Result[count] := aText.Substring(i,j-i);
+    if j = i then
+      j := i + aMaxWidth;
+    SetLength(Result, Count + 1);
+    Result[Count] := aText.Substring(i, j - i);
     i := j;
     j := j + aMaxWidth;
-    count := count + 1;
+    Count := Count + 1;
   end;
-  SetLength(Result,count+1);
-  Result[count] := aText.Substring(i);
+  SetLength(Result, Count + 1);
+  Result[Count] := aText.Substring(i);
 end;
 
 end.
