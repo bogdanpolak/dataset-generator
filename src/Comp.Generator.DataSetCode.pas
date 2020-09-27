@@ -72,6 +72,11 @@ type
     property MaxRows: integer read fMaxRows write fMaxRows;
   end;
 
+  TTextWrapper = class
+    class function WrapTextWholeWords(const aText: string;
+      wMaxWidth: integer): TArray<string>;
+  end;
+
 implementation
 
 uses
@@ -566,6 +571,18 @@ begin
   finally
     aGenerator.Free;
   end;
+end;
+
+{ TTextWrapper }
+
+class function TTextWrapper.WrapTextWholeWords(const aText: string;
+  wMaxWidth: integer): TArray<string>;
+var
+  i: Integer;
+  j: Integer;
+begin
+  i:=0; j:=wMaxWidth;
+  Result := [''];
 end;
 
 end.
