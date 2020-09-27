@@ -20,6 +20,7 @@ type
     procedure NoWrapText;
     procedure Wrap_2Lines;
     procedure Wrap_3Lines;
+    procedure Wrap_4Lines;
   end;
 
 implementation
@@ -68,5 +69,15 @@ begin
   actual := TTextWrapper.WrapTextWholeWords(fText, 13);
   AssertStringArrays(['Lorem ipsum ','dolor sit ','amet,'],actual);
 end;
+
+procedure TTestTextWrapper.Wrap_4Lines;
+var
+  actual: TArray<string>;
+begin
+  fText := 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+  actual := TTextWrapper.WrapTextWholeWords(fText, 20);
+  AssertStringArrays(['Lorem ipsum dolor ','sit amet, ','consectetur ','adipiscing elit.'],actual);
+end;
+
 
 end.
