@@ -582,7 +582,7 @@ var
   j: Integer;
 begin
   i:=0; j:=wMaxWidth;
-  Result := [''];
+  Result := [aText];
 end;
 
 end.

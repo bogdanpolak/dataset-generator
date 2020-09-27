@@ -14,16 +14,25 @@ type
   [TestFixture]
   TTestTextWrapper = class(TObject)
   private
+    fText: string;
   public
   published
-    procedure Case01;
+    procedure NoWrapText;
   end;
 
 implementation
 
-procedure TTestTextWrapper.Case01;
+uses
+  Comp.Generator.DataSetCode;
+
+procedure TTestTextWrapper.NoWrapText;
+var
+  actual: TArray<string>;
 begin
-  Assert.Fail();
+  fText := 'Lorem ipsum ...';
+  actual := TTextWrapper.WrapTextWholeWords(fText,20);
+  Assert.AreEqual(1,Length(actual));
+  Assert.AreEqual(fText,actual[0]);
 end;
 
 end.
