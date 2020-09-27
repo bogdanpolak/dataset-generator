@@ -18,6 +18,7 @@ type
   public
   published
     procedure NoWrapText;
+    procedure Wrap_2Lines;
   end;
 
 implementation
@@ -37,6 +38,17 @@ begin
   actual := TTextWrapper.WrapTextWholeWords(fText, 20);
   Assert.AreEqual(1, Length(actual));
   Assert.AreEqual(fText, actual[0]);
+end;
+
+procedure TTestTextWrapper.Wrap_2Lines;
+var
+  actual: TArray<string>;
+begin
+  fText := 'Lorem ipsum dolor sit amet,';
+  actual := TTextWrapper.WrapTextWholeWords(fText, 20);
+  Assert.AreEqual(2, Length(actual));
+  Assert.AreEqual('Lorem ipsum dolor ', actual[0]);
+  Assert.AreEqual('sit amet,', actual[1]);
 end;
 
 end.

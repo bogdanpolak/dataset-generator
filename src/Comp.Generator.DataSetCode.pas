@@ -582,7 +582,14 @@ var
   j: Integer;
 begin
   i:=0; j:=wMaxWidth;
-  Result := [aText];
+  while (j<aText.Length) and (aText[j]<>' ') do
+    dec(j);
+  if j<aText.Length then
+  begin
+    Result := [aText.Substring(0,j),aText.Substring(j)];
+  end
+  else
+    Result := [aText];
 end;
 
 end.
