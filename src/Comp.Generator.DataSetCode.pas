@@ -580,13 +580,20 @@ class function TTextWrapper.WrapTextWholeWords(const aText: string;
 var
   i: Integer;
   j: Integer;
+  j2: Integer;
 begin
   i:=0; j:=aMaxWidth;
   while (j<aText.Length) and (aText[j]<>' ') do
     dec(j);
   if j<aText.Length then
   begin
-    Result := [aText.Substring(0,j),aText.Substring(j)];
+    j2 := j + aMaxWidth;
+    while (j2<aText.Length) and (aText[j2]<>' ') do
+      dec(j2);
+    if j2<aText.Length then
+      Result := [aText.Substring(0,j),aText.Substring(j,j2-j),aText.Substring(j2)]
+    else
+      Result := [aText.Substring(0,j),aText.Substring(j)];
   end
   else
     Result := [aText];

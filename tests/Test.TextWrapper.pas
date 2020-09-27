@@ -19,6 +19,7 @@ type
   published
     procedure NoWrapText;
     procedure Wrap_2Lines;
+    procedure Wrap_3Lines;
   end;
 
 implementation
@@ -32,7 +33,7 @@ var
   i: Integer;
 begin
   Assert.AreEqual(Length(expected), Length(actual),'Incorrect array sizes');
-  for i := 0 to Length(actual) do
+  for i := 0 to Length(actual)-1 do
     Assert.AreEqual(expected[i], actual[i],Format('Line %d',[i+1]));
 end;
 
@@ -57,6 +58,15 @@ begin
   fText := 'Lorem ipsum dolor sit amet,';
   actual := TTextWrapper.WrapTextWholeWords(fText, 20);
   AssertStringArrays(['Lorem ipsum dolor ','sit amet,'],actual);
+end;
+
+procedure TTestTextWrapper.Wrap_3Lines;
+var
+  actual: TArray<string>;
+begin
+  fText := 'Lorem ipsum dolor sit amet,';
+  actual := TTextWrapper.WrapTextWholeWords(fText, 13);
+  AssertStringArrays(['Lorem ipsum ','dolor sit ','amet,'],actual);
 end;
 
 end.
