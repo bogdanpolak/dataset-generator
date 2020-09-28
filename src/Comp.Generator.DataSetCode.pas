@@ -35,6 +35,7 @@ type
     fRightMargin: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline: string;
+    function GenerateSingleLine_ValuesArray: string;
     function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
@@ -298,43 +299,51 @@ begin
   end;
 end;
 
+function TDSGenerator.GenerateSingleLine_ValuesArray: string;
+var
+  fld: TField;
+  value: string;
+begin
+  Result := '';
+  for fld in fDataSet.Fields do
+  begin
+    if fld.IsNull then
+      value := 'Null'
+    else
+      case fld.DataType of
+        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+          value := fld.AsString;
+        ftBoolean:
+          value := BoolToStr(fld.AsBoolean, true);
+        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+          value := FloatToCode(fld.AsExtended);
+        ftDate:
+          value := DateToCode(fld.AsDateTime);
+        ftTime:
+          value := TimeToCode(fld.AsDateTime);
+        ftDateTime:
+          value := DateTimeToCode(fld.AsDateTime);
+        ftString, ftWideString:
+          value := QuotedStr(fld.Value);
+        else
+          value := 'Null'
+      end;
+    Result := IfThen(Result = '', value, Result + ', ' + value);
+  end;
+  Result := '[' + Result + ']';
+end;
+
 function TDSGenerator.GenerateOneAppend_Singleline: string;
 var
   sFieldsValues: string;
   fld: TField;
   s1: string;
 begin
-  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    Exit('');
-  sFieldsValues := '';
-  for fld in fDataSet.Fields do
-  begin
-    if fld.IsNull then
-      s1 := 'Null'
-    else
-      case fld.DataType of
-        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-          s1 := fld.AsString;
-        ftBoolean:
-          s1 := BoolToStr(fld.AsBoolean, true);
-        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-          s1 := FloatToCode(fld.AsExtended);
-        ftDate:
-          s1 := DateToCode(fld.AsDateTime);
-        ftTime:
-          s1 := TimeToCode(fld.AsDateTime);
-        ftDateTime:
-          s1 := DateTimeToCode(fld.AsDateTime);
-        ftString, ftWideString:
-          s1 := QuotedStr(fld.Value);
-      end;
-    if sFieldsValues = '' then
-      sFieldsValues := s1
-    else
-      sFieldsValues := sFieldsValues + ', ' + s1;
-  end;
-  Result := fIndentationText + 'ds.AppendRecord([' + sFieldsValues + ']);' +
-    sLineBreak;
+  if (fDataSet <> nil) and (fDataSet.Fields.Count > 0) then
+    Result := fIndentationText + 'ds.AppendRecord(' +
+      GenerateSingleLine_ValuesArray() + ');' + sLineBreak
+  else
+    Result := '';
 end;
 
 function TDSGenerator.GenerateOneAppend: string;
@@ -370,11 +379,26 @@ begin
       aBookmark := DataSet.GetBookmark;
       try
         DataSet.First;
-        while not DataSet.Eof and (aRowCounter > 0) do
+        if fAppendMode = amAppendRows then
         begin
-          sDataAppend := sDataAppend + GenerateOneAppend;
-          dec(aRowCounter);
-          DataSet.Next;
+          sDataAppend := fIndentationText + 'ds.AppendRows([' + sLineBreak;
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
+              GenerateSingleLine_ValuesArray() + sLineBreak;
+            dec(aRowCounter);
+            DataSet.Next;
+          end;
+          sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
+        end
+        else
+        begin
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sDataAppend := sDataAppend + GenerateOneAppend;
+            dec(aRowCounter);
+            DataSet.Next;
+          end;
         end;
       finally
         DataSet.GotoBookmark(aBookmark);
