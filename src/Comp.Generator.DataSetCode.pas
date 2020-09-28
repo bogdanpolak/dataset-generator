@@ -18,7 +18,7 @@ uses
 type
   TGeneratorMode = (genStructure, genAppend, genFunction, genUnit);
   TDataSetType = (dstFDMemTable, dstClientDataSet);
-  TAppendMode = (amMultilineAppends, amSinglelineAppends);
+  TAppendMode = (amMultilineAppends, amSinglelineAppends, amAppendRows);
 
   TDSGenerator = class(TComponent)
   public const
