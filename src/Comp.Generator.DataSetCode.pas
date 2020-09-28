@@ -43,7 +43,7 @@ type
     function GenerateStructure: string;
     function GenerateOneAppend: string;
     function GenerateAppendsBlock: string;
-    function FormatLongStringLiterals(const Literal: string): string;
+    function FormatLongStringLiteral(const Literal: string): string;
     function GenerateUnitHeader: string;
     function GenerateUnitFooter: string;
     function GenerateFunction: string;
@@ -72,9 +72,15 @@ type
     property MaxRows: integer read fMaxRows write fMaxRows;
   end;
 
+  TTextWrapper = class
+    class function WrapTextWholeWords(const aText: string;
+      aMaxWidth: integer): TArray<string>;
+  end;
+
 implementation
 
 uses
+  System.StrUtils,
   System.Rtti,
   Vcl.Clipbrd;
 
@@ -181,35 +187,26 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiterals(const Literal: string): string;
+function TDSGenerator.FormatLongStringLiteral(const Literal: string): string;
 var
-  s1: string;
-  s2: string;
+  s: string;
+  lines: TArray<string>;
+  i: Integer;
 begin
-  if Length(Literal) <= MaxLiteralLenght then
+  s := QuotedStr(Literal);
+  if Length(s) <= MaxLiteralLenght then
   begin
-    Result := Literal
+    Result := QuotedStr(Literal);
   end
   else
   begin
-    s1 := Literal;
-    s2 := sLineBreak;
-    while s1 <> '' do
-    begin
-      if Length(s1) < MaxLiteralLenght then
-      begin
-        s2 := s2 + fIndentationText + fIndentationText + s1;
-        s1 := '';
-      end
-      else
-      begin
-        s2 := s2 + fIndentationText + fIndentationText +
-          s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
-        s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
-      end;
-    end;
-    Result := s2;
-  end;
+    lines := TTextWrapper.WrapTextWholeWords(s, MaxLiteralLenght - 1);
+    Result := sLineBreak;
+    for i := 0 to High(lines) do
+      Result := Result + fIndentationText + fIndentationText +
+        IfThen(i > 0, '''') + lines[i] + IfThen(i < High(lines),
+        '''+' + sLineBreak, '');
+  end
 end;
 
 function TDSGenerator.GenerateLine_SetFieldValue(fld: TField): string;
@@ -234,8 +231,8 @@ begin
       ftDateTime:
         Result := sByNameValue + ' := ' + DateTimeToCode(fld.AsDateTime) + ';';
       ftString, ftWideString:
-        Result := sByNameValue + ' := ' + FormatLongStringLiterals
-          (QuotedStr(fld.Value)) + ';';
+        Result := sByNameValue + ' := ' + FormatLongStringLiteral
+          (fld.Value) + ';';
     end;
   end;
 end;
@@ -319,7 +316,7 @@ begin
         ftDateTime:
           s1 := DateTimeToCode(fld.AsDateTime);
         ftString, ftWideString:
-          s1 := FormatLongStringLiterals(QuotedStr(fld.Value));
+          s1 := FormatLongStringLiteral(fld.Value);
       end;
     if sFieldsValues = '' then
       sFieldsValues := s1
@@ -566,6 +563,36 @@ begin
   finally
     aGenerator.Free;
   end;
+end;
+
+{ TTextWrapper }
+
+class function TTextWrapper.WrapTextWholeWords(const aText: string;
+  aMaxWidth: integer): TArray<string>;
+var
+  i: integer;
+  j: integer;
+  Count: integer;
+begin
+  i := 0;
+  j := aMaxWidth;
+  Count := 0;
+  Result := [];
+  while j < aText.Length do
+  begin
+    while (j > i) and not(CharInSet(aText[j], [' ', '.', ',', '!', '?', ':',
+      ';', '-'])) do
+      dec(j);
+    if j = i then
+      j := i + aMaxWidth;
+    SetLength(Result, Count + 1);
+    Result[Count] := aText.Substring(i, j - i);
+    i := j;
+    j := j + aMaxWidth;
+    Count := Count + 1;
+  end;
+  SetLength(Result, Count + 1);
+  Result[Count] := aText.Substring(i);
 end;
 
 end.

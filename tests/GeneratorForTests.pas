@@ -12,8 +12,6 @@ type
   TDSGeneratorUnderTest = class(TDSGenerator)
   public
     // ----
-    function _FormatLongStringLiterals(const Literal: string): string;
-    // ----
     function _GenerateLine_FieldDefAdd(fld: TField): string;
     function _GenerateLine_SetFieldValue(fld: TField): string;
     function _GenerateUnitHeader: string;
@@ -24,12 +22,6 @@ type
   end;
 
 implementation
-
-function TDSGeneratorUnderTest._FormatLongStringLiterals(
-  const Literal: string): string;
-begin
-  Result := FormatLongStringLiterals(Literal);
-end;
 
 function TDSGeneratorUnderTest._GenerateLine_FieldDefAdd(fld: TField): string;
 begin

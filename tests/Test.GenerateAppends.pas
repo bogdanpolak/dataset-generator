@@ -34,7 +34,6 @@ type
     procedure GenFieldByName_DateTime;
     procedure GenFieldByName_BCDField;
     // -------------
-    procedure GenLongLiterals;
     // -------------
     procedure Iss002_GenLongStringLiterals_NewLines;
     // -------------
@@ -261,28 +260,6 @@ begin
 end;
 
 // -----------------------------------------------------------------------
-// Tests: Format code with long string literals
-// -----------------------------------------------------------------------
-
-procedure TestGenerateAppends.GenLongLiterals;
-var
-  longText: string;
-  actualCode: string;
-begin
-  longText := 'Covers Dependency Injection, you''ll learn about' +
-    ' Constructor Injection, Property Injection, and Method Injection' +
-    ' and about the right and wrong way to use it';
-
-  actualCode := fGenerator._FormatLongStringLiterals(longText);
-
-  Assert.AreMemosEqual(
-    {} #13
-    {} + '    Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
-    {} + '    '', Property Injection, and Method Injection and about the right and w''+'#13
-    {} + '    ''rong way to use it'#13, actualCode);
-end;
-
-// -----------------------------------------------------------------------
 // Tests for: Registered issues (bugs)
 // -----------------------------------------------------------------------
 
@@ -299,9 +276,9 @@ begin
   Assert.AreMemosEqual_FullReport(
     {} '  ds.Append;'#13
     {} + '  ds.FieldByName(''Info'').Value := '#13
-    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    {} + '    ''on, Property Injection, and Method Injection and about the right and''+'#13
-    {} + '    '' wrong way to use it'';'#13
+    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor ''+'#13
+    {} + '    ''Injection, Property Injection, and Method Injection and about the ''+'#13
+    {} + '    ''right and wrong way to use it'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;
@@ -361,9 +338,9 @@ begin
   Assert.AreMemosEqual(
     {} '  ds.Append;'#13
     {} + '  ds.FieldByName(''LongDescription'').Value := '#13
-    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    {} + '    ''on, Property Injection, and Method Injection and about the right and''+'#13
-    {} + '    '' wrong way to use it'';'#13
+    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor ''+'#13
+    {} + '    ''Injection, Property Injection, and Method Injection and about the ''+'#13
+    {} + '    ''right and wrong way to use it'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;
