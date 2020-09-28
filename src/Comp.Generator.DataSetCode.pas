@@ -40,7 +40,7 @@ type
     function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
-    function GenerateLine_SetFieldValue(fld: TField): string;
+    function GenerateFieldByName(fld: TField; out line: string): boolean;
     function GenerateStructure: string;
     function GenerateOneAppend: string;
     function GenerateAppendsBlock: string;
@@ -75,8 +75,8 @@ type
   end;
 
   TTextWrapper = class
-    class function WrapTextWholeWords(const aText: string;
-      aMaxWidth: integer): TArray<string>;
+    class function WrapTextWholeWords(const aText: string; aMaxWidth: integer)
+      : TArray<string>;
   end;
 
 implementation
@@ -212,32 +212,40 @@ begin
   end
 end;
 
-function TDSGenerator.GenerateLine_SetFieldValue(fld: TField): string;
+function TDSGenerator.GenerateFieldByName(fld: TField;
+  out line: string): boolean;
 var
-  sByNameValue: string;
+  linePattern: string;
+  value: string;
 begin
-  Result := '';
-  if not(fld.IsNull) then
-  begin
-    sByNameValue := 'FieldByName(' + QuotedStr(fld.FieldName) + ').Value';
-    case fld.DataType of
-      ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-        Result := sByNameValue + ' := ' + fld.AsString + ';';
-      ftBoolean:
-        Result := sByNameValue + ' := ' + BoolToStr(fld.AsBoolean, true) + ';';
-      ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-        Result := sByNameValue + ' := ' + FloatToCode(fld.AsExtended) + ';';
-      ftDate:
-        Result := sByNameValue + ' := ' + DateToCode(fld.AsDateTime) + ';';
-      ftTime:
-        Result := sByNameValue + ' := ' + TimeToCode(fld.AsDateTime) + ';';
-      ftDateTime:
-        Result := sByNameValue + ' := ' + DateTimeToCode(fld.AsDateTime) + ';';
-      ftString, ftWideString:
-        Result := sByNameValue + ' := ' + FormatLongStringLiteral
-          (fld.Value) + ';';
-    end;
+  Result := False;
+  line:='';
+  if fld.IsNull then
+    exit;
+  linePattern := fIndentationText + 'ds.FieldByName(' +
+    QuotedStr(fld.FieldName) + ').Value := %s;';
+  case fld.DataType of
+    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+      value := fld.AsString;
+    ftBoolean:
+      value := BoolToStr(fld.AsBoolean, true);
+    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+      value := FloatToCode(fld.AsExtended);
+    ftDate:
+      value := DateToCode(fld.AsDateTime);
+    ftTime:
+      value := TimeToCode(fld.AsDateTime);
+    ftDateTime:
+      value := DateTimeToCode(fld.AsDateTime);
+    ftString, ftWideString:
+      value := FormatLongStringLiteral(fld.Value);
+    else
+      value := '';
   end;
+  if value = '' then
+    exit;
+  line := Format(linePattern, [value]);
+  Result := True;
 end;
 
 function TDSGenerator.GenerateStructure: string;
@@ -270,7 +278,7 @@ end;
 function TDSGenerator.GenerateOneAppend_Multiline: string;
 var
   fld: TField;
-  s1: string;
+  line: string;
   sl: TStringList;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
@@ -280,9 +288,8 @@ begin
     sl.Add(fIndentationText + 'ds.Append;');
     for fld in fDataSet.Fields do
     begin
-      s1 := GenerateLine_SetFieldValue(fld);
-      if s1 <> '' then
-        sl.Add(fIndentationText + 'ds.' + s1);
+      if GenerateFieldByName(fld, line) then
+        sl.Add(line);
     end;
     sl.Add(fIndentationText + 'ds.Post;');
     Result := sl.Text;
@@ -319,7 +326,7 @@ begin
         ftDateTime:
           s1 := DateTimeToCode(fld.AsDateTime);
         ftString, ftWideString:
-          s1 := FormatLongStringLiteral(fld.Value);
+          s1 := QuotedStr(fld.Value);
       end;
     if sFieldsValues = '' then
       sFieldsValues := s1

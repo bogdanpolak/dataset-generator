@@ -190,26 +190,31 @@ procedure TestGenerateAppends.GenFieldByName_Integer;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'Level', ftInteger);
   fld.DataSet.AppendRecord([1]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''Level'').Value := 1;', actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''Level'').Value := 1;', actualCode);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_Date;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
   fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual
+    ('  ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
     actualCode);
 end;
 
@@ -217,30 +222,33 @@ procedure TestGenerateAppends.GenFieldByName_DateTime;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'ChangeDate', ftDateTime);
   fld.DataSet.AppendRecord( //.
     [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual( //.
-    'FieldByName(''ChangeDate'').Value := EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);',
-    actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''ChangeDate'').Value := ' +
+    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);', actualCode);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_WideString;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
   fld.DataSet.AppendRecord(['Alice has a cat']);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual( //.
-    'FieldByName(''ChangeDate'').Value := ''Alice has a cat'';', //.
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual
+    ('  ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
     actualCode);
 end;
 
@@ -249,6 +257,7 @@ var
   ds: TFDMemTable;
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   ds := TFDMemTable.Create(fOwner);
   with ds.FieldDefs.AddFieldDef do
@@ -262,9 +271,10 @@ begin
   ds.AppendRecord([1.01]);
   fld := ds.Fields[0];
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''abc123'').Value := 1.01;', actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
 end;
 
 // -----------------------------------------------------------------------
