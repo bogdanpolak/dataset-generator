@@ -34,6 +34,7 @@ type
     fAppendMode: TAppendMode;
     fNameOfUnit: string;
     fMaxRows: integer;
+    fRightMargin: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline: string;
     function GenerateOneAppend_Singleline: string;
@@ -70,6 +71,7 @@ type
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
     property NameOfUnit: string read fNameOfUnit write fNameOfUnit;
     property MaxRows: integer read fMaxRows write fMaxRows;
+    property RightMargin: integer read fRightMargin write fRightMargin;
   end;
 
   TTextWrapper = class
@@ -95,6 +97,7 @@ begin
   fIndentationText := '  ';
   fNameOfUnit := 'uSampleDataSet';
   fMaxRows := 100;
+  fRightMargin := 76;
   // --------------------------------
   fCode := TStringList.Create;
 end;
