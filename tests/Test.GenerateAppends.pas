@@ -42,6 +42,7 @@ type
     procedure GenIndentation_LongLiteral;
     // -------------
     procedure GenWrappedString_WithMargin47;
+    procedure GenString_WithMargin63;
     // -------------
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
@@ -399,6 +400,32 @@ begin
     {} + '    ''#Lorem ipsum dolor sit amet, consectetur ''+'#13
     {} + '    ''adipiscing elit. Suspendisse in ''+'#13
     {} + '    ''vestibulum ante.'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13, actualCode);
+end;
+
+//  ---------1---------2---------3---------4---------5---------6---
+//  123456789012345678901234567890123456789012345678901234567890123
+//  ---------.---------.---------.---------.------|
+//   ds.Append;
+//   ds.FieldByName('Poem').Value := 'Lorem ipsum dolor sit amet';
+
+procedure TestGenerateAppends.GenString_WithMargin63;
+var
+  actualCode: string;
+begin
+  fGenerator.RightMargin := 63;
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Poem',
+    'Lorem ipsum dolor sit amet');
+  fGenerator.GeneratorMode := genAppend;
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    {} '  ds.Append;'#13
+    {} + '  ds.FieldByName(''Poem'').Value := ''Lorem ipsum dolor sit amet'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;
