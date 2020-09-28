@@ -41,6 +41,8 @@ type
     procedure GenIndentation_OneSpace;
     procedure GenIndentation_LongLiteral;
     // -------------
+    procedure GenWrappedString_WithMargin47;
+    // -------------
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
     // -------------
@@ -348,6 +350,45 @@ begin
     {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor ''+'#13
     {} + '    ''Injection, Property Injection, and Method Injection and about the ''+'#13
     {} + '    ''right and wrong way to use it'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13, actualCode);
+end;
+
+// -----------------------------------------------------------------------
+// Tests for: literals with RightMargin
+// -----------------------------------------------------------------------
+
+//  ---------1---------2---------3---------4---------5
+//  12345678901234567890123456789012345678901234567890
+//  ---------.---------.---------.---------.------|
+//   ds.Append;
+//   ds.FieldByName('Poem').Value :=
+//     '#Lorem ipsum dolor sit amet, consectetur '+
+//     'adipiscing elit. Suspendisse in '+
+//     'vestibulum ante.';
+//   ds.Post;
+//   ds.First;
+
+procedure TestGenerateAppends.GenWrappedString_WithMargin47;
+var
+  actualCode: string;
+begin
+  fGenerator.RightMargin := 47;
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Poem',
+    '#Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse '+
+    'in vestibulum ante. ');
+  fGenerator.GeneratorMode := genAppend;
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    {} '  ds.Append;'#13
+    {} + '  ds.FieldByName(''Poem'').Value := '#13
+    {} + '    ''#Lorem ipsum dolor sit amet, consectetur ''+'#13
+    {} + '    ''adipiscing elit. Suspendisse in ''+'#13
+    {} + '    ''vestibulum ante.'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;
