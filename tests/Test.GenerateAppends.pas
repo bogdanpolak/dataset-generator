@@ -462,6 +462,10 @@ begin
     {} '  ds.First;'#13, actualCode);
 end;
 
+// -----------------------------------------------------------------------
+// Tests for: Single Line Appends (AppendMode = amSinglelineAppends)
+// -----------------------------------------------------------------------
+
 procedure TestGenerateAppends.GenSampleDataset_OnelineAppends;
 var
   actualCode: string;
