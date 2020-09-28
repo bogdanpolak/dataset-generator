@@ -363,6 +363,7 @@ var
   sDataAppend: string;
   aBookmark: TBookmark;
   aRowCounter: integer;
+  sValuesArray: string;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
@@ -384,10 +385,11 @@ begin
           sDataAppend := fIndentationText + 'ds.AppendRows([' + sLineBreak;
           while not DataSet.Eof and (aRowCounter > 0) do
           begin
-            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
-              GenerateSingleLine_ValuesArray() + sLineBreak;
-            dec(aRowCounter);
+            sValuesArray := GenerateSingleLine_ValuesArray();
             DataSet.Next;
+            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
+               sValuesArray + IfThen(not DataSet.Eof,',') + sLineBreak;
+            dec(aRowCounter);
           end;
           sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
         end
