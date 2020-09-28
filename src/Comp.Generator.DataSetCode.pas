@@ -18,7 +18,7 @@ uses
 type
   TGeneratorMode = (genStructure, genAppend, genFunction, genUnit);
   TDataSetType = (dstFDMemTable, dstClientDataSet);
-  TAppendMode = (amMultilineAppends, amSinglelineAppends);
+  TAppendMode = (amMultilineAppends, amSinglelineAppends, amAppendRows);
 
   TDSGenerator = class(TComponent)
   public const
@@ -35,6 +35,7 @@ type
     fRightMargin: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline: string;
+    function GenerateSingleLine_ValuesArray: string;
     function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
@@ -298,43 +299,47 @@ begin
   end;
 end;
 
-function TDSGenerator.GenerateOneAppend_Singleline: string;
+function TDSGenerator.GenerateSingleLine_ValuesArray: string;
 var
-  sFieldsValues: string;
   fld: TField;
-  s1: string;
+  value: string;
 begin
-  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    Exit('');
-  sFieldsValues := '';
+  Result := '';
   for fld in fDataSet.Fields do
   begin
     if fld.IsNull then
-      s1 := 'Null'
+      value := 'Null'
     else
       case fld.DataType of
         ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-          s1 := fld.AsString;
+          value := fld.AsString;
         ftBoolean:
-          s1 := BoolToStr(fld.AsBoolean, true);
+          value := BoolToStr(fld.AsBoolean, true);
         ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-          s1 := FloatToCode(fld.AsExtended);
+          value := FloatToCode(fld.AsExtended);
         ftDate:
-          s1 := DateToCode(fld.AsDateTime);
+          value := DateToCode(fld.AsDateTime);
         ftTime:
-          s1 := TimeToCode(fld.AsDateTime);
+          value := TimeToCode(fld.AsDateTime);
         ftDateTime:
-          s1 := DateTimeToCode(fld.AsDateTime);
+          value := DateTimeToCode(fld.AsDateTime);
         ftString, ftWideString:
-          s1 := QuotedStr(fld.Value);
+          value := QuotedStr(fld.Value);
+        else
+          value := 'Null'
       end;
-    if sFieldsValues = '' then
-      sFieldsValues := s1
-    else
-      sFieldsValues := sFieldsValues + ', ' + s1;
+    Result := IfThen(Result = '', value, Result + ', ' + value);
   end;
-  Result := fIndentationText + 'ds.AppendRecord([' + sFieldsValues + ']);' +
-    sLineBreak;
+  Result := '[' + Result + ']';
+end;
+
+function TDSGenerator.GenerateOneAppend_Singleline: string;
+begin
+  if (fDataSet <> nil) and (fDataSet.Fields.Count > 0) then
+    Result := fIndentationText + 'ds.AppendRecord(' +
+      GenerateSingleLine_ValuesArray() + ');' + sLineBreak
+  else
+    Result := '';
 end;
 
 function TDSGenerator.GenerateOneAppend: string;
@@ -354,6 +359,7 @@ var
   sDataAppend: string;
   aBookmark: TBookmark;
   aRowCounter: integer;
+  sValuesArray: string;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
@@ -370,11 +376,27 @@ begin
       aBookmark := DataSet.GetBookmark;
       try
         DataSet.First;
-        while not DataSet.Eof and (aRowCounter > 0) do
+        if fAppendMode = amAppendRows then
         begin
-          sDataAppend := sDataAppend + GenerateOneAppend;
-          dec(aRowCounter);
-          DataSet.Next;
+          sDataAppend := fIndentationText + 'ds.AppendRows([' + sLineBreak;
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sValuesArray := GenerateSingleLine_ValuesArray();
+            DataSet.Next;
+            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
+               sValuesArray + IfThen(not DataSet.Eof,',') + sLineBreak;
+            dec(aRowCounter);
+          end;
+          sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
+        end
+        else
+        begin
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sDataAppend := sDataAppend + GenerateOneAppend;
+            dec(aRowCounter);
+            DataSet.Next;
+          end;
         end;
       finally
         DataSet.GotoBookmark(aBookmark);
