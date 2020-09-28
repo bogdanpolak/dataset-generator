@@ -41,6 +41,9 @@ type
     procedure GenIndentation_OneSpace;
     procedure GenIndentation_LongLiteral;
     // -------------
+    procedure GenWrappedString_WithMargin47;
+    procedure GenString_WithMargin63;
+    // -------------
     procedure GenSampleDataset_Appends;
     procedure GenSampleDataset_OnelineAppends;
     // -------------
@@ -54,6 +57,7 @@ implementation
 
 uses
   System.Variants,
+  System.Math,
   Data.FmtBcd;
 
 // -----------------------------------------------------------------------
@@ -76,6 +80,11 @@ end;
 // Dataset factories
 // -----------------------------------------------------------------------
 
+const
+  STR_300chars = 'Covers Dependency Injection, you''ll learn about' +
+    ' Constructor Injection, Property Injection, and Method Injection' +
+    ' and about the right and wrong way to use it';
+
 function GivenField(aOwner: TComponent; const fieldName: string;
   fieldType: TFieldType; size: integer = 0): TField;
 var
@@ -87,19 +96,19 @@ begin
   Result := ds.Fields[0];
 end;
 
-function GivenDataSet_With300String(aOwner: TComponent;
-  const aFieldName: string): TDataSet;
+function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
+  const aDataValue: string): TDataSet;
 var
   ds: TFDMemTable;
+  fieldSize: integer;
 begin
   ds := TFDMemTable.Create(aOwner);
   with ds do
   begin
-    FieldDefs.Add(aFieldName, ftWideString, 300);
+    fieldSize := IFThen(aDataValue.Length<100,100,aDataValue.Length+1);
+    FieldDefs.Add(aFieldName, ftWideString, fieldSize);
     CreateDataSet;
-    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
-      ' Constructor Injection, Property Injection, and Method Injection' +
-      ' and about the right and wrong way to use it']);
+    AppendRecord([aDataValue]);
     First;
   end;
   Result := ds;
@@ -182,26 +191,31 @@ procedure TestGenerateAppends.GenFieldByName_Integer;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'Level', ftInteger);
   fld.DataSet.AppendRecord([1]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''Level'').Value := 1;', actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''Level'').Value := 1;', actualCode);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_Date;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
   fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual
+    ('  ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
     actualCode);
 end;
 
@@ -209,30 +223,33 @@ procedure TestGenerateAppends.GenFieldByName_DateTime;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'ChangeDate', ftDateTime);
   fld.DataSet.AppendRecord( //.
     [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual( //.
-    'FieldByName(''ChangeDate'').Value := EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);',
-    actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''ChangeDate'').Value := ' +
+    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);', actualCode);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_WideString;
 var
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
   fld.DataSet.AppendRecord(['Alice has a cat']);
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual( //.
-    'FieldByName(''ChangeDate'').Value := ''Alice has a cat'';', //.
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual
+    ('  ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
     actualCode);
 end;
 
@@ -241,6 +258,7 @@ var
   ds: TFDMemTable;
   fld: TField;
   actualCode: string;
+  isGenerated: Boolean;
 begin
   ds := TFDMemTable.Create(fOwner);
   with ds.FieldDefs.AddFieldDef do
@@ -254,9 +272,10 @@ begin
   ds.AppendRecord([1.01]);
   fld := ds.Fields[0];
 
-  actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
+  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
 
-  Assert.AreEqual('FieldByName(''abc123'').Value := 1.01;', actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.AreEqual('  ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -267,7 +286,7 @@ procedure TestGenerateAppends.Iss002_GenLongStringLiterals_NewLines;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'Info');
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Info', STR_300chars);
   fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
@@ -328,7 +347,8 @@ procedure TestGenerateAppends.GenIndentation_LongLiteral;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'LongDescription');
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'LongDescription',
+    STR_300chars);
   fGenerator.GeneratorMode := genAppend;
   fGenerator.IndentationText := '  ';
 
@@ -341,6 +361,71 @@ begin
     {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor ''+'#13
     {} + '    ''Injection, Property Injection, and Method Injection and about the ''+'#13
     {} + '    ''right and wrong way to use it'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13, actualCode);
+end;
+
+// -----------------------------------------------------------------------
+// Tests for: literals with RightMargin
+// -----------------------------------------------------------------------
+
+//  ---------1---------2---------3---------4---------5
+//  12345678901234567890123456789012345678901234567890
+//  ---------.---------.---------.---------.------|
+//   ds.Append;
+//   ds.FieldByName('Poem').Value :=
+//     '#Lorem ipsum dolor sit amet, consectetur '+
+//     'adipiscing elit. Suspendisse in '+
+//     'vestibulum ante.';
+//   ds.Post;
+//   ds.First;
+
+procedure TestGenerateAppends.GenWrappedString_WithMargin47;
+var
+  actualCode: string;
+begin
+  fGenerator.RightMargin := 47;
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Poem',
+    '#Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse '+
+    'in vestibulum ante.');
+  fGenerator.GeneratorMode := genAppend;
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    {} '  ds.Append;'#13
+    {} + '  ds.FieldByName(''Poem'').Value := '#13
+    {} + '    ''#Lorem ipsum dolor sit amet, consectetur ''+'#13
+    {} + '    ''adipiscing elit. Suspendisse in ''+'#13
+    {} + '    ''vestibulum ante.'';'#13
+    {} + '  ds.Post;'#13
+    {} + '  ds.First;'#13, actualCode);
+end;
+
+//  ---------1---------2---------3---------4---------5---------6---
+//  123456789012345678901234567890123456789012345678901234567890123
+//  ---------.---------.---------.---------.------|
+//   ds.Append;
+//   ds.FieldByName('Poem').Value := 'Lorem ipsum dolor sit amet';
+
+procedure TestGenerateAppends.GenString_WithMargin63;
+var
+  actualCode: string;
+begin
+  fGenerator.RightMargin := 63;
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Poem',
+    'Lorem ipsum dolor sit amet');
+  fGenerator.GeneratorMode := genAppend;
+  fGenerator.IndentationText := '  ';
+
+  fGenerator.Execute;
+  actualCode := fGenerator.Code.Text;
+
+  Assert.AreMemosEqual(
+    {} '  ds.Append;'#13
+    {} + '  ds.FieldByName(''Poem'').Value := ''Lorem ipsum dolor sit amet'';'#13
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13, actualCode);
 end;

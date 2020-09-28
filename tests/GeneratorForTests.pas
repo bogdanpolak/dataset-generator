@@ -13,7 +13,7 @@ type
   public
     // ----
     function _GenerateLine_FieldDefAdd(fld: TField): string;
-    function _GenerateLine_SetFieldValue(fld: TField): string;
+    function _GenerateFieldByName(fld: TField; out line: string): boolean;
     function _GenerateUnitHeader: string;
     function _GenerateUnitFooter: string;
     function _GenerateOneAppend: string;
@@ -28,10 +28,10 @@ begin
   Result := GenerateLine_FieldDefAdd(fld);
 end;
 
-function TDSGeneratorUnderTest._GenerateLine_SetFieldValue(
-  fld: TField): string;
+function TDSGeneratorUnderTest._GenerateFieldByName(
+  fld: TField; out line: string): boolean;
 begin
-  Result := GenerateLine_SetFieldValue(fld);
+  Result := GenerateFieldByName(fld, line);
 end;
 
 function TDSGeneratorUnderTest._GenerateUnitHeader: string;
