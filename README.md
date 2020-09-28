@@ -3,6 +3,13 @@
 ![ Delphi Support ](https://img.shields.io/badge/Delphi%20Support-%20XE8%20..%2010.3%20Rio-blue.svg)
 ![ version ](https://img.shields.io/badge/version-%201.4-yellow.svg)
 
+# Plan - documentation update to version 1.5
+
+1. Generated long string literals divided by whole words - https://github.com/bogdanpolak/dataset-generator/issues/4
+2. TDSGenerator.RightMargin - https://github.com/bogdanpolak/dataset-generator/issues/27
+3. New Append Mode = amAppendRowArray - https://github.com/bogdanpolak/dataset-generator/issues/37
+4. Demo update: (a) RightMargin := 50 - 100 (b) AppendMode = amAppendRowArray
+
 ## Overview
 
 DataSet Generator is a component that generates a Delphi code using any dataset provided as an input parameter. Component output is a function which creates and populates in-memory dataset according to structure and content of the provided dataset. The main reason for building this component was ability to generate quickly fake datasets for unit testing purposes.
