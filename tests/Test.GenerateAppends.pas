@@ -34,7 +34,6 @@ type
     procedure GenFieldByName_DateTime;
     procedure GenFieldByName_BCDField;
     // -------------
-    procedure GenLongLiterals;
     // -------------
     procedure Iss002_GenLongStringLiterals_NewLines;
     // -------------
@@ -258,28 +257,6 @@ begin
   actualCode := fGenerator._GenerateLine_SetFieldValue(fld);
 
   Assert.AreEqual('FieldByName(''abc123'').Value := 1.01;', actualCode);
-end;
-
-// -----------------------------------------------------------------------
-// Tests: Format code with long string literals
-// -----------------------------------------------------------------------
-
-procedure TestGenerateAppends.GenLongLiterals;
-var
-  longText: string;
-  actualCode: string;
-begin
-  longText := '''Covers Dependency Injection, you''''ll learn about' +
-    ' Constructor Injection, Property Injection, and Method Injection' +
-    ' and about the right and wrong way to use it''';
-
-  actualCode := fGenerator._FormatLongStringLiterals(longText);
-
-  Assert.AreMemosEqual(
-    {} #13
-    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
-    {} + '    ''on, Property Injection, and Method Injection and about the right and''+'#13
-    {} + '    '' wrong way to use it'''#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
