@@ -50,6 +50,8 @@ type
     procedure GenMultipleRowDataset_MaxRows_Zero;
     procedure GenMultipleRowDataset_MaxRows_2;
     // -------------
+    procedure GenAppendRows_OneRow;
+    // -------------
     procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
 
@@ -538,6 +540,26 @@ begin
   fGenerator._GenerateAppendsBlock;
 
   Assert.AreEqual(3, fGenerator.DataSet.RecNo);
+end;
+
+// -----------------------------------------------------------------------
+// Tests for: Append Rows (AppendMode = amAppendRows)
+// -----------------------------------------------------------------------
+
+procedure TestGenerateAppends.GenAppendRows_OneRow;
+begin
+  fGenerator.DataSet := Given_ID_Text_DataSet(fOwner,[[1, 'FirstRow']]);
+  fGenerator.AppendMode := amAppendRows;
+  fGenerator.GeneratorMode := genAppend;
+
+  fGenerator.MaxRows := 0;
+  fGenerator.Execute;
+
+  Assert.AreMemosEqual(
+    {} '  ds.AppendRows(['#13 +
+    {} '    [1, ''FirstRow'']'#13 +
+    {} '  ]);'#13 +
+    {} '  ds.First;'#13, fGenerator.Code.Text);
 end;
 
 initialization
