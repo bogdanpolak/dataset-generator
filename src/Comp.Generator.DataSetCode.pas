@@ -197,7 +197,7 @@ var
   i: Integer;
 begin
   s := QuotedStr(Literal);
-  if fistLineStartAt + Length(s) < RightMargin then
+  if fistLineStartAt + Length(s) <= RightMargin then
   begin
     Result := QuotedStr(Literal);
   end
