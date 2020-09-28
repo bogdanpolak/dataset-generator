@@ -51,6 +51,7 @@ type
     procedure GenMultipleRowDataset_MaxRows_2;
     // -------------
     procedure GenAppendRows_OneRow;
+    procedure GenAppendRows_ThreeRows;
     // -------------
     procedure GenMultipleRowDataset_PersistDatasetPosition;
   end;
@@ -558,6 +559,25 @@ begin
   Assert.AreMemosEqual(
     {} '  ds.AppendRows(['#13 +
     {} '    [1, ''FirstRow'']'#13 +
+    {} '  ]);'#13 +
+    {} '  ds.First;'#13, fGenerator.Code.Text);
+end;
+
+procedure TestGenerateAppends.GenAppendRows_ThreeRows;
+begin
+  fGenerator.DataSet := Given_ID_Text_DataSet(fOwner,[
+    [1, 'FirstRow'],[2, 'MiddleRow'], [3, 'LastRow']]);
+  fGenerator.AppendMode := amAppendRows;
+  fGenerator.GeneratorMode := genAppend;
+
+  fGenerator.MaxRows := 0;
+  fGenerator.Execute;
+
+  Assert.AreMemosEqual(
+    {} '  ds.AppendRows(['#13 +
+    {} '    [1, ''FirstRow''],'#13 +
+    {} '    [2, ''MiddleRow''],'#13 +
+    {} '    [3, ''LastRow'']'#13 +
     {} '  ]);'#13 +
     {} '  ds.First;'#13, fGenerator.Code.Text);
 end;
