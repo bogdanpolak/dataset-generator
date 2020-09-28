@@ -54,6 +54,7 @@ implementation
 
 uses
   System.Variants,
+  System.Math,
   Data.FmtBcd;
 
 // -----------------------------------------------------------------------
@@ -76,6 +77,11 @@ end;
 // Dataset factories
 // -----------------------------------------------------------------------
 
+const
+  STR_300chars = 'Covers Dependency Injection, you''ll learn about' +
+    ' Constructor Injection, Property Injection, and Method Injection' +
+    ' and about the right and wrong way to use it';
+
 function GivenField(aOwner: TComponent; const fieldName: string;
   fieldType: TFieldType; size: integer = 0): TField;
 var
@@ -87,19 +93,19 @@ begin
   Result := ds.Fields[0];
 end;
 
-function GivenDataSet_With300String(aOwner: TComponent;
-  const aFieldName: string): TDataSet;
+function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
+  const aDataValue: string): TDataSet;
 var
   ds: TFDMemTable;
+  fieldSize: integer;
 begin
   ds := TFDMemTable.Create(aOwner);
   with ds do
   begin
-    FieldDefs.Add(aFieldName, ftWideString, 300);
+    fieldSize := IFThen(aDataValue.Length<100,100,aDataValue.Length+1);
+    FieldDefs.Add(aFieldName, ftWideString, fieldSize);
     CreateDataSet;
-    AppendRecord(['Covers Dependency Injection, you''ll learn about' +
-      ' Constructor Injection, Property Injection, and Method Injection' +
-      ' and about the right and wrong way to use it']);
+    AppendRecord([aDataValue]);
     First;
   end;
   Result := ds;
@@ -267,7 +273,7 @@ procedure TestGenerateAppends.Iss002_GenLongStringLiterals_NewLines;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'Info');
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Info', STR_300chars);
   fGenerator.GeneratorMode := genAppend;
 
   fGenerator.Execute;
@@ -328,7 +334,8 @@ procedure TestGenerateAppends.GenIndentation_LongLiteral;
 var
   actualCode: string;
 begin
-  fGenerator.DataSet := GivenDataSet_With300String(fOwner, 'LongDescription');
+  fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'LongDescription',
+    STR_300chars);
   fGenerator.GeneratorMode := genAppend;
   fGenerator.IndentationText := '  ';
 
