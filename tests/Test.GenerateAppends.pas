@@ -386,7 +386,7 @@ begin
   fGenerator.RightMargin := 47;
   fGenerator.DataSet := GivenDataSet_WithString(fOwner, 'Poem',
     '#Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse '+
-    'in vestibulum ante. ');
+    'in vestibulum ante.');
   fGenerator.GeneratorMode := genAppend;
   fGenerator.IndentationText := '  ';
 

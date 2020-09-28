@@ -23,8 +23,6 @@ type
   TDSGenerator = class(TComponent)
   public const
     Version = '1.4';
-  private const
-    MaxLiteralLenght = 70;
   private
     fCode: TStrings;
     fDataSet: TDataSet;
@@ -44,7 +42,8 @@ type
     function GenerateStructure: string;
     function GenerateOneAppend: string;
     function GenerateAppendsBlock: string;
-    function FormatLongStringLiteral(const Literal: string): string;
+    function FormatLongStringLiteral(const Literal: string; fistLineStartAt:
+      integer): string;
     function GenerateUnitHeader: string;
     function GenerateUnitFooter: string;
     function GenerateFunction: string;
@@ -190,20 +189,21 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiteral(const Literal: string): string;
+function TDSGenerator.FormatLongStringLiteral(const Literal: string;
+  fistLineStartAt: integer): string;
 var
   s: string;
   lines: TArray<string>;
   i: Integer;
 begin
   s := QuotedStr(Literal);
-  if Length(s) <= MaxLiteralLenght then
+  if fistLineStartAt + Length(s) < RightMargin then
   begin
     Result := QuotedStr(Literal);
   end
   else
   begin
-    lines := TTextWrapper.WrapTextWholeWords(s, MaxLiteralLenght - 1);
+    lines := TTextWrapper.WrapTextWholeWords(s, RightMargin - 2*Length(fIndentationText) - 1);
     Result := sLineBreak;
     for i := 0 to High(lines) do
       Result := Result + fIndentationText + fIndentationText +
@@ -238,7 +238,7 @@ begin
     ftDateTime:
       value := DateTimeToCode(fld.AsDateTime);
     ftString, ftWideString:
-      value := FormatLongStringLiteral(fld.Value);
+      value := FormatLongStringLiteral(fld.Value, Length(linePattern)-2);
     else
       value := '';
   end;
