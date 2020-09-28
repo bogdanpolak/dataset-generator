@@ -269,17 +269,17 @@ var
   longText: string;
   actualCode: string;
 begin
-  longText := 'Covers Dependency Injection, you''ll learn about' +
+  longText := '''Covers Dependency Injection, you''''ll learn about' +
     ' Constructor Injection, Property Injection, and Method Injection' +
-    ' and about the right and wrong way to use it';
+    ' and about the right and wrong way to use it''';
 
   actualCode := fGenerator._FormatLongStringLiterals(longText);
 
   Assert.AreMemosEqual(
     {} #13
-    {} + '    Covers Dependency Injection, you''ll learn about Constructor Injection''+'#13
-    {} + '    '', Property Injection, and Method Injection and about the right and w''+'#13
-    {} + '    ''rong way to use it'#13, actualCode);
+    {} + '    ''Covers Dependency Injection, you''''ll learn about Constructor Injecti''+'#13
+    {} + '    ''on, Property Injection, and Method Injection and about the right and''+'#13
+    {} + '    '' wrong way to use it'''#13, actualCode);
 end;
 
 // -----------------------------------------------------------------------
