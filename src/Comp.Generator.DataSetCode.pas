@@ -334,10 +334,6 @@ begin
 end;
 
 function TDSGenerator.GenerateOneAppend_Singleline: string;
-var
-  sFieldsValues: string;
-  fld: TField;
-  s1: string;
 begin
   if (fDataSet <> nil) and (fDataSet.Fields.Count > 0) then
     Result := fIndentationText + 'ds.AppendRecord(' +
