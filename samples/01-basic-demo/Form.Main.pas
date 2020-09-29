@@ -14,6 +14,8 @@ uses
   FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.Phys.SQLiteDef,
   FireDAC.Stan.ExprFuncs, FireDAC.VCLUI.Wait, FireDAC.DApt,
+  FireDAC.Phys.SQLiteWrapper.Stat,
+  {}
   Comp.Generator.DataSetCode;
 
 type
@@ -24,13 +26,19 @@ type
     Memo1: TMemo;
     GroupBox1: TGroupBox;
     Splitter1: TSplitter;
-    Button1: TButton;
-    Button2: TButton;
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
-  public const
+    bntGenSimpleDataset: TButton;
+    btnGenerateOrders: TButton;
+    btnGenerateLongLiterals: TButton;
+    pnSideBar: TPanel;
+    GroupBox2: TGroupBox;
+    procedure bntGenSimpleDatasetClick(Sender: TObject);
+    procedure btnGenerateOrdersClick(Sender: TObject);
+    procedure btnGenerateLongLiteralsClick(Sender: TObject);
+  private const
     Version = '1.4';
   private
+    fDSGenerator: TDSGenerator;
+    constructor Create(AOwner: TComponent); override;
     function CreateSimpleMemTable: TDataSet;
     function CreateSqlQuery: TDataSet;
   end;
@@ -41,6 +49,12 @@ var
 implementation
 
 {$R *.dfm}
+
+constructor TFormMain.Create(AOwner: TComponent);
+begin
+  inherited;
+  fDSGenerator := TDSGenerator.Create(nil);
+end;
 
 function TFormMain.CreateSimpleMemTable: TDataSet;
 var
@@ -81,7 +95,7 @@ begin
   Result := ds;
 end;
 
-procedure TFormMain.Button1Click(Sender: TObject);
+procedure TFormMain.bntGenSimpleDatasetClick(Sender: TObject);
 var
   ADataSet: TDataSet;
 begin
@@ -89,12 +103,18 @@ begin
   Memo1.Lines.Text := TDSGenerator.GenerateAsString (ADataSet);
 end;
 
-procedure TFormMain.Button2Click(Sender: TObject);
+procedure TFormMain.btnGenerateOrdersClick(Sender: TObject);
 var
   ADataSet: TDataSet;
 begin
-  ADataSet := CreateSqlQuery;
-  Memo1.Lines.Text := TDSGenerator.GenerateAsString(ADataSet);
+  fDSGenerator.DataSet := CreateSqlQuery;
+  fDSGenerator.Execute;
+  Memo1.Lines := fDSGenerator.Code;
+end;
+
+procedure TFormMain.btnGenerateLongLiteralsClick(Sender: TObject);
+begin
+  // TODO: Generate Long Literals DataSet (copy code from unit tests)
 end;
 
 end.
