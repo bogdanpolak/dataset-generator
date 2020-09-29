@@ -137,6 +137,7 @@ In this code not only generator is constructed and executed, but also generator'
 | `AppendMode` | `TAppendMode` Defines Code format of append data section (described bellow). Values: `amMultilineAppends`, `amSinglelineAppends`. |
 | `MaxRows` | `Integer` Maximum number of a rows from input dataset which are used to generate append section *(default value = `100`)* |
 | `UnitName` | `String` Used as unit name when the whole unit is generated, (not used in other generator modes) |
+| `RightMargin` | `Integer` Defines width of generated code - only applies to generation of string literals including multiline string literals |
 
 ### Option: `AppendMode`
 
