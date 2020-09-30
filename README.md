@@ -127,9 +127,10 @@ In this code not only generator is constructed and executed, but also generator'
 | `IndentationText` | `String` Used as a code indentation text (defined text is used a an one level of the indentation) |
 | `GeneratorMode` | `TGeneratorMode` Decides which section of code are generated when using Execute command. Values: `genStructure`, `genAppend`, `genFunction`, `genUnit`. |
 | `DataSetType` | `TDataSetType` Decides which in-memory dataset component is used as a fake. Values: `dstFDMemTable`, `dstClientDataSet`. |
-| `AppendMode` | `TAppendMode` Defines Code format of append data section (described bellow). Values: `amMultilineAppends`, `amSinglelineAppends`. |
+| `AppendMode` | `TAppendMode` Defines Code format of append data section (described bellow). Values: `amMultilineAppends`, `amSinglelineAppends`, `amAppendRowArray`. |
 | `MaxRows` | `Integer` Maximum number of a rows from input dataset which are used to generate append section *(default value = `100`)* |
 | `UnitName` | `String` Used as unit name when the whole unit is generated, (not used in other generator modes) |
+| `RightMargin` | `Integer` Defines width of generated code - only applies to generation of string literals including multiline string literals |
 
 ### Option: `AppendMode`
 
@@ -155,6 +156,16 @@ ds.FieldByName('RegistrationDate').Value := EncodeDate(2019, 09, 16);
 ds.FieldByName('Balance')Value := 1.2;
 ds.FieldByName('Budget').Value := 1200;
 ds.Post;
+```
+
+New AppendMode was implemented in version 1.5 (`amAppendRowArray`). In that mode this component is generating two dimensional array with all the rows inserted in one statement:
+
+```pas
+ds.AppendRows([
+  [1, ''FirstRow''],
+  [2, ''MiddleRow''],
+  [3, ''LastRow'']
+);
 ```
 
 ## Fakes vs mocks
