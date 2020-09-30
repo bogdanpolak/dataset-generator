@@ -30,17 +30,33 @@ type
     btnGenerateOrders: TButton;
     btnGenerateLongLiterals: TButton;
     pnSideBar: TPanel;
-    GroupBox2: TGroupBox;
+    grbxOptions: TGroupBox;
+    lblIndentation: TLabel;
+    trbrIndentation: TTrackBar;
+    rgrDatasetType: TRadioGroup;
+    rgrAppendMode: TRadioGroup;
+    GroupBox3: TGroupBox;
+    edtMaxRows: TEdit;
+    GroupBox4: TGroupBox;
+    edtRightMargin: TEdit;
     procedure bntGenSimpleDatasetClick(Sender: TObject);
     procedure btnGenerateOrdersClick(Sender: TObject);
     procedure btnGenerateLongLiteralsClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure trbrIndentationChange(Sender: TObject);
+    procedure rgrDatasetTypeClick(Sender: TObject);
+    procedure edtMaxRowsKeyPress(Sender: TObject; var Key: Char);
+    procedure rgrAppendModeClick(Sender: TObject);
+    procedure edtRightMarginKeyPress(Sender: TObject; var Key: Char);
   private const
     Version = '1.4';
   private
     fDSGenerator: TDSGenerator;
+    LabelIndentation: string;
     constructor Create(AOwner: TComponent); override;
     function CreateSimpleMemTable: TDataSet;
     function CreateSqlQuery: TDataSet;
+    procedure UpdateOptions;
   end;
 
 var
@@ -49,6 +65,10 @@ var
 implementation
 
 {$R *.dfm}
+
+const
+  DefaultMaxRows = 100;
+  DefaultRightMargin = 60;
 
 constructor TFormMain.Create(AOwner: TComponent);
 begin
@@ -95,17 +115,101 @@ begin
   Result := ds;
 end;
 
-procedure TFormMain.bntGenSimpleDatasetClick(Sender: TObject);
+procedure TFormMain.UpdateOptions();
 var
-  ADataSet: TDataSet;
+  maxRows: integer;
+  rightMargin: Integer;
 begin
-  ADataSet := CreateSimpleMemTable;
-  Memo1.Lines.Text := TDSGenerator.GenerateAsString (ADataSet);
+  if grbxOptions.Enabled then
+  begin
+    fDSGenerator.IndentationText := StringOfChar(' ', trbrIndentation.Position);
+    lblIndentation.Caption := Format(LabelIndentation,
+      [trbrIndentation.Position]);
+    case rgrDatasetType.ItemIndex of
+      0: fDSGenerator.DataSetType := dstFDMemTable;
+      else fDSGenerator.DataSetType := dstClientDataSet;
+    end;
+    case rgrAppendMode.ItemIndex of
+      0: fDSGenerator.AppendMode := amMultilineAppends;
+      1: fDSGenerator.AppendMode := amSinglelineAppends;
+      else fDSGenerator.AppendMode := amAppendRows;
+    end;
+    if TryStrToInt(edtMaxRows.Text,maxRows) then
+      fDSGenerator.MaxRows := maxRows
+    else
+    begin
+      fDSGenerator.MaxRows := DefaultMaxRows;
+      edtMaxRows.Text := DefaultMaxRows.ToString;
+    end;
+    if TryStrToInt(edtRightMargin.Text,rightMargin) then
+      fDSGenerator.RightMargin := rightMargin
+    else
+    begin
+      fDSGenerator.RightMargin := DefaultRightMargin;
+      edtRightMargin.Text := DefaultRightMargin.ToString;
+    end;
+    fDSGenerator.Execute;
+    Memo1.Lines := fDSGenerator.Code;
+  end;
+end;
+
+procedure TFormMain.edtMaxRowsKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    UpdateOptions;
+    Key := #0;
+  end;
+end;
+
+procedure TFormMain.edtRightMarginKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    UpdateOptions;
+    Key := #0;
+  end;
+end;
+
+procedure TFormMain.FormCreate(Sender: TObject);
+begin
+  LabelIndentation := lblIndentation.Caption;
+  grbxOptions.Enabled := False;
+  try
+    trbrIndentation.Position := 2;
+    rgrDatasetType.ItemIndex := 0;
+    rgrAppendMode.ItemIndex := 0;
+    edtMaxRows.Text := DefaultMaxRows.ToString;
+    edtRightMargin.Text := DefaultRightMargin.ToString;
+  finally
+    grbxOptions.Enabled := True;
+    UpdateOptions;
+  end;
+end;
+
+procedure TFormMain.rgrAppendModeClick(Sender: TObject);
+begin
+    UpdateOptions;
+end;
+
+procedure TFormMain.rgrDatasetTypeClick(Sender: TObject);
+begin
+    UpdateOptions;
+end;
+
+procedure TFormMain.trbrIndentationChange(Sender: TObject);
+begin
+    UpdateOptions;
+end;
+
+procedure TFormMain.bntGenSimpleDatasetClick(Sender: TObject);
+begin
+  fDSGenerator.DataSet := CreateSimpleMemTable;
+  fDSGenerator.Execute;
+  Memo1.Lines := fDSGenerator.Code;
 end;
 
 procedure TFormMain.btnGenerateOrdersClick(Sender: TObject);
-var
-  ADataSet: TDataSet;
 begin
   fDSGenerator.DataSet := CreateSqlQuery;
   fDSGenerator.Execute;
