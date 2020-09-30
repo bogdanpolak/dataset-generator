@@ -53,9 +53,12 @@ type
   private
     fDSGenerator: TDSGenerator;
     LabelIndentation: string;
+    fMemTableSimple: TFDMemTable;
+    fMemTableOrders: TFDMemTable;
+    fMemTableLiterals: TFDMemTable;
     constructor Create(AOwner: TComponent); override;
-    function CreateSimpleMemTable: TDataSet;
-    function CreateSqlQuery: TDataSet;
+    function GivenDataSet_Simple: TDataSet;
+    function GivenDataSet_Orders: TDataSet;
     procedure UpdateOptions;
   end;
 
@@ -76,43 +79,55 @@ begin
   fDSGenerator := TDSGenerator.Create(nil);
 end;
 
-function TFormMain.CreateSimpleMemTable: TDataSet;
-var
-  ds: TFDMemTable;
+function TFormMain.GivenDataSet_Simple: TDataSet;
 begin
-  ds := TFDMemTable.Create(Self);
-  with ds do
+  if fMemTableSimple=nil then
   begin
-    FieldDefs.Add('id', ftInteger);
-    FieldDefs.Add('text1', ftWideString, 30);
-    FieldDefs.Add('date1', ftDate);
-    FieldDefs.Add('float1', ftFloat);
-    FieldDefs.Add('currency1', ftCurrency);
-    CreateDataSet;
-    AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
-    AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
+    fMemTableSimple := TFDMemTable.Create(Self);
+    with fMemTableSimple do
+    begin
+      FieldDefs.Add('id', ftInteger);
+      FieldDefs.Add('text1', ftWideString, 30);
+      FieldDefs.Add('date1', ftDate);
+      FieldDefs.Add('float1', ftFloat);
+      FieldDefs.Add('currency1', ftCurrency);
+      CreateDataSet;
+      AppendRecord([1, 'Ala ma kota', EncodeDate(2019, 09, 16), 1.2, 1200]);
+      AppendRecord([2, 'Ala ma kota', System.Variants.Null, Null, 950]);
+    end;
   end;
-  ds.First;
-  Result := ds;
+  fMemTableSimple.First;
+  Result := fMemTableSimple;
 end;
 
-function TFormMain.CreateSqlQuery: TDataSet;
+function TFormMain.GivenDataSet_Orders: TDataSet;
 var
-  ds: TFDQuery;
+  fdqOrders: TFDQuery;
 begin
-  ds := TFDQuery.Create(Self);
-  ds.Connection := FDConnection1;
-  ds.Open('SELECT Orders.OrderID,  Orders.CustomerID,' +
-    '   Customers.CompanyName, Orders.EmployeeID, ' +
-    '   Employees.FirstName||'' ''||Employees.LastName EmployeeName,' +
-    '   Orders.OrderDate, Orders.RequiredDate, Orders.ShippedDate,' +
-    '   Orders.ShipVia, Orders.Freight' + ' FROM {id Orders} Orders ' +
-    '   INNER JOIN {id Employees} Employees' +
-    '     ON Orders.EmployeeID = Employees.EmployeeID ' +
-    '   INNER JOIN {id Customers} Customers' +
-    '     ON Orders.CustomerID = Customers.CustomerID ' +
-    ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
-  Result := ds;
+  if fMemTableOrders=nil then
+  begin
+    fdqOrders := TFDQuery.Create(Self);
+    try
+      fdqOrders.Connection := FDConnection1;
+      fdqOrders.Open(
+        'SELECT Orders.OrderID,  Orders.CustomerID,' +
+        '   Customers.CompanyName, Orders.EmployeeID, ' +
+        '   Employees.FirstName||'' ''||Employees.LastName EmployeeName,' +
+        '   Orders.OrderDate, Orders.RequiredDate, Orders.ShippedDate,' +
+        '   Orders.ShipVia, Orders.Freight' + ' FROM {id Orders} Orders ' +
+        '   INNER JOIN {id Employees} Employees' +
+        '     ON Orders.EmployeeID = Employees.EmployeeID ' +
+        '   INNER JOIN {id Customers} Customers' +
+        '     ON Orders.CustomerID = Customers.CustomerID ' +
+        ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
+      fMemTableOrders := TFDMemTable.Create(Self);
+      fMemTableOrders.CopyDataSet(fdqOrders, [coStructure, coRestart, coAppend]);
+    finally
+      fdqOrders.Free;
+    end;
+  end;
+  fMemTableOrders.First;
+  Result := fMemTableOrders;
 end;
 
 procedure TFormMain.UpdateOptions();
@@ -149,7 +164,7 @@ begin
       edtRightMargin.Text := DefaultRightMargin.ToString;
     end;
     fDSGenerator.Execute;
-    Memo1.Lines := fDSGenerator.Code;
+    Memo1.Lines.Text := fDSGenerator.Code.Text;
   end;
 end;
 
@@ -173,6 +188,9 @@ end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
+  fMemTableSimple:=nil;
+  fMemTableOrders:=nil;
+  fMemTableLiterals:=nil;
   LabelIndentation := lblIndentation.Caption;
   grbxOptions.Enabled := False;
   try
@@ -204,14 +222,14 @@ end;
 
 procedure TFormMain.bntGenSimpleDatasetClick(Sender: TObject);
 begin
-  fDSGenerator.DataSet := CreateSimpleMemTable;
+  fDSGenerator.DataSet := GivenDataSet_Simple;
   fDSGenerator.Execute;
   Memo1.Lines := fDSGenerator.Code;
 end;
 
 procedure TFormMain.btnGenerateOrdersClick(Sender: TObject);
 begin
-  fDSGenerator.DataSet := CreateSqlQuery;
+  fDSGenerator.DataSet := GivenDataSet_Orders;
   fDSGenerator.Execute;
   Memo1.Lines := fDSGenerator.Code;
 end;
