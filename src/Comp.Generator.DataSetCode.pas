@@ -22,7 +22,7 @@ type
 
   TDSGenerator = class(TComponent)
   public const
-    Version = '1.4';
+    Version = '1.5';
   private
     fCode: TStrings;
     fDataSet: TDataSet;

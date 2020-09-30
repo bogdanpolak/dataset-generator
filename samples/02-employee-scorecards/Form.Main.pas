@@ -1,4 +1,4 @@
-unit Form.Main;
+﻿unit Form.Main;
 
 interface
 
@@ -36,7 +36,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure lbxMonthsClick(Sender: TObject);
   public const
-    Version = '1.4';
+    Version = '1.5';
   private
     fDataModule1: TDataModule1;
     procedure FillListBoxWithMonths(const aListBox: TListBox);

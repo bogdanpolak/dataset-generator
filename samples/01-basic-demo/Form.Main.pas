@@ -1,4 +1,4 @@
-unit Form.Main;
+﻿unit Form.Main;
 
 interface
 
@@ -49,7 +49,7 @@ type
     procedure rgrAppendModeClick(Sender: TObject);
     procedure edtRightMarginKeyPress(Sender: TObject; var Key: Char);
   private const
-    Version = '1.4';
+    Version = '1.5';
   private
     fDSGenerator: TDSGenerator;
     LabelIndentation: string;
