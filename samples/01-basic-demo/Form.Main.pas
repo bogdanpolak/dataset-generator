@@ -59,6 +59,7 @@ type
     constructor Create(AOwner: TComponent); override;
     function GivenDataSet_Simple: TDataSet;
     function GivenDataSet_Orders: TDataSet;
+    function GivenDataSet_Literals: TDataSet;
     procedure UpdateOptions;
   end;
 
@@ -81,7 +82,7 @@ end;
 
 function TFormMain.GivenDataSet_Simple: TDataSet;
 begin
-  if fMemTableSimple=nil then
+  if fMemTableSimple = nil then
   begin
     fMemTableSimple := TFDMemTable.Create(Self);
     with fMemTableSimple do
@@ -131,13 +132,12 @@ function TFormMain.GivenDataSet_Orders: TDataSet;
 var
   fdqOrders: TFDQuery;
 begin
-  if fMemTableOrders=nil then
+  if fMemTableOrders = nil then
   begin
     fdqOrders := TFDQuery.Create(Self);
     try
       fdqOrders.Connection := FDConnection1;
-      fdqOrders.Open(
-        'SELECT Orders.OrderID,  Orders.CustomerID,' +
+      fdqOrders.Open('SELECT Orders.OrderID,  Orders.CustomerID,' +
         '   Customers.CompanyName, Orders.EmployeeID, ' +
         '   Employees.FirstName||'' ''||Employees.LastName EmployeeName,' +
         '   Orders.OrderDate, Orders.RequiredDate, Orders.ShippedDate,' +
@@ -148,7 +148,8 @@ begin
         '     ON Orders.CustomerID = Customers.CustomerID ' +
         ' WHERE {year(OrderDate)} = 1997 ORDER BY Orders.OrderID ');
       fMemTableOrders := TFDMemTable.Create(Self);
-      fMemTableOrders.CopyDataSet(fdqOrders, [coStructure, coRestart, coAppend]);
+      fMemTableOrders.CopyDataSet(fdqOrders, [coStructure, coRestart,
+        coAppend]);
     finally
       fdqOrders.Free;
     end;
@@ -160,7 +161,7 @@ end;
 procedure TFormMain.UpdateOptions();
 var
   maxRows: integer;
-  rightMargin: Integer;
+  rightMargin: integer;
 begin
   if grbxOptions.Enabled then
   begin
@@ -168,26 +169,31 @@ begin
     lblIndentation.Caption := Format(LabelIndentation,
       [trbrIndentation.Position]);
     case rgrDatasetType.ItemIndex of
-      0: fDSGenerator.DataSetType := dstFDMemTable;
-      else fDSGenerator.DataSetType := dstClientDataSet;
+      0:
+        fDSGenerator.DataSetType := dstFDMemTable;
+    else
+      fDSGenerator.DataSetType := dstClientDataSet;
     end;
     case rgrAppendMode.ItemIndex of
-      0: fDSGenerator.AppendMode := amMultilineAppends;
-      1: fDSGenerator.AppendMode := amSinglelineAppends;
-      else fDSGenerator.AppendMode := amAppendRows;
+      0:
+        fDSGenerator.AppendMode := amMultilineAppends;
+      1:
+        fDSGenerator.AppendMode := amSinglelineAppends;
+    else
+      fDSGenerator.AppendMode := amAppendRows;
     end;
-    if TryStrToInt(edtMaxRows.Text,maxRows) then
-      fDSGenerator.MaxRows := maxRows
+    if TryStrToInt(edtMaxRows.Text, maxRows) then
+      fDSGenerator.maxRows := maxRows
     else
     begin
-      fDSGenerator.MaxRows := DefaultMaxRows;
+      fDSGenerator.maxRows := DefaultMaxRows;
       edtMaxRows.Text := DefaultMaxRows.ToString;
     end;
-    if TryStrToInt(edtRightMargin.Text,rightMargin) then
-      fDSGenerator.RightMargin := rightMargin
+    if TryStrToInt(edtRightMargin.Text, rightMargin) then
+      fDSGenerator.rightMargin := rightMargin
     else
     begin
-      fDSGenerator.RightMargin := DefaultRightMargin;
+      fDSGenerator.rightMargin := DefaultRightMargin;
       edtRightMargin.Text := DefaultRightMargin.ToString;
     end;
     fDSGenerator.Execute;
@@ -215,9 +221,9 @@ end;
 
 procedure TFormMain.FormCreate(Sender: TObject);
 begin
-  fMemTableSimple:=nil;
-  fMemTableOrders:=nil;
-  fMemTableLiterals:=nil;
+  fMemTableSimple := nil;
+  fMemTableOrders := nil;
+  fMemTableLiterals := nil;
   LabelIndentation := lblIndentation.Caption;
   grbxOptions.Enabled := False;
   try
@@ -234,17 +240,17 @@ end;
 
 procedure TFormMain.rgrAppendModeClick(Sender: TObject);
 begin
-    UpdateOptions;
+  UpdateOptions;
 end;
 
 procedure TFormMain.rgrDatasetTypeClick(Sender: TObject);
 begin
-    UpdateOptions;
+  UpdateOptions;
 end;
 
 procedure TFormMain.trbrIndentationChange(Sender: TObject);
 begin
-    UpdateOptions;
+  UpdateOptions;
 end;
 
 procedure TFormMain.bntGenSimpleDatasetClick(Sender: TObject);
