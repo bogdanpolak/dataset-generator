@@ -100,6 +100,33 @@ begin
   Result := fMemTableSimple;
 end;
 
+function TFormMain.GivenDataSet_Literals: TDataSet;
+const
+  Line1 = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam varius posuere risus, maximus tincidunt libero sollicitudin ut. Nunc ullamcorper lacinia semper. Suspendisse non egestas velit. '
+    + 'Fusce lacus orci, vestibulum porta turpis at, mollis malesuada odio. Etiam venenatis gravida placerat. Phasellus sit amet tincidunt turpis. Suspendisse convallis sem non libero condimentum rhoncus. '
+    + 'Sed fringilla aliquam tempor. Aenean vitae mauris eu nunc efficitur convallis. Sed lectus est, placerat ac est vel, porttitor convallis urna. Duis eget metus justo. '
+    + 'Quisque quam felis, tincidunt quis dignissim nec, eleifend sed turpis. Phasellus luctus sodales elementum.';
+  Line2 = 'Quisque aliquet purus nec ullamcorper varius. Nam risus nunc, dictum at odio in, cursus aliquam nulla. Nam quis vestibulum ante, ut tincidunt odio. '
+    + 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque magna diam, porttitor vitae pharetra quis, convallis et nunc. Cras lacinia placerat velit vitae laoreet. '
+    + 'Aenean vestibulum sodales metus, nec cursus odio pharetra nec. Morbi quis laoreet orci. Curabitur non odio vel diam tincidunt pulvinar. Ut sagittis arcu justo, at gravida diam finibus non. '
+    + 'Nullam quam ante, ullamcorper sed tortor a, rutrum vehicula diam. In ac magna magna. Phasellus iaculis elit at posuere laoreet. In egestas blandit rhoncus. Nam at magna odio.';
+begin
+  if fMemTableLiterals = nil then
+  begin
+    fMemTableLiterals := TFDMemTable.Create(Self);
+    with fMemTableLiterals do
+    begin
+      FieldDefs.Add('No', ftInteger, 0);
+      FieldDefs.Add('Paragraph', ftWideString, 1000);
+      CreateDataSet;
+      AppendRecord([1, Line1]);
+      AppendRecord([2, Line2]);
+    end;
+  end;
+  fMemTableLiterals.First;
+  Result := fMemTableLiterals;
+end;
+
 function TFormMain.GivenDataSet_Orders: TDataSet;
 var
   fdqOrders: TFDQuery;
@@ -236,7 +263,9 @@ end;
 
 procedure TFormMain.btnGenerateLongLiteralsClick(Sender: TObject);
 begin
-  // TODO: Generate Long Literals DataSet (copy code from unit tests)
+  fDSGenerator.DataSet := GivenDataSet_Literals;
+  fDSGenerator.Execute;
+  Memo1.Lines := fDSGenerator.Code;
 end;
 
 end.
