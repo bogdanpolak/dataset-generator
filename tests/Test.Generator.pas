@@ -165,7 +165,7 @@ procedure TestDSGenerator.Generate_UnitHeader;
 var
   actualCode: string;
 begin
-  fGenerator.UnitName := 'Fake.HistoricalEvents';
+  fGenerator.NameOfUnit := 'Fake.HistoricalEvents';
 
   actualCode := fGenerator._GenerateUnitHeader;
 
@@ -292,7 +292,7 @@ procedure TestDSGenerator.GenerateUnit_Header;
 var
   actualCode: string;
 begin
-  fGenerator.UnitName := 'Unit1';
+  fGenerator.NameOfUnit := 'Unit1';
 
   actualCode := fGenerator._GenerateUnitHeader;
   Assert.AreMemosEqual(

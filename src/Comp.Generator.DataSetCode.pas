@@ -18,13 +18,11 @@ uses
 type
   TGeneratorMode = (genStructure, genAppend, genFunction, genUnit);
   TDataSetType = (dstFDMemTable, dstClientDataSet);
-  TAppendMode = (amMultilineAppends, amSinglelineAppends);
+  TAppendMode = (amMultilineAppends, amSinglelineAppends, amAppendRows);
 
   TDSGenerator = class(TComponent)
   public const
-    Version = '1.4';
-  private const
-    MaxLiteralLenght = 70;
+    Version = '1.5';
   private
     fCode: TStrings;
     fDataSet: TDataSet;
@@ -32,18 +30,21 @@ type
     fGeneratorMode: TGeneratorMode;
     fDataSetType: TDataSetType;
     fAppendMode: TAppendMode;
-    fUnitName: string;
+    fNameOfUnit: string;
     fMaxRows: integer;
+    fRightMargin: integer;
     function GetDataFieldPrecision(fld: TField): integer;
     function GenerateOneAppend_Multiline: string;
+    function GenerateSingleLine_ValuesArray: string;
     function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
-    function GenerateLine_SetFieldValue(fld: TField): string;
+    function GenerateFieldByName(fld: TField; out line: string): boolean;
     function GenerateStructure: string;
     function GenerateOneAppend: string;
     function GenerateAppendsBlock: string;
-    function FormatLongStringLiterals(const Literal: string): string;
+    function FormatLongStringLiteral(const Literal: string; fistLineStartAt:
+      integer): string;
     function GenerateUnitHeader: string;
     function GenerateUnitFooter: string;
     function GenerateFunction: string;
@@ -68,13 +69,20 @@ type
       write fGeneratorMode;
     property DataSetType: TDataSetType read fDataSetType write fDataSetType;
     property AppendMode: TAppendMode read fAppendMode write fAppendMode;
-    property UnitName: string read fUnitName write fUnitName;
+    property NameOfUnit: string read fNameOfUnit write fNameOfUnit;
     property MaxRows: integer read fMaxRows write fMaxRows;
+    property RightMargin: integer read fRightMargin write fRightMargin;
+  end;
+
+  TTextWrapper = class
+    class function WrapTextWholeWords(const aText: string; aMaxWidth: integer)
+      : TArray<string>;
   end;
 
 implementation
 
 uses
+  System.StrUtils,
   System.Rtti,
   Vcl.Clipbrd;
 
@@ -87,8 +95,9 @@ begin
   fDataSetType := dstFDMemTable;
   fAppendMode := amMultilineAppends;
   fIndentationText := '  ';
-  fUnitName := 'uSampleDataSet';
+  fNameOfUnit := 'uSampleDataSet';
   fMaxRows := 100;
+  fRightMargin := 76;
   // --------------------------------
   fCode := TStringList.Create;
 end;
@@ -181,63 +190,63 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiterals(const Literal: string): string;
+function TDSGenerator.FormatLongStringLiteral(const Literal: string;
+  fistLineStartAt: integer): string;
 var
-  s1: string;
-  s2: string;
+  s: string;
+  lines: TArray<string>;
+  i: Integer;
 begin
-  if Length(Literal) <= MaxLiteralLenght then
+  s := QuotedStr(Literal);
+  if fistLineStartAt + Length(s) <= RightMargin then
   begin
-    Result := Literal
+    Result := QuotedStr(Literal);
   end
   else
   begin
-    s1 := Literal;
-    s2 := sLineBreak;
-    while s1 <> '' do
-    begin
-      if Length(s1) < MaxLiteralLenght then
-      begin
-        s2 := s2 + fIndentationText + fIndentationText + s1;
-        s1 := '';
-      end
-      else
-      begin
-        s2 := s2 + fIndentationText + fIndentationText +
-          s1.Substring(0, MaxLiteralLenght - 1) + '''+' + sLineBreak;
-        s1 := '''' + s1.Substring(MaxLiteralLenght - 1);
-      end;
-    end;
-    Result := s2;
-  end;
+    lines := TTextWrapper.WrapTextWholeWords(s, RightMargin - 2*Length(fIndentationText) - 1);
+    Result := sLineBreak;
+    for i := 0 to High(lines) do
+      Result := Result + fIndentationText + fIndentationText +
+        IfThen(i > 0, '''') + lines[i] + IfThen(i < High(lines),
+        '''+' + sLineBreak, '');
+  end
 end;
 
-function TDSGenerator.GenerateLine_SetFieldValue(fld: TField): string;
+function TDSGenerator.GenerateFieldByName(fld: TField;
+  out line: string): boolean;
 var
-  sByNameValue: string;
+  linePattern: string;
+  value: string;
 begin
-  Result := '';
-  if not(fld.IsNull) then
-  begin
-    sByNameValue := 'FieldByName(' + QuotedStr(fld.FieldName) + ').Value';
-    case fld.DataType of
-      ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-        Result := sByNameValue + ' := ' + fld.AsString + ';';
-      ftBoolean:
-        Result := sByNameValue + ' := ' + BoolToStr(fld.AsBoolean, true) + ';';
-      ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-        Result := sByNameValue + ' := ' + FloatToCode(fld.AsExtended) + ';';
-      ftDate:
-        Result := sByNameValue + ' := ' + DateToCode(fld.AsDateTime) + ';';
-      ftTime:
-        Result := sByNameValue + ' := ' + TimeToCode(fld.AsDateTime) + ';';
-      ftDateTime:
-        Result := sByNameValue + ' := ' + DateTimeToCode(fld.AsDateTime) + ';';
-      ftString, ftWideString:
-        Result := sByNameValue + ' := ' + FormatLongStringLiterals
-          (QuotedStr(fld.Value)) + ';';
-    end;
+  Result := False;
+  line:='';
+  if fld.IsNull then
+    exit;
+  linePattern := fIndentationText + 'ds.FieldByName(' +
+    QuotedStr(fld.FieldName) + ').Value := %s;';
+  case fld.DataType of
+    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+      value := fld.AsString;
+    ftBoolean:
+      value := BoolToStr(fld.AsBoolean, true);
+    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+      value := FloatToCode(fld.AsExtended);
+    ftDate:
+      value := DateToCode(fld.AsDateTime);
+    ftTime:
+      value := TimeToCode(fld.AsDateTime);
+    ftDateTime:
+      value := DateTimeToCode(fld.AsDateTime);
+    ftString, ftWideString:
+      value := FormatLongStringLiteral(fld.Value, Length(linePattern)-2);
+    else
+      value := '';
   end;
+  if value = '' then
+    exit;
+  line := Format(linePattern, [value]);
+  Result := True;
 end;
 
 function TDSGenerator.GenerateStructure: string;
@@ -270,7 +279,7 @@ end;
 function TDSGenerator.GenerateOneAppend_Multiline: string;
 var
   fld: TField;
-  s1: string;
+  line: string;
   sl: TStringList;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
@@ -280,9 +289,8 @@ begin
     sl.Add(fIndentationText + 'ds.Append;');
     for fld in fDataSet.Fields do
     begin
-      s1 := GenerateLine_SetFieldValue(fld);
-      if s1 <> '' then
-        sl.Add(fIndentationText + 'ds.' + s1);
+      if GenerateFieldByName(fld, line) then
+        sl.Add(line);
     end;
     sl.Add(fIndentationText + 'ds.Post;');
     Result := sl.Text;
@@ -291,43 +299,47 @@ begin
   end;
 end;
 
-function TDSGenerator.GenerateOneAppend_Singleline: string;
+function TDSGenerator.GenerateSingleLine_ValuesArray: string;
 var
-  sFieldsValues: string;
   fld: TField;
-  s1: string;
+  value: string;
 begin
-  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    Exit('');
-  sFieldsValues := '';
+  Result := '';
   for fld in fDataSet.Fields do
   begin
     if fld.IsNull then
-      s1 := 'Null'
+      value := 'Null'
     else
       case fld.DataType of
         ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-          s1 := fld.AsString;
+          value := fld.AsString;
         ftBoolean:
-          s1 := BoolToStr(fld.AsBoolean, true);
+          value := BoolToStr(fld.AsBoolean, true);
         ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-          s1 := FloatToCode(fld.AsExtended);
+          value := FloatToCode(fld.AsExtended);
         ftDate:
-          s1 := DateToCode(fld.AsDateTime);
+          value := DateToCode(fld.AsDateTime);
         ftTime:
-          s1 := TimeToCode(fld.AsDateTime);
+          value := TimeToCode(fld.AsDateTime);
         ftDateTime:
-          s1 := DateTimeToCode(fld.AsDateTime);
+          value := DateTimeToCode(fld.AsDateTime);
         ftString, ftWideString:
-          s1 := FormatLongStringLiterals(QuotedStr(fld.Value));
+          value := QuotedStr(fld.Value);
+        else
+          value := 'Null'
       end;
-    if sFieldsValues = '' then
-      sFieldsValues := s1
-    else
-      sFieldsValues := sFieldsValues + ', ' + s1;
+    Result := IfThen(Result = '', value, Result + ', ' + value);
   end;
-  Result := fIndentationText + 'ds.AppendRecord([' + sFieldsValues + ']);' +
-    sLineBreak;
+  Result := '[' + Result + ']';
+end;
+
+function TDSGenerator.GenerateOneAppend_Singleline: string;
+begin
+  if (fDataSet <> nil) and (fDataSet.Fields.Count > 0) then
+    Result := fIndentationText + 'ds.AppendRecord(' +
+      GenerateSingleLine_ValuesArray() + ');' + sLineBreak
+  else
+    Result := '';
 end;
 
 function TDSGenerator.GenerateOneAppend: string;
@@ -347,6 +359,7 @@ var
   sDataAppend: string;
   aBookmark: TBookmark;
   aRowCounter: integer;
+  sValuesArray: string;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
     Exit('');
@@ -363,11 +376,27 @@ begin
       aBookmark := DataSet.GetBookmark;
       try
         DataSet.First;
-        while not DataSet.Eof and (aRowCounter > 0) do
+        if fAppendMode = amAppendRows then
         begin
-          sDataAppend := sDataAppend + GenerateOneAppend;
-          dec(aRowCounter);
-          DataSet.Next;
+          sDataAppend := fIndentationText + 'ds.AppendRows([' + sLineBreak;
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sValuesArray := GenerateSingleLine_ValuesArray();
+            DataSet.Next;
+            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
+               sValuesArray + IfThen(not DataSet.Eof,',') + sLineBreak;
+            dec(aRowCounter);
+          end;
+          sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
+        end
+        else
+        begin
+          while not DataSet.Eof and (aRowCounter > 0) do
+          begin
+            sDataAppend := sDataAppend + GenerateOneAppend;
+            dec(aRowCounter);
+            DataSet.Next;
+          end;
         end;
       finally
         DataSet.GotoBookmark(aBookmark);
@@ -396,7 +425,7 @@ begin
       {} fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit ' + fUnitName + ';' + sLineBreak +
+  {} 'unit ' + fNameOfUnit + ';' + sLineBreak +
   {} sLineBreak +
   {} 'interface' + sLineBreak +
   {} sLineBreak +
@@ -505,7 +534,7 @@ begin
   aGenerator := TDSGenerator.Create(nil);
   try
     aGenerator.DataSet := ds;
-    aGenerator.UnitName := aUnitName;
+    aGenerator.NameOfUnit := aUnitName;
     Result := aGenerator.GenerateAll(genUnit);
   finally
     aGenerator.Free;
@@ -566,6 +595,36 @@ begin
   finally
     aGenerator.Free;
   end;
+end;
+
+{ TTextWrapper }
+
+class function TTextWrapper.WrapTextWholeWords(const aText: string;
+  aMaxWidth: integer): TArray<string>;
+var
+  i: integer;
+  j: integer;
+  Count: integer;
+begin
+  i := 0;
+  j := aMaxWidth;
+  Count := 0;
+  Result := [];
+  while j < aText.Length do
+  begin
+    while (j > i) and not(CharInSet(aText[j], [' ', '.', ',', '!', '?', ':',
+      ';', '-'])) do
+      dec(j);
+    if j = i then
+      j := i + aMaxWidth;
+    SetLength(Result, Count + 1);
+    Result[Count] := aText.Substring(i, j - i);
+    i := j;
+    j := j + aMaxWidth;
+    Count := Count + 1;
+  end;
+  SetLength(Result, Count + 1);
+  Result[Count] := aText.Substring(i);
 end;
 
 end.
