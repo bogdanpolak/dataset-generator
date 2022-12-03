@@ -1,12 +1,13 @@
-﻿{* ------------------------------------------------------------------------
- * ♥
- * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
- * ♥
- * Component: TDSGenerator
- * Project: https://github.com/bogdanpolak/datasetToDelphiCode
- * ------------------------------------------------------------------------ }
+﻿{ * ------------------------------------------------------------------------
+  * ♥
+  * ♥ Memory DataSet Generator
+  * ♥ creates ClientDataSet or FDMemTable with the data
+  * ♥
+  * Component: TDSGenerator
+  * Project: https://github.com/bogdanpolak/dataset-generator
+  * ------------------------------------------------------------------------ }
 
-unit Comp.Generator.DataSetCode;
+unit MemoryDataSetGenerator;
 
 interface
 
@@ -39,25 +40,33 @@ type
     function GenerateOneAppend_Singleline: string;
   protected
     function GenerateLine_FieldDefAdd(fld: TField): string;
-    function GenerateFieldByName(fld: TField; out line: string): boolean;
+    function GenerateFieldByName(
+      fld: TField;
+      out line: string): boolean;
     function GenerateStructure: string;
     function GenerateOneAppend: string;
     function GenerateAppendsBlock: string;
-    function FormatLongStringLiteral(const Literal: string; fistLineStartAt:
-      integer): string;
+    function FormatLongStringLiteral(
+      const Literal: string;
+      fistLineStartAt: integer): string;
     function GenerateUnitHeader: string;
     function GenerateUnitFooter: string;
     function GenerateFunction: string;
     function GenerateAll(aMode: TGeneratorMode): string;
-    class function GenetateUnit(ds: TDataSet; const aUnitName: string): string;
+    class function GenetateUnit(
+      ds: TDataSet;
+      const aUnitName: string): string;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Execute;
     class function GenerateAsString(ds: TDataSet): string;
     class function GenerateAsArray(ds: TDataSet): TArray<String>;
-    class procedure GenerateAndSaveToStream(ds: TDataSet; aStream: TStream);
-    class procedure GenerateAndSaveToFile(ds: TDataSet;
+    class procedure GenerateAndSaveToStream(
+      ds: TDataSet;
+      aStream: TStream);
+    class procedure GenerateAndSaveToFile(
+      ds: TDataSet;
       const aFileName: string);
     class procedure GenerateAndSaveClipboard(ds: TDataSet);
   published
@@ -75,8 +84,9 @@ type
   end;
 
   TTextWrapper = class
-    class function WrapTextWholeWords(const aText: string; aMaxWidth: integer)
-      : TArray<string>;
+    class function WrapTextWholeWords(
+      const aText: string;
+      aMaxWidth: integer): TArray<string>;
   end;
 
 implementation
@@ -129,16 +139,16 @@ function TDSGenerator.GenerateLine_FieldDefAdd(fld: TField): string;
 begin
   (* -----------------------------------------------------------------------
     [Doc]
-   TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
-   ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
-   ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
-   ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
-   ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
-   ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
-   ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
-   ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
-   ftTimeStampOffset, ftObject, ftSingle);
-   ------------------------------------------------------------------------- *)
+    TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
+    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
+    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
+    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
+    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
+    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
+    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
+    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
+    ftTimeStampOffset, ftObject, ftSingle);
+    ------------------------------------------------------------------------- *)
   if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
     ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
@@ -190,12 +200,13 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiteral(const Literal: string;
+function TDSGenerator.FormatLongStringLiteral(
+  const Literal: string;
   fistLineStartAt: integer): string;
 var
   s: string;
   lines: TArray<string>;
-  i: Integer;
+  i: integer;
 begin
   s := QuotedStr(Literal);
   if fistLineStartAt + Length(s) <= RightMargin then
@@ -204,7 +215,8 @@ begin
   end
   else
   begin
-    lines := TTextWrapper.WrapTextWholeWords(s, RightMargin - 2*Length(fIndentationText) - 1);
+    lines := TTextWrapper.WrapTextWholeWords(s,
+      RightMargin - 2 * Length(fIndentationText) - 1);
     Result := sLineBreak;
     for i := 0 to High(lines) do
       Result := Result + fIndentationText + fIndentationText +
@@ -213,18 +225,19 @@ begin
   end
 end;
 
-function TDSGenerator.GenerateFieldByName(fld: TField;
+function TDSGenerator.GenerateFieldByName(
+  fld: TField;
   out line: string): boolean;
 var
   linePattern: string;
   value: string;
 begin
   Result := False;
-  line:='';
+  line := '';
   if fld.IsNull then
     exit;
-  linePattern := fIndentationText + 'ds.FieldByName(' +
-    QuotedStr(fld.FieldName) + ').Value := %s;';
+  linePattern := fIndentationText + 'ds.FieldByName(' + QuotedStr(fld.FieldName)
+    + ').Value := %s;';
   case fld.DataType of
     ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
       value := fld.AsString;
@@ -239,14 +252,14 @@ begin
     ftDateTime:
       value := DateTimeToCode(fld.AsDateTime);
     ftString, ftWideString:
-      value := FormatLongStringLiteral(fld.Value, Length(linePattern)-2);
-    else
-      value := '';
+      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2);
+  else
+    value := '';
   end;
   if value = '' then
     exit;
   line := Format(linePattern, [value]);
-  Result := True;
+  Result := true;
 end;
 
 function TDSGenerator.GenerateStructure: string;
@@ -265,15 +278,15 @@ begin
   if fDataSet <> nil then
     for fld in fDataSet.Fields do
       sFieldDefinitions := sFieldDefinitions +
-      {} fIndentationText + fIndentationText + GenerateLine_FieldDefAdd(fld) +
+      { } fIndentationText + fIndentationText + GenerateLine_FieldDefAdd(fld) +
         sLineBreak;
   Result :=
-  {} fIndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
-  {} fIndentationText + 'with ds do' + sLineBreak +
-  {} fIndentationText + 'begin' + sLineBreak +
-  {} sFieldDefinitions +
-  {} fIndentationText + fIndentationText + 'CreateDataSet;' + sLineBreak +
-  {} fIndentationText + 'end;' + sLineBreak
+  { } fIndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
+  { } fIndentationText + 'with ds do' + sLineBreak +
+  { } fIndentationText + 'begin' + sLineBreak +
+  { } sFieldDefinitions +
+  { } fIndentationText + fIndentationText + 'CreateDataSet;' + sLineBreak +
+  { } fIndentationText + 'end;' + sLineBreak
 end;
 
 function TDSGenerator.GenerateOneAppend_Multiline: string;
@@ -283,7 +296,7 @@ var
   sl: TStringList;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    Exit('');
+    exit('');
   sl := TStringList.Create;
   try
     sl.Add(fIndentationText + 'ds.Append;');
@@ -324,9 +337,9 @@ begin
         ftDateTime:
           value := DateTimeToCode(fld.AsDateTime);
         ftString, ftWideString:
-          value := QuotedStr(fld.Value);
-        else
-          value := 'Null'
+          value := QuotedStr(fld.value);
+      else
+        value := 'Null'
       end;
     Result := IfThen(Result = '', value, Result + ', ' + value);
   end;
@@ -362,7 +375,7 @@ var
   sValuesArray: string;
 begin
   if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    Exit('');
+    exit('');
   if fMaxRows = 0 then
     aRowCounter := MaxInt
   else
@@ -384,7 +397,7 @@ begin
             sValuesArray := GenerateSingleLine_ValuesArray();
             DataSet.Next;
             sDataAppend := sDataAppend + fIndentationText + fIndentationText +
-               sValuesArray + IfThen(not DataSet.Eof,',') + sLineBreak;
+              sValuesArray + IfThen(not DataSet.Eof, ',') + sLineBreak;
             dec(aRowCounter);
           end;
           sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
@@ -408,8 +421,8 @@ begin
   end;
 
   Result :=
-  {} sDataAppend +
-  {} fIndentationText + 'ds.First;' + sLineBreak;
+  { } sDataAppend +
+  { } fIndentationText + 'ds.First;' + sLineBreak;
 end;
 
 function TDSGenerator.GenerateUnitHeader: string;
@@ -421,25 +434,25 @@ begin
       sDataSetUnits := fIndentationText + 'FireDAC.Comp.Client;';
     dstClientDataSet:
       sDataSetUnits :=
-      {} fIndentationText + 'Datasnap.DBClient;'#13#10 +
-      {} fIndentationText + 'MidasLib;';
+      { } fIndentationText + 'Datasnap.DBClient;'#13#10 +
+      { } fIndentationText + 'MidasLib;';
   end;
   Result :=
-  {} 'unit ' + fNameOfUnit + ';' + sLineBreak +
-  {} sLineBreak +
-  {} 'interface' + sLineBreak +
-  {} sLineBreak +
-  {} 'uses' + sLineBreak +
-  {} fIndentationText + 'System.Classes,' + sLineBreak +
-  {} fIndentationText + 'System.SysUtils,' + sLineBreak +
-  {} fIndentationText + 'System.Variants,' + sLineBreak +
-  {} fIndentationText + 'Data.DB,' + sLineBreak +
-  {} sDataSetUnits + sLineBreak +
-  {} sLineBreak +
-  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
-  {} sLineBreak +
-  {} 'implementation' + sLineBreak +
-  {} sLineBreak;
+  { } 'unit ' + fNameOfUnit + ';' + sLineBreak +
+  { } sLineBreak +
+  { } 'interface' + sLineBreak +
+  { } sLineBreak +
+  { } 'uses' + sLineBreak +
+  { } fIndentationText + 'System.Classes,' + sLineBreak +
+  { } fIndentationText + 'System.SysUtils,' + sLineBreak +
+  { } fIndentationText + 'System.Variants,' + sLineBreak +
+  { } fIndentationText + 'Data.DB,' + sLineBreak +
+  { } sDataSetUnits + sLineBreak +
+  { } sLineBreak +
+  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  { } sLineBreak +
+  { } 'implementation' + sLineBreak +
+  { } sLineBreak;
 end;
 
 function TDSGenerator.GenerateFunction: string;
@@ -453,14 +466,14 @@ begin
       aClassName := 'TClientDataSet';
   end;
   Result :=
-  {} 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
-  {} 'var' + sLineBreak +
-  {} '  ds: ' + aClassName + ';' + sLineBreak +
-  {} 'begin' + sLineBreak +
-  {} GenerateStructure() +
-  {} GenerateAppendsBlock() +
-  {} '  Result := ds;' + sLineBreak +
-  {} 'end;' + sLineBreak;
+  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  { } 'var' + sLineBreak +
+  { } '  ds: ' + aClassName + ';' + sLineBreak +
+  { } 'begin' + sLineBreak +
+  { } GenerateStructure() +
+  { } GenerateAppendsBlock() +
+  { } '  Result := ds;' + sLineBreak +
+  { } 'end;' + sLineBreak;
 end;
 
 function TDSGenerator.GenerateUnitFooter(): string;
@@ -526,7 +539,8 @@ begin
   end;
 end;
 
-class function TDSGenerator.GenetateUnit(ds: TDataSet;
+class function TDSGenerator.GenetateUnit(
+  ds: TDataSet;
   const aUnitName: string): string;
 var
   aGenerator: TDSGenerator;
@@ -541,7 +555,8 @@ begin
   end;
 end;
 
-class procedure TDSGenerator.GenerateAndSaveToStream(ds: TDataSet;
+class procedure TDSGenerator.GenerateAndSaveToStream(
+  ds: TDataSet;
   aStream: TStream);
 var
   sCode: Utf8String;
@@ -563,7 +578,8 @@ begin
     Result := aUnitName;
 end;
 
-class procedure TDSGenerator.GenerateAndSaveToFile(ds: TDataSet;
+class procedure TDSGenerator.GenerateAndSaveToFile(
+  ds: TDataSet;
   const aFileName: string);
 var
   fs: TFileStream;
@@ -575,8 +591,8 @@ begin
   fs := TFileStream.Create(aFileName, fmCreate);
   try
     {
-     aFilePreamble := TEncoding.UTF8.GetPreamble;
-     aStream.Write(aFilePreamble[0], Length(aFilePreamble));
+      aFilePreamble := TEncoding.UTF8.GetPreamble;
+      aStream.Write(aFilePreamble[0], Length(aFilePreamble));
     }
     fs.Write(sCode[1], Length(sCode));
   finally
@@ -599,7 +615,8 @@ end;
 
 { TTextWrapper }
 
-class function TTextWrapper.WrapTextWholeWords(const aText: string;
+class function TTextWrapper.WrapTextWholeWords(
+  const aText: string;
   aMaxWidth: integer): TArray<string>;
 var
   i: integer;

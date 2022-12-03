@@ -8,7 +8,7 @@ uses
   System.SysUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode,
+  MemoryDataSetGenerator,
   GeneratorForTests,
   Helper.DUnitAssert;
 
