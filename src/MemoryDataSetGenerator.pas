@@ -1,12 +1,13 @@
 ﻿{ * ------------------------------------------------------------------------
   * ♥
-  * ♥ DataSet to Delphi Code (create TFDMemTable with the data)
+  * ♥ Memory DataSet Generator
+  * ♥ creates ClientDataSet or FDMemTable with the data
   * ♥
   * Component: TDSGenerator
-  * Project: https://github.com/bogdanpolak/datasetToDelphiCode
+  * Project: https://github.com/bogdanpolak/dataset-generator
   * ------------------------------------------------------------------------ }
 
-unit Comp.Generator.DataSetCode;
+unit MemoryDataSetGenerator;
 
 interface
 

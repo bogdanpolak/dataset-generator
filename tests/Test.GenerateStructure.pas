@@ -9,7 +9,7 @@ uses
   System.Math,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode,
+  MemoryDataSetGenerator,
   GeneratorForTests,
   Helper.DUnitAssert;
 

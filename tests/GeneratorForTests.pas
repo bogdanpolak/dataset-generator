@@ -6,7 +6,7 @@ uses
   System.Classes,
   System.SysUtils,
   Data.DB,
-  Comp.Generator.DataSetCode;
+  MemoryDataSetGenerator;
 
 type
   TDSGeneratorUnderTest = class(TDSGenerator)
