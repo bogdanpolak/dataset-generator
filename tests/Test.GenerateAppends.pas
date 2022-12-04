@@ -531,7 +531,6 @@ begin
   fGenerator.AppendMode := amSinglelineAppends;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(
@@ -588,7 +587,6 @@ begin
   fGenerator.AppendMode := amAppendRows;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(
@@ -605,7 +603,6 @@ begin
   fGenerator.AppendMode := amAppendRows;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(

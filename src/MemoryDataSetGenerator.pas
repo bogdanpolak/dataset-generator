@@ -72,14 +72,11 @@ type
       const aDataSet: TDataSet;
       const aIndentation: string): string;
     class function GetDataFieldPrecision(fld: TField): integer; static;
-    // Data Block
   public
     // Structure
     class function GenerateFieldDefAdd(
       const fld: TField;
       const aIndentation: string): string;
-    // Data Block
-  private
   public
     // Code Segments
     class function GenerateFunction(
@@ -98,7 +95,17 @@ type
   end;
 
   TDataBlockGenerator = class
+  private
+    fAppendMode: TAppendMode;
+    fRightMargin: integer;
+    fIndentation: string;
+    fMaxRows: integer;
   public
+    constructor Create(
+      const aAppendMode: TAppendMode;
+      const aRightMargin: integer;
+      const aIndentation: string;
+      const aMaxRows: integer);
     class function GenerateDataBlock(
       const aDataSet: TDataSet;
       const aAppendMode: TAppendMode;
@@ -106,27 +113,17 @@ type
       const aIndentation: string;
       const aMaxRows: integer = 10): string;
   private
-    class function GenerateFieldByName(
-      fld: TField;
-      const aIndentation: string;
-      const aRightMargin: integer;
-      out line: string): boolean; static;
-    class function FormatLongStringLiteral(
+    function DoGenerateDataBlock(const aDataSet: TDataSet): string;
+    function GenerateDataWithManyAppends(const aDataSet: TDataSet): string;
+    function GenerateDataWithAppendRows(const aDataSet: TDataSet): string;
+    function GenerateOneMultilineAppend(const aDataSet: TDataSet): string;
+    function TryGenerateFieldByName(
+      const fld: TField;
+      out line: string): boolean;
+    function FormatLongStringLiteral(
       const aLiteral: string;
-      const aFistLineStartAt: integer;
-      const aRightMargin: integer;
-      const aIndentation: string): string;
-    class function GenerateSingleLine_ValuesArray(const aFields
-      : TFields): string;
-    class function GenerateOneAppend(
-      const aAppendMode: TAppendMode;
-      const aFields: TFields;
-      const aIndentation: string;
-      const aRightMargin: integer): string;
-    class function GenerateOneAppend_Multiline(
-      const aFields: TFields;
-      const aIndentation: string;
-      const aRightMargin: integer): string;
+      const aFistLineStartAt: integer): string;
+    function GenerateArrayWithValues(const aFields: TFields): string;
   end;
 
   TTextWrapper = class
@@ -391,223 +388,6 @@ begin
     Result := (fld as TFloatField).Precision
 end;
 
-class function TDataBlockGenerator.GenerateFieldByName(
-  fld: TField;
-  const aIndentation: string;
-  const aRightMargin: integer;
-  out line: string): boolean;
-var
-  linePattern: string;
-  value: string;
-begin
-  Result := False;
-  line := '';
-  if fld.IsNull then
-    exit;
-  linePattern := aIndentation + 'ds.FieldByName(' + QuotedStr(fld.FieldName) +
-    ').Value := %s;';
-  case fld.DataType of
-    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-      value := fld.AsString;
-    ftBoolean:
-      value := BoolToStr(fld.AsBoolean, true);
-    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-      value := FloatToCode(fld.AsExtended);
-    ftDate:
-      value := DateToCode(fld.AsDateTime);
-    ftTime:
-      value := TimeToCode(fld.AsDateTime);
-    ftDateTime:
-      value := DateTimeToCode(fld.AsDateTime);
-    ftString, ftWideString:
-      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2,
-        aRightMargin, aIndentation);
-  else
-    value := '';
-  end;
-  if value = '' then
-    exit;
-  line := Format(linePattern, [value]);
-  Result := true;
-end;
-
-class function TDataBlockGenerator.FormatLongStringLiteral(
-  const aLiteral: string;
-  const aFistLineStartAt: integer;
-  const aRightMargin: integer;
-  const aIndentation: string): string;
-var
-  s: string;
-  lines: TArray<string>;
-  i: integer;
-  sb: TStringBuilder;
-begin
-  s := QuotedStr(aLiteral);
-  if aFistLineStartAt + Length(s) <= aRightMargin then
-  begin
-    Result := QuotedStr(aLiteral);
-  end
-  else
-  begin
-    lines := TTextWrapper.WrapTextWholeWords(s,
-      aRightMargin - 2 * Length(aIndentation) - 1);
-    sb := TStringBuilder.Create;
-    try
-      sb.Append(sLineBreak);
-      for i := 0 to High(lines) do
-        sb.Append(DupeString(aIndentation, 2) + IfThen(i > 0, '''') + lines[i] +
-          IfThen(i < High(lines), '''+' + sLineBreak, ''));
-      Result := sb.ToString();
-    finally
-      sb.Free;
-    end;
-  end
-end;
-
-class function TDataBlockGenerator.GenerateOneAppend(
-  const aAppendMode: TAppendMode;
-  const aFields: TFields;
-  const aIndentation: string;
-  const aRightMargin: integer): string;
-begin
-  case aAppendMode of
-    amMultilineAppends:
-      Result := GenerateOneAppend_Multiline(aFields, aIndentation,
-        aRightMargin);
-    amSinglelineAppends:
-      Result := aIndentation + 'ds.AppendRecord(' +
-        GenerateSingleLine_ValuesArray(aFields) + ');' + sLineBreak;
-  else
-    Result := '';
-  end;
-end;
-
-class function TDataBlockGenerator.GenerateOneAppend_Multiline(
-  const aFields: TFields;
-  const aIndentation: string;
-  const aRightMargin: integer): string;
-var
-  fld: TField;
-  line: string;
-  sl: TStringList;
-begin
-  sl := TStringList.Create;
-  try
-    sl.Add(aIndentation + 'ds.Append;');
-    for fld in aFields do
-    begin
-      if GenerateFieldByName(fld, aIndentation, aRightMargin, line) then
-        sl.Add(line);
-    end;
-    sl.Add(aIndentation + 'ds.Post;');
-    Result := sl.Text;
-  finally
-    sl.Free;
-  end;
-end;
-
-class function TDataBlockGenerator.GenerateSingleLine_ValuesArray
-  (const aFields: TFields): string;
-var
-  fld: TField;
-  value: string;
-begin
-  Result := '';
-  for fld in aFields do
-  begin
-    if fld.IsNull then
-      value := 'Null'
-    else
-      case fld.DataType of
-        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-          value := fld.AsString;
-        ftBoolean:
-          value := BoolToStr(fld.AsBoolean, true);
-        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-          value := FloatToCode(fld.AsExtended);
-        ftDate:
-          value := DateToCode(fld.AsDateTime);
-        ftTime:
-          value := TimeToCode(fld.AsDateTime);
-        ftDateTime:
-          value := DateTimeToCode(fld.AsDateTime);
-        ftString, ftWideString:
-          value := QuotedStr(fld.value);
-      else
-        value := 'Null'
-      end;
-    Result := IfThen(Result = '', value, Result + ', ' + value);
-  end;
-  Result := '[' + Result + ']';
-end;
-
-class function TDataBlockGenerator.GenerateDataBlock(
-  const aDataSet: TDataSet;
-  const aAppendMode: TAppendMode;
-  const aRightMargin: integer;
-  const aIndentation: string;
-  const aMaxRows: integer = 10): string;
-var
-  sb: TStringBuilder;
-  bookmark: TBookmark;
-  rowCounter: integer;
-  valuesArray: string;
-  dataAppendCode: string;
-begin
-  if (aDataSet = nil) or (aDataSet.Fields.Count = 0) then
-    exit('');
-  if aMaxRows = 0 then
-    rowCounter := MaxInt
-  else
-    rowCounter := aMaxRows;
-  sb := TStringBuilder.Create();
-  try
-    aDataSet.DisableControls;
-    try
-      aDataSet.Active := true;
-      bookmark := aDataSet.GetBookmark;
-      try
-        aDataSet.First;
-        if aAppendMode = amAppendRows then
-        begin
-          sb.Append(aIndentation + 'ds.AppendRows([' + sLineBreak);
-          while not aDataSet.Eof and (rowCounter > 0) do
-          begin
-            valuesArray := GenerateSingleLine_ValuesArray(aDataSet.Fields);
-            aDataSet.Next;
-            sb.Append(DupeString(aIndentation, 2) + valuesArray +
-              IfThen(not aDataSet.Eof, ',') + sLineBreak);
-            dec(rowCounter);
-          end;
-          sb.Append(aIndentation + ']);' + sLineBreak);
-        end
-        else
-        begin
-          while not aDataSet.Eof and (rowCounter > 0) do
-          begin
-            sb.Append(GenerateOneAppend(aAppendMode, aDataSet.Fields,
-              aIndentation, aRightMargin));
-            dec(rowCounter);
-            aDataSet.Next;
-          end;
-        end;
-      finally
-        aDataSet.GotoBookmark(bookmark);
-        aDataSet.FreeBookmark(bookmark);
-      end;
-    finally
-      aDataSet.EnableControls;
-    end;
-    dataAppendCode := sb.ToString;
-  finally
-    sb.Free;
-  end;
-
-  Result :=
-  { } dataAppendCode +
-  { } aIndentation + 'ds.First;' + sLineBreak;
-end;
-
 class function TInternalGenerator.GenerateUnitHeader(
   const aDataSetType: TDataSetType;
   const aNameOfUnit: string;
@@ -670,7 +450,6 @@ class function TInternalGenerator.GenerateStructure(
   const aIndentation: string): string;
 var
   fld: TField;
-  dataSetCreateCode: string;
   fieldDefinitions: string;
 begin
   fieldDefinitions := '';
@@ -689,6 +468,243 @@ end;
 class function TInternalGenerator.GenerateUnitFooter(): string;
 begin
   Result := sLineBreak + 'end.' + sLineBreak;
+end;
+
+{ TDataBlockGenerator }
+
+constructor TDataBlockGenerator.Create(
+  const aAppendMode: TAppendMode;
+  const aRightMargin: integer;
+  const aIndentation: string;
+  const aMaxRows: integer);
+begin
+  fAppendMode := aAppendMode;
+  fRightMargin := aRightMargin;
+  fIndentation := aIndentation;
+  fMaxRows := aMaxRows;
+end;
+
+class function TDataBlockGenerator.GenerateDataBlock(
+  const aDataSet: TDataSet;
+  const aAppendMode: TAppendMode;
+  const aRightMargin: integer;
+  const aIndentation: string;
+  const aMaxRows: integer = 10): string;
+var
+  dataBlockGenerator: TDataBlockGenerator;
+begin
+  dataBlockGenerator := TDataBlockGenerator.Create(aAppendMode, aRightMargin,
+    aIndentation, aMaxRows);
+  try
+    Result := dataBlockGenerator.DoGenerateDataBlock(aDataSet);
+  finally
+    dataBlockGenerator.Free;
+  end;
+end;
+
+function TDataBlockGenerator.DoGenerateDataBlock(const aDataSet
+  : TDataSet): string;
+var
+  bookmark: TBookmark;
+  dataCode: string;
+begin
+  if (aDataSet = nil) or (aDataSet.Fields.Count = 0) then
+    exit('');
+  aDataSet.DisableControls;
+  try
+    aDataSet.Active := true;
+    bookmark := aDataSet.GetBookmark;
+    try
+      if fAppendMode = amAppendRows then
+      begin
+        dataCode := GenerateDataWithAppendRows(aDataSet);
+      end
+      else
+      begin
+        dataCode := GenerateDataWithManyAppends(aDataSet);
+      end;
+    finally
+      aDataSet.GotoBookmark(bookmark);
+      aDataSet.FreeBookmark(bookmark);
+    end;
+  finally
+    aDataSet.EnableControls;
+  end;
+  Result := dataCode + fIndentation + 'ds.First;' + sLineBreak;
+end;
+
+function TDataBlockGenerator.GenerateDataWithManyAppends(const aDataSet
+  : TDataSet): string;
+var
+  sb: TStringBuilder;
+  rowCounter: integer;
+begin
+  aDataSet.First;
+  sb := TStringBuilder.Create();
+  rowCounter := fMaxRows;
+  try
+    while not aDataSet.Eof and (rowCounter > 0) do
+    begin
+      case fAppendMode of
+        amMultilineAppends:
+          sb.Append(GenerateOneMultilineAppend(aDataSet));
+        amSinglelineAppends:
+          sb.Append(fIndentation + 'ds.AppendRecord(' + GenerateArrayWithValues
+            (aDataSet.Fields) + ');' + sLineBreak);
+      end;
+      dec(rowCounter);
+      aDataSet.Next;
+    end;
+    Result := sb.ToString;
+  finally
+    sb.Free;
+  end;
+end;
+
+function TDataBlockGenerator.GenerateDataWithAppendRows(const aDataSet
+  : TDataSet): string;
+var
+  sb: TStringBuilder;
+  rowCounter: integer;
+  row: string;
+  rows: string;
+begin
+  aDataSet.First;
+  rowCounter := fMaxRows;
+  sb := TStringBuilder.Create;
+  try
+    while not aDataSet.Eof and (rowCounter > 0) do
+    begin
+      row := GenerateArrayWithValues(aDataSet.Fields);
+      aDataSet.Next;
+      sb.Append(DupeString(fIndentation, 2) + row + IfThen(not aDataSet.Eof,
+        ',') + sLineBreak);
+      dec(rowCounter);
+    end;
+    rows := sb.ToString;
+    Result := fIndentation + 'ds.AppendRows([' + sLineBreak + rows +
+      fIndentation + ']);' + sLineBreak;
+  finally
+    sb.Free;
+  end;
+end;
+
+function TDataBlockGenerator.GenerateOneMultilineAppend(const aDataSet
+  : TDataSet): string;
+var
+  fld: TField;
+  line: string;
+begin
+  Result := fIndentation + 'ds.Append;' + sLineBreak;
+  for fld in aDataSet.Fields do
+  begin
+    if TryGenerateFieldByName(fld, line) then
+      Result := Result + line + sLineBreak;
+  end;
+  Result := Result + fIndentation + 'ds.Post;' + sLineBreak;
+end;
+
+function TDataBlockGenerator.TryGenerateFieldByName(
+  const fld: TField;
+  out line: string): boolean;
+var
+  linePattern: string;
+  value: string;
+begin
+  Result := False;
+  line := '';
+  if fld.IsNull then
+    exit;
+  linePattern := fIndentation + 'ds.FieldByName(' + QuotedStr(fld.FieldName) +
+    ').Value := %s;';
+  case fld.DataType of
+    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+      value := fld.AsString;
+    ftBoolean:
+      value := BoolToStr(fld.AsBoolean, true);
+    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+      value := FloatToCode(fld.AsExtended);
+    ftDate:
+      value := DateToCode(fld.AsDateTime);
+    ftTime:
+      value := TimeToCode(fld.AsDateTime);
+    ftDateTime:
+      value := DateTimeToCode(fld.AsDateTime);
+    ftString, ftWideString:
+      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2);
+  else
+    value := '';
+  end;
+  if value = '' then
+    exit;
+  line := Format(linePattern, [value]);
+  Result := true;
+end;
+
+function TDataBlockGenerator.FormatLongStringLiteral(
+  const aLiteral: string;
+  const aFistLineStartAt: integer): string;
+var
+  s: string;
+  lines: TArray<string>;
+  i: integer;
+  sb: TStringBuilder;
+begin
+  s := QuotedStr(aLiteral);
+  if aFistLineStartAt + Length(s) <= fRightMargin then
+  begin
+    Result := QuotedStr(aLiteral);
+  end
+  else
+  begin
+    lines := TTextWrapper.WrapTextWholeWords(s,
+      fRightMargin - 2 * Length(fIndentation) - 1);
+    sb := TStringBuilder.Create;
+    try
+      sb.Append(sLineBreak);
+      for i := 0 to High(lines) do
+        sb.Append(DupeString(fIndentation, 2) + IfThen(i > 0, '''') + lines[i] +
+          IfThen(i < High(lines), '''+' + sLineBreak, ''));
+      Result := sb.ToString();
+    finally
+      sb.Free;
+    end;
+  end
+end;
+
+function TDataBlockGenerator.GenerateArrayWithValues(const aFields
+  : TFields): string;
+var
+  fld: TField;
+  value: string;
+begin
+  Result := '';
+  for fld in aFields do
+  begin
+    if fld.IsNull then
+      value := 'Null'
+    else
+      case fld.DataType of
+        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+          value := fld.AsString;
+        ftBoolean:
+          value := BoolToStr(fld.AsBoolean, true);
+        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+          value := FloatToCode(fld.AsExtended);
+        ftDate:
+          value := DateToCode(fld.AsDateTime);
+        ftTime:
+          value := TimeToCode(fld.AsDateTime);
+        ftDateTime:
+          value := DateTimeToCode(fld.AsDateTime);
+        ftString, ftWideString:
+          value := QuotedStr(fld.value);
+      else
+        value := 'Null'
+      end;
+    Result := IfThen(Result = '', value, Result + ', ' + value);
+  end;
+  Result := '[' + Result + ']';
 end;
 
 { TTextWrapper }
