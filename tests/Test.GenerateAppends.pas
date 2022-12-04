@@ -17,6 +17,8 @@ type
 
   [TestFixture]
   TestGenerateAppends = class(TObject)
+  private const
+    DefaultRightMargin = 101;
   private
     fGenerator: TDSGenerator;
     fOwner: TComponent;
@@ -88,15 +90,18 @@ const
     ' Constructor Injection, Property Injection, and Method Injection' +
     ' and about the right and wrong way to use it';
 
-function GivenField(aOwner: TComponent; const fieldName: string;
-  fieldType: TFieldType; size: integer = 0): TField;
+function GivenDataSetWithField(
+  const aOwner: TComponent;
+  const aFieldName: string;
+  aFieldType: TFieldType;
+  aFieldSize: integer = 0): TDataSet;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(aOwner);
-  ds.FieldDefs.Add(fieldName, fieldType, size);
+  ds.FieldDefs.Add(aFieldName, aFieldType, aFieldSize);
   ds.CreateDataSet;
-  Result := ds.Fields[0];
+  Result := ds;
 end;
 
 function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
@@ -192,76 +197,81 @@ end;
 
 procedure TestGenerateAppends.GenFieldByName_Integer;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Level', ftInteger);
-  fld.DataSet.AppendRecord([1]);
+  ds := GivenDataSetWithField(fOwner, 'Level', ftInteger);
+  ds.AppendRecord([1]);
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    70, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
-  Assert.AreEqual('·ds.FieldByName(''Level'').Value := 1;', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Level'').Value := 1;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_Date;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Birthday', ftDate);
-  fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
+  ds := GivenDataSetWithField(fOwner, 'Birthday', ftDate);
+  ds.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
-  Assert.AreEqual
-    ('·ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
-    actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);'#13+
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_DateTime;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'ChangeDate', ftDateTime);
-  fld.DataSet.AppendRecord( //.
-    [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
+  ds := GivenDataSetWithField(fOwner, 'ChangeDate', ftDateTime);
+  ds.AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
-  Assert.AreEqual('·ds.FieldByName(''ChangeDate'').Value := ' +
-    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''ChangeDate'').Value := EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);'#13
+    +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_WideString;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
-  fld.DataSet.AppendRecord(['Alice has a cat']);
+  ds := GivenDataSetWithField(fOwner, 'MessageText', ftWideString, 30);
+  ds.AppendRecord(['Alice has a ♥ cat']);
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
-  Assert.AreEqual
-    ('·ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
-    actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''MessageText'').Value := ''Alice has a ♥ cat'';'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_BCDField;
 var
   ds: TFDMemTable;
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  code: string;
 begin
   ds := TFDMemTable.Create(fOwner);
   with ds.FieldDefs.AddFieldDef do
@@ -273,31 +283,37 @@ begin
   end;
   ds.CreateDataSet;
   ds.AppendRecord([1.01]);
-  fld := ds.Fields[0];
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('·ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''abc123'').Value := 1.01;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_WithLongLitteral;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'ChangeDate', ftWideString, 1000);
-  fld.DataSet.AppendRecord(['Here we have very long text: Lorem ipsum' +
-    ' dolor sit amet, consectetur adipiscing elit']);
+  ds := GivenDataSetWithField(fOwner, 'Quotation', ftWideString, 1000);
+  ds.AppendRecord([
+  'Here we have very long text: Lorem ipsum dolor sit amet, consectetur adipiscing elit.']);
 
-  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 45, actualCode);
+  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+    45, '·');
 
-  Assert.IsTrue(isGenerated, 'FieldByName generaton failed');
-  Assert.AreMemosEqual('·ds.FieldByName(''ChangeDate'').Value := ' + sLineBreak
-    { } + '··''Here we have very long text: Lorem ipsum ''+' + sLineBreak
-    { } + '··''dolor sit amet, consectetur adipiscing ''+' + sLineBreak
-    { } + '··''elit'';', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Quotation'').Value := '#13 +
+    { } '··''Here we have very long text: Lorem ipsum ''+'#13 +
+    { } '··''dolor sit amet, consectetur adipiscing ''+'#13 +
+    { } '··''elit.'';'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 // -----------------------------------------------------------------------

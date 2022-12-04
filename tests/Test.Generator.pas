@@ -19,8 +19,6 @@ type
   [TestFixture]
   TestDSGenerator = class(TObject)
   private const
-    DefaultMaxRows: integer = 100;
-  private const
     DefaultRightMargin: integer = 76;
   private
     fGenerator: TDSGenerator;
@@ -203,7 +201,7 @@ begin
     {} 'var'#13 +
     {} '  ds: TFDMemTable;'#13 +
     {} 'begin'#13 +
-    {} '  ds := TFDMemTable.Create(AOwner);'#13 +
+    {} '  ds := TFDMemTable.Create(aOwner);'#13 +
     {} '  with ds do'#13 +
     {} '  begin'#13 +
     {} '    FieldDefs.Add(''EventID'', ftInteger);'#13 +
@@ -261,7 +259,7 @@ begin
     {} + 'var'#13
     {} + '  ds: TFDMemTable;'#13
     {} + 'begin'#13
-    {} + '  ds := TFDMemTable.Create(AOwner);'#13
+    {} + '  ds := TFDMemTable.Create(aOwner);'#13
     {} + '  with ds do'#13
     {} + '  begin'#13
     {} + '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13
@@ -360,14 +358,14 @@ begin
     'Все люди рождаются свободными');
 
   code := TInternalGenerator.GenerateFunction(dataSet,dstFDMemTable,
-    amMultilineAppends, DefaultMaxRows, DefaultRightMargin, '  ');
+    amMultilineAppends, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual(
     { } 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
     {} + 'var'#13
     {} + '  ds: TFDMemTable;'#13
     {} + 'begin'#13
-    {} + '  ds := TFDMemTable.Create(AOwner);'#13
+    {} + '  ds := TFDMemTable.Create(aOwner);'#13
     {} + '  with ds do'#13
     {} + '  begin'#13
     {} + '    FieldDefs.Add(''CyrlicText'', ftWideString, 30);'#13
@@ -389,14 +387,14 @@ begin
   dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
 
   code := TInternalGenerator.GenerateFunction(dataSet, dstClientDataSet,
-    amSinglelineAppends, DefaultMaxRows, DefaultRightMargin, '  ');
+    amSinglelineAppends, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual_FullReport(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
     {} + 'var'#13
     {} + '  ds: TClientDataSet;'#13
     {} + 'begin'#13
-    {} + '  ds := TClientDataSet.Create(AOwner);'#13
+    {} + '  ds := TClientDataSet.Create(aOwner);'#13
     {} + '  with ds do'#13
     {} + '  begin'#13
     {} + '    FieldDefs.Add(''EventID'', ftInteger);'#13

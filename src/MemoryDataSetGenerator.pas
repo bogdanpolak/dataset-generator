@@ -66,37 +66,58 @@ type
   end;
 
   TInternalGenerator = class
+  private
+    // Structure
+    class function GenerateStructure(
+      const aDataSet: TDataSet;
+      const aIndentation: string): string;
+    class function GetDataFieldPrecision(fld: TField): integer; static;
+    // Data Block
+  public
+    // Structure
     class function GenerateFieldDefAdd(
       const fld: TField;
       const aIndentation: string): string;
+    // Data Block
+  private
+  public
+    // Code Segments
+    class function GenerateFunction(
+      const aDataSet: TDataSet;
+      const aDataSetType: TDataSetType;
+      const aAppendMode: TAppendMode;
+      const aRightMargin: integer;
+      const aIndentation: string;
+      const aMaxRows: integer = 10): string;
+  public
+    class function GenerateUnitFooter: string; static;
+    class function GenerateUnitHeader(
+      const aDataSetType: TDataSetType;
+      const aNameOfUnit: string;
+      const aIndentation: string): string; static;
+  end;
+
+  TDataBlockGenerator = class
+  public
+    class function GenerateDataBlock(
+      const aDataSet: TDataSet;
+      const aAppendMode: TAppendMode;
+      const aRightMargin: integer;
+      const aIndentation: string;
+      const aMaxRows: integer = 10): string;
+  private
     class function GenerateFieldByName(
       fld: TField;
       const aIndentation: string;
       const aRightMargin: integer;
       out line: string): boolean; static;
-    class function GetDataFieldPrecision(fld: TField): integer; static;
     class function FormatLongStringLiteral(
       const aLiteral: string;
       const aFistLineStartAt: integer;
       const aRightMargin: integer;
       const aIndentation: string): string;
-    class function GenerateDataBlock(
-      const aDataSet: TDataSet;
-      const aAppendMode: TAppendMode;
-      const aMaxRows: integer;
-      const aRightMargin: integer;
-      const aIndentation: string): string; static;
-    class function GenerateFunction(
-      const aDataSet: TDataSet;
-      const aDataSetType: TDataSetType;
-      const aAppendMode: TAppendMode;
-      const aMaxRows: integer;
-      const aRightMargin: integer;
-      const aIndentation: string): string; static;
-    class function GenerateStructure(
-      const aDataSet: TDataSet;
-      const aDataSetType: TDataSetType;
-      const aIndentation: string): string;
+    class function GenerateSingleLine_ValuesArray(const aFields
+      : TFields): string;
     class function GenerateOneAppend(
       const aAppendMode: TAppendMode;
       const aFields: TFields;
@@ -105,14 +126,7 @@ type
     class function GenerateOneAppend_Multiline(
       const aFields: TFields;
       const aIndentation: string;
-      const aRightMargin: integer): string; static;
-    class function GenerateSingleLine_ValuesArray(const aFields: TFields)
-      : string; static;
-    class function GenerateUnitFooter: string; static;
-    class function GenerateUnitHeader(
-      const aDataSetType: TDataSetType;
-      const aNameOfUnit: string;
-      const aIndentation: string): string; static;
+      const aRightMargin: integer): string;
   end;
 
   TTextWrapper = class
@@ -188,20 +202,20 @@ function TDSGenerator.GenerateAll(aMode: TGeneratorMode): string;
 begin
   case aMode of
     genStructure:
-      Result := TInternalGenerator.GenerateStructure(fDataSet, fDataSetType,
+      Result := TInternalGenerator.GenerateStructure(fDataSet,
         fIndentationText);
     genAppend:
       Result := IfThen(fDataSet = nil, '',
-        TInternalGenerator.GenerateDataBlock(fDataSet, fAppendMode, fMaxRows,
-        fRightMargin, fIndentationText));
+        TDataBlockGenerator.GenerateDataBlock(fDataSet, fAppendMode,
+        fRightMargin, fIndentationText, fMaxRows));
     genUnit:
       Result := TInternalGenerator.GenerateUnitHeader(fDataSetType, fNameOfUnit,
         fIndentationText) + TInternalGenerator.GenerateFunction(fDataSet,
-        fDataSetType, fAppendMode, fMaxRows, fRightMargin, fIndentationText) +
+        fDataSetType, fAppendMode, fRightMargin, fIndentationText, fMaxRows) +
         TInternalGenerator.GenerateUnitFooter();
     genFunction:
       Result := TInternalGenerator.GenerateFunction(fDataSet, fDataSetType,
-        fAppendMode, fMaxRows, fRightMargin, fIndentationText);
+        fAppendMode, fRightMargin, fIndentationText, fMaxRows);
   else
     Result := '// Unsupported generator mode';
   end;
@@ -318,8 +332,8 @@ begin
   try
     aGenerator.DataSet := ds;
     Clipboard.AsText := TInternalGenerator.GenerateFunction(aGenerator.DataSet,
-      aGenerator.DataSetType, aGenerator.AppendMode, aGenerator.MaxRows,
-      aGenerator.RightMargin, aGenerator.IndentationText);
+      aGenerator.DataSetType, aGenerator.AppendMode, aGenerator.RightMargin,
+      aGenerator.IndentationText, aGenerator.MaxRows);
   finally
     aGenerator.Free;
   end;
@@ -377,7 +391,7 @@ begin
     Result := (fld as TFloatField).Precision
 end;
 
-class function TInternalGenerator.GenerateFieldByName(
+class function TDataBlockGenerator.GenerateFieldByName(
   fld: TField;
   const aIndentation: string;
   const aRightMargin: integer;
@@ -417,7 +431,7 @@ begin
   Result := true;
 end;
 
-class function TInternalGenerator.FormatLongStringLiteral(
+class function TDataBlockGenerator.FormatLongStringLiteral(
   const aLiteral: string;
   const aFistLineStartAt: integer;
   const aRightMargin: integer;
@@ -450,7 +464,7 @@ begin
   end
 end;
 
-class function TInternalGenerator.GenerateOneAppend(
+class function TDataBlockGenerator.GenerateOneAppend(
   const aAppendMode: TAppendMode;
   const aFields: TFields;
   const aIndentation: string;
@@ -468,7 +482,7 @@ begin
   end;
 end;
 
-class function TInternalGenerator.GenerateOneAppend_Multiline(
+class function TDataBlockGenerator.GenerateOneAppend_Multiline(
   const aFields: TFields;
   const aIndentation: string;
   const aRightMargin: integer): string;
@@ -477,14 +491,12 @@ var
   line: string;
   sl: TStringList;
 begin
-
   sl := TStringList.Create;
   try
     sl.Add(aIndentation + 'ds.Append;');
     for fld in aFields do
     begin
-      if TInternalGenerator.GenerateFieldByName(fld, aIndentation, aRightMargin,
-        line) then
+      if GenerateFieldByName(fld, aIndentation, aRightMargin, line) then
         sl.Add(line);
     end;
     sl.Add(aIndentation + 'ds.Post;');
@@ -494,7 +506,7 @@ begin
   end;
 end;
 
-class function TInternalGenerator.GenerateSingleLine_ValuesArray
+class function TDataBlockGenerator.GenerateSingleLine_ValuesArray
   (const aFields: TFields): string;
 var
   fld: TField;
@@ -529,12 +541,12 @@ begin
   Result := '[' + Result + ']';
 end;
 
-class function TInternalGenerator.GenerateDataBlock(
+class function TDataBlockGenerator.GenerateDataBlock(
   const aDataSet: TDataSet;
   const aAppendMode: TAppendMode;
-  const aMaxRows: integer;
   const aRightMargin: integer;
-  const aIndentation: string): string;
+  const aIndentation: string;
+  const aMaxRows: integer = 10): string;
 var
   sb: TStringBuilder;
   bookmark: TBookmark;
@@ -633,52 +645,40 @@ class function TInternalGenerator.GenerateFunction(
   const aDataSet: TDataSet;
   const aDataSetType: TDataSetType;
   const aAppendMode: TAppendMode;
-  const aMaxRows: integer;
   const aRightMargin: integer;
-  const aIndentation: string): string;
+  const aIndentation: string;
+  const aMaxRows: integer = 10): string;
 var
-  aClassName: string;
+  dsc: string;
 begin
-  case aDataSetType of
-    dstFDMemTable:
-      aClassName := 'TFDMemTable';
-    dstClientDataSet:
-      aClassName := 'TClientDataSet';
-  end;
+  dsc := IfThen(aDataSetType = dstFDMemTable, 'TFDMemTable', 'TClientDataSet');
   Result :=
   { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   { } 'var' + sLineBreak +
-  { } '  ds: ' + aClassName + ';' + sLineBreak +
+  { } aIndentation + 'ds: ' + dsc + ';' + sLineBreak +
   { } 'begin' + sLineBreak +
-  { } GenerateStructure(aDataSet, aDataSetType, aIndentation) +
-  { } GenerateDataBlock(aDataSet, aAppendMode, aMaxRows, aRightMargin,
-    aIndentation) +
-  { } '  Result := ds;' + sLineBreak +
+  { } aIndentation + 'ds := ' + dsc + '.Create(aOwner);' + sLineBreak +
+  { } GenerateStructure(aDataSet, aIndentation) +
+  { } TDataBlockGenerator.GenerateDataBlock(aDataSet, aAppendMode, aRightMargin,
+    aIndentation, aMaxRows) +
+  { } aIndentation + 'Result := ds;' + sLineBreak +
   { } 'end;' + sLineBreak;
 end;
 
 class function TInternalGenerator.GenerateStructure(
   const aDataSet: TDataSet;
-  const aDataSetType: TDataSetType;
   const aIndentation: string): string;
 var
   fld: TField;
   dataSetCreateCode: string;
   fieldDefinitions: string;
 begin
-  case aDataSetType of
-    dstFDMemTable:
-      dataSetCreateCode := 'TFDMemTable.Create(AOwner)';
-    dstClientDataSet:
-      dataSetCreateCode := 'TClientDataSet.Create(AOwner)';
-  end;
   fieldDefinitions := '';
   if (aDataSet <> nil) then
     for fld in aDataSet.Fields do
       fieldDefinitions := fieldDefinitions + DupeString(aIndentation, 2) +
         GenerateFieldDefAdd(fld, aIndentation) + sLineBreak;
   Result :=
-  { } aIndentation + 'ds := ' + dataSetCreateCode + ';' + sLineBreak +
   { } aIndentation + 'with ds do' + sLineBreak +
   { } aIndentation + 'begin' + sLineBreak +
   { } fieldDefinitions +

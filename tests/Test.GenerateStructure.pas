@@ -231,7 +231,6 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '  ds := TClientDataSet.Create(AOwner);'#13 +
     (* *) '  with ds do'#13 +
     (* *) '  begin'#13 +
     (* *) '    FieldDefs.Add(''Group'', ftInteger);'#13 +
@@ -250,7 +249,6 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
     (* *) '  with ds do'#13 +
     (* *) '  begin'#13 +
     (* *) '    FieldDefs.Add(''id'', ftInteger);'#13 +
@@ -278,7 +276,6 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) ' ds := TFDMemTable.Create(AOwner);'#13 +
     (* *) ' with ds do'#13 +
     (* *) ' begin'#13 +
     (* *) '  FieldDefs.Add(''Points'', ftInteger);'#13 +
@@ -298,7 +295,6 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) 'ds := TFDMemTable.Create(AOwner);'#13 +
     (* *) 'with ds do'#13 +
     (* *) 'begin'#13 +
     (* *) 'FieldDefs.Add(''Points'', ftInteger);'#13 +
@@ -318,7 +314,6 @@ begin
   actualCode := fGenerator.Code.Text;
 
   Assert.AreMemosEqual(
-    (* *) '  ds := TFDMemTable.Create(AOwner);'#13 +
     (* *) '  with ds do'#13 +
     (* *) '  begin'#13 +
     (* *) '    with FieldDefs.AddFieldDef do begin'#13 +
