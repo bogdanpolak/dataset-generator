@@ -67,19 +67,22 @@ end;
 // Dataset factories
 // -----------------------------------------------------------------------
 
-function GivenField(aOwner: TComponent; const fieldName: string;
-  fieldType: TFieldType; size: integer = 0): TField;
+function GivenDataSet_WithField(aOwner: TComponent; const fieldName: string;
+  fieldType: TFieldType; size: integer = 0): TDataSet;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(aOwner);
   ds.FieldDefs.Add(fieldName, fieldType, size);
   ds.CreateDataSet;
-  Result := ds.Fields[0];
+  Result := ds;
 end;
 
-function GivenField_BCD_10_4(aOwner: TComponent; const aFieldName: string)
-  : TField;
+function GivenDataSet_WithBcdField(
+  aOwner: TComponent;
+  const aFieldName: string;
+  const aPrecision: integer;
+  const aDecimalLen: integer): TDataSet;
 var
   ds: TFDMemTable;
 begin
@@ -88,11 +91,11 @@ begin
   begin
     Name := aFieldName;
     DataType := ftBcd;
-    Precision := 10;
-    size := 4;
+    Precision := aPrecision;
+    size := aDecimalLen;
   end;
   ds.CreateDataSet;
-  Result := ds.Fields[0];
+  Result := ds;
 end;
 
 function GivenDataSet_WithInteger(aOwner: TComponent; const aFieldName: string)
@@ -152,67 +155,90 @@ end;
 
 procedure TestGenerateStructure.GenFieldDef_Date;
 var
-  fld: TField;
-  actualCode: string;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Birthday', ftDate);
+  ds := GivenDataSet_WithField(fOwner, 'Birthday', ftDate);
 
-  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
+  code := TStructureBlockGenerator.Generate(ds,'  ');
 
-  Assert.AreEqual('FieldDefs.Add(''Birthday'', ftDate);', actualCode);
+  Assert.AreMemosEqual(
+    { } '  with ds do'#13 +
+    { } '  begin'#13 +
+    { } '    FieldDefs.Add(''Birthday'', ftDate);'#13 +
+    { } '    CreateDataSet;'#13 +
+    { } '  end;', code);
 end;
 
 procedure TestGenerateStructure.GenFieldDef_DateTime;
 var
-  fld: TField;
-  actualCode: string;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Created', ftDateTime);
+  ds := GivenDataSet_WithField(fOwner, 'Created', ftDateTime);
 
-  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
+  code := TStructureBlockGenerator.Generate(ds,'·');
 
-  Assert.AreEqual('FieldDefs.Add(''Created'', ftDateTime);', actualCode);
+  Assert.AreMemosEqual(
+    { } '·with ds do'#13 +
+    { } '·begin'#13 +
+    { } '··FieldDefs.Add(''Created'', ftDateTime);'#13 +
+    { } '··CreateDataSet;'#13 +
+    { } '·end;', code);
 end;
 
 procedure TestGenerateStructure.GenFieldDef_Integer;
 var
-  fld: TField;
-  actualCode: string;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Rating', ftInteger);
+  ds := GivenDataSet_WithField(fOwner, 'Rating', ftInteger);
 
-  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
+  code := TStructureBlockGenerator.Generate(ds,'  ');
 
-  Assert.AreEqual('FieldDefs.Add(''Rating'', ftInteger);', actualCode);
+  Assert.AreMemosEqual(
+    { } '  with ds do'#13 +
+    { } '  begin'#13 +
+    { } '    FieldDefs.Add(''Rating'', ftInteger);'#13 +
+    { } '    CreateDataSet;'#13 +
+    { } '  end;', code);
 end;
 
 procedure TestGenerateStructure.GenFieldDef_WideString;
 var
-  fld: TField;
-  actualCode: string;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Description', ftWideString, 30);
+  ds := GivenDataSet_WithField(fOwner, 'Description', ftWideString, 30);
 
-  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
+  code := TStructureBlockGenerator.Generate(ds,'  ');
 
-  Assert.AreEqual('FieldDefs.Add(''Description'', ftWideString, 30);',
-    actualCode);
+  Assert.AreMemosEqual(
+    { } '  with ds do'#13 +
+    { } '  begin'#13 +
+    { } '    FieldDefs.Add(''Description'', ftWideString, 30);'#13 +
+    { } '    CreateDataSet;'#13 +
+    { } '  end;', code);
 end;
 
 procedure TestGenerateStructure.GenFieldDef_BCD;
 var
-  fld: TField;
-  actualCode: string;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField_BCD_10_4(fOwner, 'Price');
+  ds := GivenDataSet_WithBcdField(fOwner, 'Price', 10, 4);
 
-  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'·');
+  code := TStructureBlockGenerator.Generate(ds,'·');
 
   Assert.AreMemosEqual(
-    { } 'with FieldDefs.AddFieldDef do begin'#13 +
+    { } '·with ds do'#13 +
+    { } '·begin'#13 +
+    { } '··with FieldDefs.AddFieldDef do begin'#13 +
     { } '···Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
     +
-    { } '··end;', actualCode);
+    { } '··end;'#13 +
+    { } '··CreateDataSet;'#13 +
+    { } '·end;', code);
 end;
 
 // -----------------------------------------------------------------------

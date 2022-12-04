@@ -66,17 +66,6 @@ type
   end;
 
   TInternalGenerator = class
-  private
-    // Structure
-    class function GenerateStructure(
-      const aDataSet: TDataSet;
-      const aIndentation: string): string;
-    class function GetDataFieldPrecision(fld: TField): integer; static;
-  public
-    // Structure
-    class function GenerateFieldDefAdd(
-      const fld: TField;
-      const aIndentation: string): string;
   public
     // Code Segments
     class function GenerateFunction(
@@ -86,12 +75,23 @@ type
       const aRightMargin: integer;
       const aIndentation: string;
       const aMaxRows: integer = 10): string;
-  public
     class function GenerateUnitFooter: string; static;
     class function GenerateUnitHeader(
       const aDataSetType: TDataSetType;
       const aNameOfUnit: string;
       const aIndentation: string): string; static;
+  end;
+
+  TStructureBlockGenerator = class
+  private
+    class function GetDataFieldPrecision(fld: TField): integer; static;
+    class function GenerateFieldDefAdd(
+      const fld: TField;
+      const aIndentation: string): string;
+  public
+    class function Generate(
+      const aDataSet: TDataSet;
+      const aIndentation: string): string;
   end;
 
   TDataBlockGenerator = class
@@ -199,8 +199,7 @@ function TDSGenerator.GenerateAll(aMode: TGeneratorMode): string;
 begin
   case aMode of
     genStructure:
-      Result := TInternalGenerator.GenerateStructure(fDataSet,
-        fIndentationText);
+      Result := TStructureBlockGenerator.Generate(fDataSet, fIndentationText);
     genAppend:
       Result := IfThen(fDataSet = nil, '',
         TDataBlockGenerator.GenerateDataBlock(fDataSet, fAppendMode,
@@ -336,57 +335,7 @@ begin
   end;
 end;
 
-{ TFieldGenerator }
-
-class function TInternalGenerator.GenerateFieldDefAdd(
-  const fld: TField;
-  const aIndentation: string): string;
-begin
-  (* -----------------------------------------------------------------------
-    [Doc]
-    TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
-    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
-    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
-    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
-    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
-    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
-    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
-    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
-    ftTimeStampOffset, ftObject, ftSingle);
-    ------------------------------------------------------------------------- *)
-  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
-    ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ');'
-  else if (fld.DataType in [ftBCD, ftFMTBcd]) then
-    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
-      DupeString(aIndentation, 3) +
-      Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
-      [fld.FieldName, FieldTypeToString(fld.DataType),
-      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak +
-      DupeString(aIndentation, 2) + 'end;'
-  else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', 100);'
-  else if (fld.DataType in [ftString, ftWideString]) then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
-  else
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
-end;
-
-class function TInternalGenerator.GetDataFieldPrecision(fld: TField): integer;
-begin
-  System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
-    (fld is TFloatField));
-  if fld is TBCDField then
-    Result := (fld as TBCDField).Precision
-  else if fld is TFMTBCDField then
-    Result := (fld as TFMTBCDField).Precision
-  else
-    Result := (fld as TFloatField).Precision
-end;
+{ TInternalGenerator }
 
 class function TInternalGenerator.GenerateUnitHeader(
   const aDataSetType: TDataSetType;
@@ -438,14 +387,21 @@ begin
   { } aIndentation + 'ds: ' + dsc + ';' + sLineBreak +
   { } 'begin' + sLineBreak +
   { } aIndentation + 'ds := ' + dsc + '.Create(aOwner);' + sLineBreak +
-  { } GenerateStructure(aDataSet, aIndentation) +
+  { } TStructureBlockGenerator.Generate(aDataSet, aIndentation) +
   { } TDataBlockGenerator.GenerateDataBlock(aDataSet, aAppendMode, aRightMargin,
     aIndentation, aMaxRows) +
   { } aIndentation + 'Result := ds;' + sLineBreak +
   { } 'end;' + sLineBreak;
 end;
 
-class function TInternalGenerator.GenerateStructure(
+class function TInternalGenerator.GenerateUnitFooter(): string;
+begin
+  Result := sLineBreak + 'end.' + sLineBreak;
+end;
+
+{ TStructureBlockGenerator }
+
+class function TStructureBlockGenerator.Generate(
   const aDataSet: TDataSet;
   const aIndentation: string): string;
 var
@@ -465,10 +421,56 @@ begin
   { } aIndentation + 'end;' + sLineBreak
 end;
 
-class function TInternalGenerator.GenerateUnitFooter(): string;
+class function TStructureBlockGenerator.GenerateFieldDefAdd(
+  const fld: TField;
+  const aIndentation: string): string;
 begin
-  Result := sLineBreak + 'end.' + sLineBreak;
+  (* -----------------------------------------------------------------------
+    [Doc]
+    TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
+    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
+    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
+    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
+    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
+    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
+    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
+    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
+    ftTimeStampOffset, ftObject, ftSingle);
+    ------------------------------------------------------------------------- *)
+  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
+    ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ');'
+  else if (fld.DataType in [ftBCD, ftFMTBcd]) then
+    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
+      DupeString(aIndentation, 3) +
+      Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
+      [fld.FieldName, FieldTypeToString(fld.DataType),
+      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak +
+      DupeString(aIndentation, 2) + 'end;'
+  else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', 100);'
+  else if (fld.DataType in [ftString, ftWideString]) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
+  else
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
 end;
+
+class function TStructureBlockGenerator.GetDataFieldPrecision(fld: TField): integer;
+begin
+  System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
+    (fld is TFloatField));
+  if fld is TBCDField then
+    Result := (fld as TBCDField).Precision
+  else if fld is TFMTBCDField then
+    Result := (fld as TFMTBCDField).Precision
+  else
+    Result := (fld as TFloatField).Precision
+end;
+
 
 { TDataBlockGenerator }
 
