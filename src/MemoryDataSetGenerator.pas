@@ -65,9 +65,8 @@ type
     property RightMargin: integer read fRightMargin write fRightMargin;
   end;
 
-  TInternalGenerator = class
+  TCodeSegmentsGenerator = class
   public
-    // Code Segments
     class function GenerateFunction(
       const aDataSet: TDataSet;
       const aDataSetType: TDataSetType;
@@ -75,22 +74,22 @@ type
       const aRightMargin: integer;
       const aIndentation: string;
       const aMaxRows: integer = 10): string;
-    class function GenerateUnitFooter: string; static;
     class function GenerateUnitHeader(
       const aDataSetType: TDataSetType;
       const aNameOfUnit: string;
       const aIndentation: string): string; static;
+    class function GenerateUnitFooter: string; static;
   end;
 
   TStructureBlockGenerator = class
+  public
+    class function Generate(
+      const aDataSet: TDataSet;
+      const aIndentation: string): string;
   private
     class function GetDataFieldPrecision(fld: TField): integer; static;
     class function GenerateFieldDefAdd(
       const fld: TField;
-      const aIndentation: string): string;
-  public
-    class function Generate(
-      const aDataSet: TDataSet;
       const aIndentation: string): string;
   end;
 
@@ -106,7 +105,7 @@ type
       const aRightMargin: integer;
       const aIndentation: string;
       const aMaxRows: integer);
-    class function GenerateDataBlock(
+    class function Generate(
       const aDataSet: TDataSet;
       const aAppendMode: TAppendMode;
       const aRightMargin: integer;
@@ -161,40 +160,6 @@ begin
   inherited;
 end;
 
-function FieldTypeToString(ft: TFieldType): string;
-begin
-  Result := System.Rtti.TRttiEnumerationType.GetName(ft);
-end;
-
-function FloatToCode(val: Extended): string;
-begin
-  Result := FloatToStr(val);
-  Result := StringReplace(Result, ',', '.', []);
-end;
-
-function DateToCode(dt: TDateTime): string;
-var
-  y, m, d: word;
-begin
-  DecodeDate(dt, y, m, d);
-  Result := Format('EncodeDate(%d,%d,%d)', [y, m, d]);
-end;
-
-function TimeToCode(dt: TDateTime): string;
-var
-  h, min, s, ms: word;
-begin
-  DecodeTime(dt, h, min, s, ms);
-  Result := Format('EncodeTime(%d,%d,%d,%d)', [h, min, s, ms]);
-end;
-
-function DateTimeToCode(dt: TDateTime): string;
-begin
-  Result := DateToCode(dt);
-  if Frac(dt) > 0 then
-    Result := Result + '+' + TimeToCode(dt);
-end;
-
 function TDSGenerator.GenerateAll(aMode: TGeneratorMode): string;
 begin
   case aMode of
@@ -202,15 +167,15 @@ begin
       Result := TStructureBlockGenerator.Generate(fDataSet, fIndentationText);
     genAppend:
       Result := IfThen(fDataSet = nil, '',
-        TDataBlockGenerator.GenerateDataBlock(fDataSet, fAppendMode,
-        fRightMargin, fIndentationText, fMaxRows));
+        TDataBlockGenerator.Generate(fDataSet, fAppendMode, fRightMargin,
+        fIndentationText, fMaxRows));
     genUnit:
-      Result := TInternalGenerator.GenerateUnitHeader(fDataSetType, fNameOfUnit,
-        fIndentationText) + TInternalGenerator.GenerateFunction(fDataSet,
-        fDataSetType, fAppendMode, fRightMargin, fIndentationText, fMaxRows) +
-        TInternalGenerator.GenerateUnitFooter();
+      Result := TCodeSegmentsGenerator.GenerateUnitHeader(fDataSetType,
+        fNameOfUnit, fIndentationText) + TCodeSegmentsGenerator.GenerateFunction
+        (fDataSet, fDataSetType, fAppendMode, fRightMargin, fIndentationText,
+        fMaxRows) + TCodeSegmentsGenerator.GenerateUnitFooter();
     genFunction:
-      Result := TInternalGenerator.GenerateFunction(fDataSet, fDataSetType,
+      Result := TCodeSegmentsGenerator.GenerateFunction(fDataSet, fDataSetType,
         fAppendMode, fRightMargin, fIndentationText, fMaxRows);
   else
     Result := '// Unsupported generator mode';
@@ -327,17 +292,18 @@ begin
   aGenerator := TDSGenerator.Create(nil);
   try
     aGenerator.DataSet := ds;
-    Clipboard.AsText := TInternalGenerator.GenerateFunction(aGenerator.DataSet,
-      aGenerator.DataSetType, aGenerator.AppendMode, aGenerator.RightMargin,
-      aGenerator.IndentationText, aGenerator.MaxRows);
+    Clipboard.AsText := TCodeSegmentsGenerator.GenerateFunction
+      (aGenerator.DataSet, aGenerator.DataSetType, aGenerator.AppendMode,
+      aGenerator.RightMargin, aGenerator.IndentationText, aGenerator.MaxRows);
   finally
     aGenerator.Free;
   end;
 end;
 
-{ TInternalGenerator }
 
-class function TInternalGenerator.GenerateUnitHeader(
+{ TCodeSegmentsGenerator }
+
+class function TCodeSegmentsGenerator.GenerateUnitHeader(
   const aDataSetType: TDataSetType;
   const aNameOfUnit: string;
   const aIndentation: string): string;
@@ -370,7 +336,7 @@ begin
   { } sLineBreak;
 end;
 
-class function TInternalGenerator.GenerateFunction(
+class function TCodeSegmentsGenerator.GenerateFunction(
   const aDataSet: TDataSet;
   const aDataSetType: TDataSetType;
   const aAppendMode: TAppendMode;
@@ -379,25 +345,65 @@ class function TInternalGenerator.GenerateFunction(
   const aMaxRows: integer = 10): string;
 var
   dsc: string;
+  body: string;
 begin
   dsc := IfThen(aDataSetType = dstFDMemTable, 'TFDMemTable', 'TClientDataSet');
+  body := TStructureBlockGenerator.Generate(aDataSet, aIndentation) +
+    TDataBlockGenerator.Generate(aDataSet, aAppendMode, aRightMargin,
+    aIndentation, aMaxRows);
   Result :=
   { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
   { } 'var' + sLineBreak +
   { } aIndentation + 'ds: ' + dsc + ';' + sLineBreak +
   { } 'begin' + sLineBreak +
   { } aIndentation + 'ds := ' + dsc + '.Create(aOwner);' + sLineBreak +
-  { } TStructureBlockGenerator.Generate(aDataSet, aIndentation) +
-  { } TDataBlockGenerator.GenerateDataBlock(aDataSet, aAppendMode, aRightMargin,
-    aIndentation, aMaxRows) +
+  { } body +
   { } aIndentation + 'Result := ds;' + sLineBreak +
   { } 'end;' + sLineBreak;
 end;
 
-class function TInternalGenerator.GenerateUnitFooter(): string;
+class function TCodeSegmentsGenerator.GenerateUnitFooter(): string;
 begin
   Result := sLineBreak + 'end.' + sLineBreak;
 end;
+
+
+{ TFieldGeneratorUtils }
+
+function FieldTypeToString(ft: TFieldType): string;
+begin
+  Result := System.Rtti.TRttiEnumerationType.GetName(ft);
+end;
+
+function FloatToCode(val: Extended): string;
+begin
+  Result := FloatToStr(val);
+  Result := StringReplace(Result, ',', '.', []);
+end;
+
+function DateToCode(dt: TDateTime): string;
+var
+  y, m, d: word;
+begin
+  DecodeDate(dt, y, m, d);
+  Result := Format('EncodeDate(%d,%d,%d)', [y, m, d]);
+end;
+
+function TimeToCode(dt: TDateTime): string;
+var
+  h, min, s, ms: word;
+begin
+  DecodeTime(dt, h, min, s, ms);
+  Result := Format('EncodeTime(%d,%d,%d,%d)', [h, min, s, ms]);
+end;
+
+function DateTimeToCode(dt: TDateTime): string;
+begin
+  Result := DateToCode(dt);
+  if Frac(dt) > 0 then
+    Result := Result + '+' + TimeToCode(dt);
+end;
+
 
 { TStructureBlockGenerator }
 
@@ -459,7 +465,8 @@ begin
       FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
 end;
 
-class function TStructureBlockGenerator.GetDataFieldPrecision(fld: TField): integer;
+class function TStructureBlockGenerator.GetDataFieldPrecision
+  (fld: TField): integer;
 begin
   System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
     (fld is TFloatField));
@@ -470,7 +477,6 @@ begin
   else
     Result := (fld as TFloatField).Precision
 end;
-
 
 { TDataBlockGenerator }
 
@@ -486,7 +492,7 @@ begin
   fMaxRows := aMaxRows;
 end;
 
-class function TDataBlockGenerator.GenerateDataBlock(
+class function TDataBlockGenerator.Generate(
   const aDataSet: TDataSet;
   const aAppendMode: TAppendMode;
   const aRightMargin: integer;

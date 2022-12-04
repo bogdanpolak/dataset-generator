@@ -203,7 +203,7 @@ begin
   ds := GivenDataSetWithField(fOwner, 'Level', ftInteger);
   ds.AppendRecord([1]);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     70, '·');
 
   Assert.AreMemosEqual(
@@ -221,7 +221,7 @@ begin
   ds := GivenDataSetWithField(fOwner, 'Birthday', ftDate);
   ds.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     DefaultRightMargin, '·');
 
   Assert.AreMemosEqual(
@@ -239,7 +239,7 @@ begin
   ds := GivenDataSetWithField(fOwner, 'ChangeDate', ftDateTime);
   ds.AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     DefaultRightMargin, '·');
 
   Assert.AreMemosEqual(
@@ -258,7 +258,7 @@ begin
   ds := GivenDataSetWithField(fOwner, 'MessageText', ftWideString, 30);
   ds.AppendRecord(['Alice has a ♥ cat']);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     DefaultRightMargin, '·');
 
   Assert.AreMemosEqual(
@@ -284,7 +284,7 @@ begin
   ds.CreateDataSet;
   ds.AppendRecord([1.01]);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     DefaultRightMargin, '·');
 
   Assert.AreMemosEqual(
@@ -303,7 +303,7 @@ begin
   ds.AppendRecord([
   'Here we have very long text: Lorem ipsum dolor sit amet, consectetur adipiscing elit.']);
 
-  code := TDataBlockGenerator.GenerateDataBlock(ds, amMultilineAppends,
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
     45, '·');
 
   Assert.AreMemosEqual(

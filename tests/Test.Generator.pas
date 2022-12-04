@@ -166,7 +166,7 @@ procedure TestDSGenerator.Generate_UnitHeader;
 var
   actualCode: string;
 begin
-  actualCode := TInternalGenerator.GenerateUnitHeader(dstFDMemTable,
+  actualCode := TCodeSegmentsGenerator.GenerateUnitHeader(dstFDMemTable,
     'Fake.HistoricalEvents','  ');
 
   Assert.AreMemosEqual(
@@ -292,7 +292,7 @@ procedure TestDSGenerator.GenerateUnit_Header_FDMemTable;
 var
   code: string;
 begin
-  code := TInternalGenerator.GenerateUnitHeader(dstFDMemTable,
+  code := TCodeSegmentsGenerator.GenerateUnitHeader(dstFDMemTable,
     'Unit1', '  ');
   Assert.AreMemosEqual(
     { } 'unit Unit1;'#13 +
@@ -317,7 +317,7 @@ var
   actualCode: string;
 begin
   fGenerator.DataSetType := dstClientDataSet;
-  actualCode := TInternalGenerator.GenerateUnitHeader(dstClientDataSet,
+  actualCode := TCodeSegmentsGenerator.GenerateUnitHeader(dstClientDataSet,
     'MemoryDataSetUnit','  ');
   Assert.AreMemosEqual(
     {} 'unit MemoryDataSetUnit;'#13 +
@@ -343,7 +343,7 @@ procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
-  actualCode := TInternalGenerator.GenerateUnitFooter;
+  actualCode := TCodeSegmentsGenerator.GenerateUnitFooter;
   Assert.AreMemosEqual(
     {} #13 +
     {} 'end.'#13, actualCode);
@@ -357,7 +357,7 @@ begin
   dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
 
-  code := TInternalGenerator.GenerateFunction(dataSet,dstFDMemTable,
+  code := TCodeSegmentsGenerator.GenerateFunction(dataSet,dstFDMemTable,
     amMultilineAppends, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual(
@@ -386,7 +386,7 @@ var
 begin
   dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
 
-  code := TInternalGenerator.GenerateFunction(dataSet, dstClientDataSet,
+  code := TCodeSegmentsGenerator.GenerateFunction(dataSet, dstClientDataSet,
     amSinglelineAppends, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual_FullReport(
