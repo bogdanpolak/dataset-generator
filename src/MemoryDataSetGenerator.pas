@@ -34,24 +34,6 @@ type
     fNameOfUnit: string;
     fMaxRows: integer;
     fRightMargin: integer;
-    function GetDataFieldPrecision(fld: TField): integer;
-    function GenerateOneAppend_Multiline: string;
-    function GenerateSingleLine_ValuesArray: string;
-    function GenerateOneAppend_Singleline: string;
-  protected
-    function GenerateLine_FieldDefAdd(fld: TField): string;
-    function GenerateFieldByName(
-      fld: TField;
-      out line: string): boolean;
-    function GenerateStructure: string;
-    function GenerateOneAppend: string;
-    function GenerateAppendsBlock: string;
-    function FormatLongStringLiteral(
-      const Literal: string;
-      fistLineStartAt: integer): string;
-    function GenerateUnitHeader: string;
-    function GenerateUnitFooter: string;
-    function GenerateFunction: string;
     function GenerateAll(aMode: TGeneratorMode): string;
     class function GenetateUnit(
       ds: TDataSet;
@@ -81,6 +63,56 @@ type
     property NameOfUnit: string read fNameOfUnit write fNameOfUnit;
     property MaxRows: integer read fMaxRows write fMaxRows;
     property RightMargin: integer read fRightMargin write fRightMargin;
+  end;
+
+  TInternalGenerator = class
+    class function GenerateFieldDefAdd(
+      const fld: TField;
+      const aIndentation: string): string;
+    class function GenerateFieldByName(
+      fld: TField;
+      const aIndentation: string;
+      const aRightMargin: integer;
+      out line: string): boolean; static;
+    class function GetDataFieldPrecision(fld: TField): integer; static;
+    class function FormatLongStringLiteral(
+      const aLiteral: string;
+      const aFistLineStartAt: integer;
+      const aRightMargin: integer;
+      const aIndentation: string): string;
+    class function GenerateDataBlock(
+      const aDataSet: TDataSet;
+      const aAppendMode: TAppendMode;
+      const aMaxRows: integer;
+      const aRightMargin: integer;
+      const aIndentation: string): string; static;
+    class function GenerateFunction(
+      const aDataSet: TDataSet;
+      const aDataSetType: TDataSetType;
+      const aAppendMode: TAppendMode;
+      const aMaxRows: integer;
+      const aRightMargin: integer;
+      const aIndentation: string): string; static;
+    class function GenerateStructure(
+      const aDataSet: TDataSet;
+      const aDataSetType: TDataSetType;
+      const aIndentation: string): string;
+    class function GenerateOneAppend(
+      const aAppendMode: TAppendMode;
+      const aFields: TFields;
+      const aIndentation: string;
+      const aRightMargin: integer): string;
+    class function GenerateOneAppend_Multiline(
+      const aFields: TFields;
+      const aIndentation: string;
+      const aRightMargin: integer): string; static;
+    class function GenerateSingleLine_ValuesArray(const aFields: TFields)
+      : string; static;
+    class function GenerateUnitFooter: string; static;
+    class function GenerateUnitHeader(
+      const aDataSetType: TDataSetType;
+      const aNameOfUnit: string;
+      const aIndentation: string): string; static;
   end;
 
   TTextWrapper = class
@@ -123,54 +155,6 @@ begin
   Result := System.Rtti.TRttiEnumerationType.GetName(ft);
 end;
 
-function TDSGenerator.GetDataFieldPrecision(fld: TField): integer;
-begin
-  System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
-    (fld is TFloatField));
-  if fld is TBCDField then
-    Result := (fld as TBCDField).Precision
-  else if fld is TFMTBCDField then
-    Result := (fld as TFMTBCDField).Precision
-  else
-    Result := (fld as TFloatField).Precision
-end;
-
-function TDSGenerator.GenerateLine_FieldDefAdd(fld: TField): string;
-begin
-  (* -----------------------------------------------------------------------
-    [Doc]
-    TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
-    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
-    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
-    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
-    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
-    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
-    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
-    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
-    ftTimeStampOffset, ftObject, ftSingle);
-    ------------------------------------------------------------------------- *)
-  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
-    ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ');'
-  else if (fld.DataType in [ftBCD, ftFMTBcd]) then
-    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
-      fIndentationText + '    ' +
-      Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
-      [fld.FieldName, FieldTypeToString(fld.DataType),
-      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak + fIndentationText
-      + '  end;'
-  else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', 100);'
-  else if (fld.DataType in [ftString, ftWideString]) then
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
-  else
-    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
-      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
-end;
-
 function FloatToCode(val: Extended): string;
 begin
   Result := FloatToStr(val);
@@ -200,298 +184,24 @@ begin
     Result := Result + '+' + TimeToCode(dt);
 end;
 
-function TDSGenerator.FormatLongStringLiteral(
-  const Literal: string;
-  fistLineStartAt: integer): string;
-var
-  s: string;
-  lines: TArray<string>;
-  i: integer;
-begin
-  s := QuotedStr(Literal);
-  if fistLineStartAt + Length(s) <= RightMargin then
-  begin
-    Result := QuotedStr(Literal);
-  end
-  else
-  begin
-    lines := TTextWrapper.WrapTextWholeWords(s,
-      RightMargin - 2 * Length(fIndentationText) - 1);
-    Result := sLineBreak;
-    for i := 0 to High(lines) do
-      Result := Result + fIndentationText + fIndentationText +
-        IfThen(i > 0, '''') + lines[i] + IfThen(i < High(lines),
-        '''+' + sLineBreak, '');
-  end
-end;
-
-function TDSGenerator.GenerateFieldByName(
-  fld: TField;
-  out line: string): boolean;
-var
-  linePattern: string;
-  value: string;
-begin
-  Result := False;
-  line := '';
-  if fld.IsNull then
-    exit;
-  linePattern := fIndentationText + 'ds.FieldByName(' + QuotedStr(fld.FieldName)
-    + ').Value := %s;';
-  case fld.DataType of
-    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-      value := fld.AsString;
-    ftBoolean:
-      value := BoolToStr(fld.AsBoolean, true);
-    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-      value := FloatToCode(fld.AsExtended);
-    ftDate:
-      value := DateToCode(fld.AsDateTime);
-    ftTime:
-      value := TimeToCode(fld.AsDateTime);
-    ftDateTime:
-      value := DateTimeToCode(fld.AsDateTime);
-    ftString, ftWideString:
-      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2);
-  else
-    value := '';
-  end;
-  if value = '' then
-    exit;
-  line := Format(linePattern, [value]);
-  Result := true;
-end;
-
-function TDSGenerator.GenerateStructure: string;
-var
-  fld: TField;
-  sDataSetCreate: string;
-  sFieldDefinitions: string;
-begin
-  case fDataSetType of
-    dstFDMemTable:
-      sDataSetCreate := 'TFDMemTable.Create(AOwner)';
-    dstClientDataSet:
-      sDataSetCreate := 'TClientDataSet.Create(AOwner)';
-  end;
-  sFieldDefinitions := '';
-  if fDataSet <> nil then
-    for fld in fDataSet.Fields do
-      sFieldDefinitions := sFieldDefinitions +
-      { } fIndentationText + fIndentationText + GenerateLine_FieldDefAdd(fld) +
-        sLineBreak;
-  Result :=
-  { } fIndentationText + 'ds := ' + sDataSetCreate + ';' + sLineBreak +
-  { } fIndentationText + 'with ds do' + sLineBreak +
-  { } fIndentationText + 'begin' + sLineBreak +
-  { } sFieldDefinitions +
-  { } fIndentationText + fIndentationText + 'CreateDataSet;' + sLineBreak +
-  { } fIndentationText + 'end;' + sLineBreak
-end;
-
-function TDSGenerator.GenerateOneAppend_Multiline: string;
-var
-  fld: TField;
-  line: string;
-  sl: TStringList;
-begin
-  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    exit('');
-  sl := TStringList.Create;
-  try
-    sl.Add(fIndentationText + 'ds.Append;');
-    for fld in fDataSet.Fields do
-    begin
-      if GenerateFieldByName(fld, line) then
-        sl.Add(line);
-    end;
-    sl.Add(fIndentationText + 'ds.Post;');
-    Result := sl.Text;
-  finally
-    sl.Free;
-  end;
-end;
-
-function TDSGenerator.GenerateSingleLine_ValuesArray: string;
-var
-  fld: TField;
-  value: string;
-begin
-  Result := '';
-  for fld in fDataSet.Fields do
-  begin
-    if fld.IsNull then
-      value := 'Null'
-    else
-      case fld.DataType of
-        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
-          value := fld.AsString;
-        ftBoolean:
-          value := BoolToStr(fld.AsBoolean, true);
-        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
-          value := FloatToCode(fld.AsExtended);
-        ftDate:
-          value := DateToCode(fld.AsDateTime);
-        ftTime:
-          value := TimeToCode(fld.AsDateTime);
-        ftDateTime:
-          value := DateTimeToCode(fld.AsDateTime);
-        ftString, ftWideString:
-          value := QuotedStr(fld.value);
-      else
-        value := 'Null'
-      end;
-    Result := IfThen(Result = '', value, Result + ', ' + value);
-  end;
-  Result := '[' + Result + ']';
-end;
-
-function TDSGenerator.GenerateOneAppend_Singleline: string;
-begin
-  if (fDataSet <> nil) and (fDataSet.Fields.Count > 0) then
-    Result := fIndentationText + 'ds.AppendRecord(' +
-      GenerateSingleLine_ValuesArray() + ');' + sLineBreak
-  else
-    Result := '';
-end;
-
-function TDSGenerator.GenerateOneAppend: string;
-begin
-  case fAppendMode of
-    amMultilineAppends:
-      Result := GenerateOneAppend_Multiline;
-    amSinglelineAppends:
-      Result := GenerateOneAppend_Singleline;
-  else
-    Result := '';
-  end;
-end;
-
-function TDSGenerator.GenerateAppendsBlock: string;
-var
-  sDataAppend: string;
-  aBookmark: TBookmark;
-  aRowCounter: integer;
-  sValuesArray: string;
-begin
-  if (fDataSet = nil) or (fDataSet.Fields.Count = 0) then
-    exit('');
-  if fMaxRows = 0 then
-    aRowCounter := MaxInt
-  else
-    aRowCounter := fMaxRows;
-  sDataAppend := '';
-  if DataSet <> nil then
-  begin
-    DataSet.DisableControls;
-    try
-      DataSet.Active := true;
-      aBookmark := DataSet.GetBookmark;
-      try
-        DataSet.First;
-        if fAppendMode = amAppendRows then
-        begin
-          sDataAppend := fIndentationText + 'ds.AppendRows([' + sLineBreak;
-          while not DataSet.Eof and (aRowCounter > 0) do
-          begin
-            sValuesArray := GenerateSingleLine_ValuesArray();
-            DataSet.Next;
-            sDataAppend := sDataAppend + fIndentationText + fIndentationText +
-              sValuesArray + IfThen(not DataSet.Eof, ',') + sLineBreak;
-            dec(aRowCounter);
-          end;
-          sDataAppend := sDataAppend + fIndentationText + ']);' + sLineBreak;
-        end
-        else
-        begin
-          while not DataSet.Eof and (aRowCounter > 0) do
-          begin
-            sDataAppend := sDataAppend + GenerateOneAppend;
-            dec(aRowCounter);
-            DataSet.Next;
-          end;
-        end;
-      finally
-        DataSet.GotoBookmark(aBookmark);
-        DataSet.FreeBookmark(aBookmark);
-      end;
-    finally
-      DataSet.EnableControls;
-    end;
-  end;
-
-  Result :=
-  { } sDataAppend +
-  { } fIndentationText + 'ds.First;' + sLineBreak;
-end;
-
-function TDSGenerator.GenerateUnitHeader: string;
-var
-  sDataSetUnits: string;
-begin
-  case fDataSetType of
-    dstFDMemTable:
-      sDataSetUnits := fIndentationText + 'FireDAC.Comp.Client;';
-    dstClientDataSet:
-      sDataSetUnits :=
-      { } fIndentationText + 'Datasnap.DBClient;'#13#10 +
-      { } fIndentationText + 'MidasLib;';
-  end;
-  Result :=
-  { } 'unit ' + fNameOfUnit + ';' + sLineBreak +
-  { } sLineBreak +
-  { } 'interface' + sLineBreak +
-  { } sLineBreak +
-  { } 'uses' + sLineBreak +
-  { } fIndentationText + 'System.Classes,' + sLineBreak +
-  { } fIndentationText + 'System.SysUtils,' + sLineBreak +
-  { } fIndentationText + 'System.Variants,' + sLineBreak +
-  { } fIndentationText + 'Data.DB,' + sLineBreak +
-  { } sDataSetUnits + sLineBreak +
-  { } sLineBreak +
-  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
-  { } sLineBreak +
-  { } 'implementation' + sLineBreak +
-  { } sLineBreak;
-end;
-
-function TDSGenerator.GenerateFunction: string;
-var
-  aClassName: string;
-begin
-  case fDataSetType of
-    dstFDMemTable:
-      aClassName := 'TFDMemTable';
-    dstClientDataSet:
-      aClassName := 'TClientDataSet';
-  end;
-  Result :=
-  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
-  { } 'var' + sLineBreak +
-  { } '  ds: ' + aClassName + ';' + sLineBreak +
-  { } 'begin' + sLineBreak +
-  { } GenerateStructure() +
-  { } GenerateAppendsBlock() +
-  { } '  Result := ds;' + sLineBreak +
-  { } 'end;' + sLineBreak;
-end;
-
-function TDSGenerator.GenerateUnitFooter(): string;
-begin
-  Result := sLineBreak + 'end.' + sLineBreak;
-end;
-
 function TDSGenerator.GenerateAll(aMode: TGeneratorMode): string;
 begin
   case aMode of
     genStructure:
-      Result := GenerateStructure();
+      Result := TInternalGenerator.GenerateStructure(fDataSet, fDataSetType,
+        fIndentationText);
     genAppend:
-      Result := GenerateAppendsBlock();
+      Result := IfThen(fDataSet = nil, '',
+        TInternalGenerator.GenerateDataBlock(fDataSet, fAppendMode, fMaxRows,
+        fRightMargin, fIndentationText));
     genUnit:
-      Result := GenerateUnitHeader + GenerateFunction + GenerateUnitFooter;
+      Result := TInternalGenerator.GenerateUnitHeader(fDataSetType, fNameOfUnit,
+        fIndentationText) + TInternalGenerator.GenerateFunction(fDataSet,
+        fDataSetType, fAppendMode, fMaxRows, fRightMargin, fIndentationText) +
+        TInternalGenerator.GenerateUnitFooter();
     genFunction:
-      Result := GenerateFunction;
+      Result := TInternalGenerator.GenerateFunction(fDataSet, fDataSetType,
+        fAppendMode, fMaxRows, fRightMargin, fIndentationText);
   else
     Result := '// Unsupported generator mode';
   end;
@@ -607,10 +317,378 @@ begin
   aGenerator := TDSGenerator.Create(nil);
   try
     aGenerator.DataSet := ds;
-    Clipboard.AsText := aGenerator.GenerateFunction;
+    Clipboard.AsText := TInternalGenerator.GenerateFunction(aGenerator.DataSet,
+      aGenerator.DataSetType, aGenerator.AppendMode, aGenerator.MaxRows,
+      aGenerator.RightMargin, aGenerator.IndentationText);
   finally
     aGenerator.Free;
   end;
+end;
+
+{ TFieldGenerator }
+
+class function TInternalGenerator.GenerateFieldDefAdd(
+  const fld: TField;
+  const aIndentation: string): string;
+begin
+  (* -----------------------------------------------------------------------
+    [Doc]
+    TFieldType = ( ftUnknown, ftString, ftSmallint, ftInteger, ftWord,
+    ftBoolean, ftFloat, ftCurrency, ftBCD, ftDate, ftTime, ftDateTime,
+    ftBytes, ftVarBytes, ftAutoInc, ftBlob, ftMemo, ftGraphic, ftFmtMemo,
+    ftParadoxOle, ftDBaseOle, ftTypedBinary, ftCursor, ftFixedChar, ftWideString,
+    ftLargeint, ftADT, ftArray, ftReference, ftDataSet, ftOraBlob, ftOraClob,
+    ftVariant, ftInterface, ftIDispatch, ftGuid, ftTimeStamp, ftFMTBcd,
+    ftFixedWideChar, ftWideMemo, ftOraTimeStamp, ftOraInterval,
+    ftLongWord, ftShortint, ftByte, ftExtended, ftConnection, ftParams, ftStream,
+    ftTimeStampOffset, ftObject, ftSingle);
+    ------------------------------------------------------------------------- *)
+  if fld.DataType in [ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint,
+    ftBoolean, ftFloat, ftCurrency, ftDate, ftTime, ftDateTime] then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ');'
+  else if (fld.DataType in [ftBCD, ftFMTBcd]) then
+    Result := 'with FieldDefs.AddFieldDef do begin' + sLineBreak +
+      DupeString(aIndentation, 3) +
+      Format('Name := ''%s'';  DataType := %s;  Precision := %d;  Size := %d;',
+      [fld.FieldName, FieldTypeToString(fld.DataType),
+      GetDataFieldPrecision(fld), fld.Size]) + sLineBreak +
+      DupeString(aIndentation, 2) + 'end;'
+  else if (fld.DataType in [ftString, ftWideString]) and (fld.Size > 9999) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', 100);'
+  else if (fld.DataType in [ftString, ftWideString]) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
+  else
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
+end;
+
+class function TInternalGenerator.GetDataFieldPrecision(fld: TField): integer;
+begin
+  System.Assert((fld is TBCDField) or (fld is TFMTBCDField) or
+    (fld is TFloatField));
+  if fld is TBCDField then
+    Result := (fld as TBCDField).Precision
+  else if fld is TFMTBCDField then
+    Result := (fld as TFMTBCDField).Precision
+  else
+    Result := (fld as TFloatField).Precision
+end;
+
+class function TInternalGenerator.GenerateFieldByName(
+  fld: TField;
+  const aIndentation: string;
+  const aRightMargin: integer;
+  out line: string): boolean;
+var
+  linePattern: string;
+  value: string;
+begin
+  Result := False;
+  line := '';
+  if fld.IsNull then
+    exit;
+  linePattern := aIndentation + 'ds.FieldByName(' + QuotedStr(fld.FieldName) +
+    ').Value := %s;';
+  case fld.DataType of
+    ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+      value := fld.AsString;
+    ftBoolean:
+      value := BoolToStr(fld.AsBoolean, true);
+    ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+      value := FloatToCode(fld.AsExtended);
+    ftDate:
+      value := DateToCode(fld.AsDateTime);
+    ftTime:
+      value := TimeToCode(fld.AsDateTime);
+    ftDateTime:
+      value := DateTimeToCode(fld.AsDateTime);
+    ftString, ftWideString:
+      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2,
+        aRightMargin, aIndentation);
+  else
+    value := '';
+  end;
+  if value = '' then
+    exit;
+  line := Format(linePattern, [value]);
+  Result := true;
+end;
+
+class function TInternalGenerator.FormatLongStringLiteral(
+  const aLiteral: string;
+  const aFistLineStartAt: integer;
+  const aRightMargin: integer;
+  const aIndentation: string): string;
+var
+  s: string;
+  lines: TArray<string>;
+  i: integer;
+  sb: TStringBuilder;
+begin
+  s := QuotedStr(aLiteral);
+  if aFistLineStartAt + Length(s) <= aRightMargin then
+  begin
+    Result := QuotedStr(aLiteral);
+  end
+  else
+  begin
+    lines := TTextWrapper.WrapTextWholeWords(s,
+      aRightMargin - 2 * Length(aIndentation) - 1);
+    sb := TStringBuilder.Create;
+    try
+      sb.Append(sLineBreak);
+      for i := 0 to High(lines) do
+        sb.Append(DupeString(aIndentation, 2) + IfThen(i > 0, '''') + lines[i] +
+          IfThen(i < High(lines), '''+' + sLineBreak, ''));
+      Result := sb.ToString();
+    finally
+      sb.Free;
+    end;
+  end
+end;
+
+class function TInternalGenerator.GenerateOneAppend(
+  const aAppendMode: TAppendMode;
+  const aFields: TFields;
+  const aIndentation: string;
+  const aRightMargin: integer): string;
+begin
+  case aAppendMode of
+    amMultilineAppends:
+      Result := GenerateOneAppend_Multiline(aFields, aIndentation,
+        aRightMargin);
+    amSinglelineAppends:
+      Result := aIndentation + 'ds.AppendRecord(' +
+        GenerateSingleLine_ValuesArray(aFields) + ');' + sLineBreak;
+  else
+    Result := '';
+  end;
+end;
+
+class function TInternalGenerator.GenerateOneAppend_Multiline(
+  const aFields: TFields;
+  const aIndentation: string;
+  const aRightMargin: integer): string;
+var
+  fld: TField;
+  line: string;
+  sl: TStringList;
+begin
+
+  sl := TStringList.Create;
+  try
+    sl.Add(aIndentation + 'ds.Append;');
+    for fld in aFields do
+    begin
+      if TInternalGenerator.GenerateFieldByName(fld, aIndentation, aRightMargin,
+        line) then
+        sl.Add(line);
+    end;
+    sl.Add(aIndentation + 'ds.Post;');
+    Result := sl.Text;
+  finally
+    sl.Free;
+  end;
+end;
+
+class function TInternalGenerator.GenerateSingleLine_ValuesArray
+  (const aFields: TFields): string;
+var
+  fld: TField;
+  value: string;
+begin
+  Result := '';
+  for fld in aFields do
+  begin
+    if fld.IsNull then
+      value := 'Null'
+    else
+      case fld.DataType of
+        ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
+          value := fld.AsString;
+        ftBoolean:
+          value := BoolToStr(fld.AsBoolean, true);
+        ftFloat, ftCurrency, ftBCD, ftFMTBcd:
+          value := FloatToCode(fld.AsExtended);
+        ftDate:
+          value := DateToCode(fld.AsDateTime);
+        ftTime:
+          value := TimeToCode(fld.AsDateTime);
+        ftDateTime:
+          value := DateTimeToCode(fld.AsDateTime);
+        ftString, ftWideString:
+          value := QuotedStr(fld.value);
+      else
+        value := 'Null'
+      end;
+    Result := IfThen(Result = '', value, Result + ', ' + value);
+  end;
+  Result := '[' + Result + ']';
+end;
+
+class function TInternalGenerator.GenerateDataBlock(
+  const aDataSet: TDataSet;
+  const aAppendMode: TAppendMode;
+  const aMaxRows: integer;
+  const aRightMargin: integer;
+  const aIndentation: string): string;
+var
+  sb: TStringBuilder;
+  bookmark: TBookmark;
+  rowCounter: integer;
+  valuesArray: string;
+  dataAppendCode: string;
+begin
+  if (aDataSet = nil) or (aDataSet.Fields.Count = 0) then
+    exit('');
+  if aMaxRows = 0 then
+    rowCounter := MaxInt
+  else
+    rowCounter := aMaxRows;
+  sb := TStringBuilder.Create();
+  try
+    aDataSet.DisableControls;
+    try
+      aDataSet.Active := true;
+      bookmark := aDataSet.GetBookmark;
+      try
+        aDataSet.First;
+        if aAppendMode = amAppendRows then
+        begin
+          sb.Append(aIndentation + 'ds.AppendRows([' + sLineBreak);
+          while not aDataSet.Eof and (rowCounter > 0) do
+          begin
+            valuesArray := GenerateSingleLine_ValuesArray(aDataSet.Fields);
+            aDataSet.Next;
+            sb.Append(DupeString(aIndentation, 2) + valuesArray +
+              IfThen(not aDataSet.Eof, ',') + sLineBreak);
+            dec(rowCounter);
+          end;
+          sb.Append(aIndentation + ']);' + sLineBreak);
+        end
+        else
+        begin
+          while not aDataSet.Eof and (rowCounter > 0) do
+          begin
+            sb.Append(GenerateOneAppend(aAppendMode, aDataSet.Fields,
+              aIndentation, aRightMargin));
+            dec(rowCounter);
+            aDataSet.Next;
+          end;
+        end;
+      finally
+        aDataSet.GotoBookmark(bookmark);
+        aDataSet.FreeBookmark(bookmark);
+      end;
+    finally
+      aDataSet.EnableControls;
+    end;
+    dataAppendCode := sb.ToString;
+  finally
+    sb.Free;
+  end;
+
+  Result :=
+  { } dataAppendCode +
+  { } aIndentation + 'ds.First;' + sLineBreak;
+end;
+
+class function TInternalGenerator.GenerateUnitHeader(
+  const aDataSetType: TDataSetType;
+  const aNameOfUnit: string;
+  const aIndentation: string): string;
+var
+  dataSetUnits: string;
+begin
+  case aDataSetType of
+    dstFDMemTable:
+      dataSetUnits := aIndentation + 'FireDAC.Comp.Client;';
+    dstClientDataSet:
+      dataSetUnits :=
+      { } aIndentation + 'Datasnap.DBClient;'#13#10 +
+      { } aIndentation + 'MidasLib;';
+  end;
+  Result :=
+  { } 'unit ' + aNameOfUnit + ';' + sLineBreak +
+  { } sLineBreak +
+  { } 'interface' + sLineBreak +
+  { } sLineBreak +
+  { } 'uses' + sLineBreak +
+  { } aIndentation + 'System.Classes,' + sLineBreak +
+  { } aIndentation + 'System.SysUtils,' + sLineBreak +
+  { } aIndentation + 'System.Variants,' + sLineBreak +
+  { } aIndentation + 'Data.DB,' + sLineBreak +
+  { } dataSetUnits + sLineBreak +
+  { } sLineBreak +
+  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  { } sLineBreak +
+  { } 'implementation' + sLineBreak +
+  { } sLineBreak;
+end;
+
+class function TInternalGenerator.GenerateFunction(
+  const aDataSet: TDataSet;
+  const aDataSetType: TDataSetType;
+  const aAppendMode: TAppendMode;
+  const aMaxRows: integer;
+  const aRightMargin: integer;
+  const aIndentation: string): string;
+var
+  aClassName: string;
+begin
+  case aDataSetType of
+    dstFDMemTable:
+      aClassName := 'TFDMemTable';
+    dstClientDataSet:
+      aClassName := 'TClientDataSet';
+  end;
+  Result :=
+  { } 'function GivenDataSet (aOwner: TComponent): TDataSet;' + sLineBreak +
+  { } 'var' + sLineBreak +
+  { } '  ds: ' + aClassName + ';' + sLineBreak +
+  { } 'begin' + sLineBreak +
+  { } GenerateStructure(aDataSet, aDataSetType, aIndentation) +
+  { } GenerateDataBlock(aDataSet, aAppendMode, aMaxRows, aRightMargin,
+    aIndentation) +
+  { } '  Result := ds;' + sLineBreak +
+  { } 'end;' + sLineBreak;
+end;
+
+class function TInternalGenerator.GenerateStructure(
+  const aDataSet: TDataSet;
+  const aDataSetType: TDataSetType;
+  const aIndentation: string): string;
+var
+  fld: TField;
+  dataSetCreateCode: string;
+  fieldDefinitions: string;
+begin
+  case aDataSetType of
+    dstFDMemTable:
+      dataSetCreateCode := 'TFDMemTable.Create(AOwner)';
+    dstClientDataSet:
+      dataSetCreateCode := 'TClientDataSet.Create(AOwner)';
+  end;
+  fieldDefinitions := '';
+  if (aDataSet <> nil) then
+    for fld in aDataSet.Fields do
+      fieldDefinitions := fieldDefinitions + DupeString(aIndentation, 2) +
+        GenerateFieldDefAdd(fld, aIndentation) + sLineBreak;
+  Result :=
+  { } aIndentation + 'ds := ' + dataSetCreateCode + ';' + sLineBreak +
+  { } aIndentation + 'with ds do' + sLineBreak +
+  { } aIndentation + 'begin' + sLineBreak +
+  { } fieldDefinitions +
+  { } DupeString(aIndentation, 2) + 'CreateDataSet;' + sLineBreak +
+  { } aIndentation + 'end;' + sLineBreak
+end;
+
+class function TInternalGenerator.GenerateUnitFooter(): string;
+begin
+  Result := sLineBreak + 'end.' + sLineBreak;
 end;
 
 { TTextWrapper }

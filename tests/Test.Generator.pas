@@ -10,7 +10,6 @@ uses
   Data.DB,
   FireDAC.Comp.Client,
   MemoryDataSetGenerator,
-  GeneratorForTests,
   Helper.DUnitAssert;
 
 {$M+}
@@ -19,8 +18,12 @@ type
 
   [TestFixture]
   TestDSGenerator = class(TObject)
+  private const
+    DefaultMaxRows: integer = 100;
+  private const
+    DefaultRightMargin: integer = 76;
   private
-    fGenerator: TDSGeneratorUnderTest;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
     fStringStream: TStringStream;
   public
@@ -34,10 +37,10 @@ type
     procedure Generate_HistoricalEvents;
     procedure GenerateToStream_StringDataSet;
     procedure GenerateToFile_UnitName;
-    procedure GenerateUnit_Header;
+    procedure GenerateUnit_Header_FDMemTable;
     procedure GenerateUnit_Header_ClientDataSet;
     procedure GenerateUnit_Footer;
-    procedure GenerateFunction;
+    procedure GenerateFunction_FDMemTable_WithCyrlicText;
     procedure GenerateFunction_ClientDataSet;
   end;
 
@@ -78,7 +81,7 @@ end;
 
 procedure TestDSGenerator.Setup;
 begin
-  fGenerator := TDSGeneratorUnderTest.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
   fStringStream := TStringStream.Create('', TEncoding.UTF8);
 end;
@@ -165,9 +168,8 @@ procedure TestDSGenerator.Generate_UnitHeader;
 var
   actualCode: string;
 begin
-  fGenerator.NameOfUnit := 'Fake.HistoricalEvents';
-
-  actualCode := fGenerator._GenerateUnitHeader;
+  actualCode := TInternalGenerator.GenerateUnitHeader(dstFDMemTable,
+    'Fake.HistoricalEvents','  ');
 
   Assert.AreMemosEqual(
     {} 'unit Fake.HistoricalEvents;'#13 +
@@ -288,15 +290,14 @@ begin
   Assert.AreEqual('unit FakeDataSet.Historical;', actualLine);
 end;
 
-procedure TestDSGenerator.GenerateUnit_Header;
+procedure TestDSGenerator.GenerateUnit_Header_FDMemTable;
 var
-  actualCode: string;
+  code: string;
 begin
-  fGenerator.NameOfUnit := 'Unit1';
-
-  actualCode := fGenerator._GenerateUnitHeader;
+  code := TInternalGenerator.GenerateUnitHeader(dstFDMemTable,
+    'Unit1', '  ');
   Assert.AreMemosEqual(
-    {} 'unit Unit1;'#13 +
+    { } 'unit Unit1;'#13 +
     {} #13 +
     {} 'interface'#13 +
     {} #13 +
@@ -310,8 +311,7 @@ begin
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13 +
     {} #13 +
     {} 'implementation'#13 +
-    {} #13, actualCode);
-  // MidasLib, Datasnap.DBClient
+    {} #13, code);
 end;
 
 procedure TestDSGenerator.GenerateUnit_Header_ClientDataSet;
@@ -319,9 +319,10 @@ var
   actualCode: string;
 begin
   fGenerator.DataSetType := dstClientDataSet;
-  actualCode := fGenerator._GenerateUnitHeader;
+  actualCode := TInternalGenerator.GenerateUnitHeader(dstClientDataSet,
+    'MemoryDataSetUnit','  ');
   Assert.AreMemosEqual(
-    {} 'unit uSampleDataSet;'#13 +
+    {} 'unit MemoryDataSetUnit;'#13 +
     {} #13 +
     {} 'interface'#13 +
     {} #13 +
@@ -344,23 +345,25 @@ procedure TestDSGenerator.GenerateUnit_Footer;
 var
   actualCode: string;
 begin
-  actualCode := fGenerator._GenerateUnitFooter;
+  actualCode := TInternalGenerator.GenerateUnitFooter;
   Assert.AreMemosEqual(
     {} #13 +
     {} 'end.'#13, actualCode);
 end;
 
-procedure TestDSGenerator.GenerateFunction;
+procedure TestDSGenerator.GenerateFunction_FDMemTable_WithCyrlicText;
 var
-  actualCode: string;
+  dataSet: TDataSet;
+  code: string;
 begin
-  fGenerator.dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
+  dataSet := GivenDataSet_WithString(fOwner, 'CyrlicText',
     'Все люди рождаются свободными');
 
-  actualCode := fGenerator._GenerateFunction;
+  code := TInternalGenerator.GenerateFunction(dataSet,dstFDMemTable,
+    amMultilineAppends, DefaultMaxRows, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual(
-    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    { } 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
     {} + 'var'#13
     {} + '  ds: TFDMemTable;'#13
     {} + 'begin'#13
@@ -375,18 +378,18 @@ begin
     {} + '  ds.Post;'#13
     {} + '  ds.First;'#13
     {} + '  Result := ds;'#13
-    {} + 'end;'#13, actualCode);
+    {} + 'end;'#13, code);
 end;
 
 procedure TestDSGenerator.GenerateFunction_ClientDataSet;
 var
-  actualCode: string;
+  dataSet: TDataSet;
+  code: string;
 begin
-  fGenerator.dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
-  fGenerator.DataSetType := dstClientDataSet;
-  fGenerator.AppendMode := amSinglelineAppends;
+  dataSet := GivenDataSet_MiniHistoricalEvents(fOwner);
 
-  actualCode := fGenerator._GenerateFunction;
+  code := TInternalGenerator.GenerateFunction(dataSet, dstClientDataSet,
+    amSinglelineAppends, DefaultMaxRows, DefaultRightMargin, '  ');
 
   Assert.AreMemosEqual_FullReport(
     {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
@@ -405,7 +408,7 @@ begin
     {} + '  ds.AppendRecord([2, ''Battle of Vienna'', EncodeDate(1683,9,12)]);'#13
     {} + '  ds.First;'#13
     {} + '  Result := ds;'#13
-    {} + 'end;'#13, actualCode);
+    {} + 'end;'#13, code);
 end;
 
 end.

@@ -14,7 +14,6 @@ uses
   MemoryDataSetGenerator in '..\src\MemoryDataSetGenerator.pas',
   Test.GenerateStructure in 'Test.GenerateStructure.pas',
   Test.GenerateAppends in 'Test.GenerateAppends.pas',
-  GeneratorForTests in 'GeneratorForTests.pas',
   Helper.DUnitAssert in 'Helper.DUnitAssert.pas',
   Test.Generator in 'Test.Generator.pas',
   Test.TextWrapper in 'Test.TextWrapper.pas';

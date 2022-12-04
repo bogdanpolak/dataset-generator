@@ -10,7 +10,6 @@ uses
   Data.DB,
   FireDAC.Comp.Client,
   MemoryDataSetGenerator,
-  GeneratorForTests,
   Helper.DUnitAssert;
 
 {$M+}
@@ -20,7 +19,7 @@ type
   [TestFixture]
   TestGenerateStructure = class(TObject)
   private
-    fGenerator: TDSGeneratorUnderTest;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
   public
     [Setup]
@@ -54,7 +53,7 @@ uses
 
 procedure TestGenerateStructure.Setup;
 begin
-  fGenerator := TDSGeneratorUnderTest.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
 end;
 
@@ -158,7 +157,7 @@ var
 begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
 
-  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
+  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
 
   Assert.AreEqual('FieldDefs.Add(''Birthday'', ftDate);', actualCode);
 end;
@@ -170,7 +169,7 @@ var
 begin
   fld := GivenField(fOwner, 'Created', ftDateTime);
 
-  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
+  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
 
   Assert.AreEqual('FieldDefs.Add(''Created'', ftDateTime);', actualCode);
 end;
@@ -182,7 +181,7 @@ var
 begin
   fld := GivenField(fOwner, 'Rating', ftInteger);
 
-  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
+  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
 
   Assert.AreEqual('FieldDefs.Add(''Rating'', ftInteger);', actualCode);
 end;
@@ -194,7 +193,7 @@ var
 begin
   fld := GivenField(fOwner, 'Description', ftWideString, 30);
 
-  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
+  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'  ');
 
   Assert.AreEqual('FieldDefs.Add(''Description'', ftWideString, 30);',
     actualCode);
@@ -207,12 +206,13 @@ var
 begin
   fld := GivenField_BCD_10_4(fOwner, 'Price');
 
-  actualCode := fGenerator._GenerateLine_FieldDefAdd(fld);
+  actualCode := TInternalGenerator.GenerateFieldDefAdd(fld,'·');
 
   Assert.AreMemosEqual(
-    (* *) 'with FieldDefs.AddFieldDef do begin'#13 +
-    (* *) '      Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
-    (* *) + '    end;', actualCode);
+    { } 'with FieldDefs.AddFieldDef do begin'#13 +
+    { } '···Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
+    +
+    { } '··end;', actualCode);
 end;
 
 // -----------------------------------------------------------------------

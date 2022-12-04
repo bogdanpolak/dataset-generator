@@ -9,7 +9,6 @@ uses
   Data.DB,
   FireDAC.Comp.Client,
   MemoryDataSetGenerator,
-  GeneratorForTests,
   Helper.DUnitAssert;
 
 {$M+}
@@ -19,7 +18,7 @@ type
   [TestFixture]
   TestGenerateAppends = class(TObject)
   private
-    fGenerator: TDSGeneratorUnderTest;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
   public
     [Setup]
@@ -33,6 +32,7 @@ type
     procedure GenFieldByName_Date;
     procedure GenFieldByName_DateTime;
     procedure GenFieldByName_BCDField;
+    procedure GenFieldByName_WithLongLitteral;
     // -------------
     // -------------
     procedure Iss002_GenLongStringLiterals_NewLines;
@@ -69,7 +69,7 @@ uses
 
 procedure TestGenerateAppends.Setup;
 begin
-  fGenerator := TDSGeneratorUnderTest.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
 end;
 
@@ -199,10 +199,10 @@ begin
   fld := GivenField(fOwner, 'Level', ftInteger);
   fld.DataSet.AppendRecord([1]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''Level'').Value := 1;', actualCode);
+  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
+  Assert.AreEqual('·ds.FieldByName(''Level'').Value := 1;', actualCode);
 end;
 
 procedure TestGenerateAppends.GenFieldByName_Date;
@@ -214,11 +214,11 @@ begin
   fld := GivenField(fOwner, 'Birthday', ftDate);
   fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
   Assert.AreEqual
-    ('  ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
+    ('·ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
     actualCode);
 end;
 
@@ -232,10 +232,10 @@ begin
   fld.DataSet.AppendRecord( //.
     [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''ChangeDate'').Value := ' +
+  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
+  Assert.AreEqual('·ds.FieldByName(''ChangeDate'').Value := ' +
     'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);', actualCode);
 end;
 
@@ -248,11 +248,11 @@ begin
   fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
   fld.DataSet.AppendRecord(['Alice has a cat']);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
+  Assert.IsTrue(isGenerated,'FieldByName generaton failed');
   Assert.AreEqual
-    ('  ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
+    ('·ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
     actualCode);
 end;
 
@@ -275,10 +275,29 @@ begin
   ds.AppendRecord([1.01]);
   fld := ds.Fields[0];
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 70, actualCode);
 
   Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
+  Assert.AreEqual('·ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
+end;
+
+procedure TestGenerateAppends.GenFieldByName_WithLongLitteral;
+var
+  fld: TField;
+  actualCode: string;
+  isGenerated: Boolean;
+begin
+  fld := GivenField(fOwner, 'ChangeDate', ftWideString, 1000);
+  fld.DataSet.AppendRecord(['Here we have very long text: Lorem ipsum' +
+    ' dolor sit amet, consectetur adipiscing elit']);
+
+  isGenerated := TInternalGenerator.GenerateFieldByName(fld, '·', 45, actualCode);
+
+  Assert.IsTrue(isGenerated, 'FieldByName generaton failed');
+  Assert.AreMemosEqual('·ds.FieldByName(''ChangeDate'').Value := ' + sLineBreak
+    { } + '··''Here we have very long text: Lorem ipsum ''+' + sLineBreak
+    { } + '··''dolor sit amet, consectetur adipiscing ''+' + sLineBreak
+    { } + '··''elit'';', actualCode);
 end;
 
 // -----------------------------------------------------------------------
@@ -538,7 +557,7 @@ begin
     [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'aRow'], [4, 'LastRow']]);
   fGenerator.DataSet.RecNo := 3;
 
-  fGenerator._GenerateAppendsBlock;
+  fGenerator.Execute;
 
   Assert.AreEqual(3, fGenerator.DataSet.RecNo);
 end;
