@@ -9,6 +9,7 @@ uses
   System.SysUtils,
   System.Variants,
   System.Classes,
+  System.StrUtils,
   Spring.Collections,
 
   Vcl.Graphics,
@@ -16,7 +17,6 @@ uses
   Vcl.Forms,
   Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList,
   {-}
-  Logic.Scorecards,
   Data.DataModule1;
 
 type
@@ -31,7 +31,9 @@ type
     actDatabaseConnect: TAction;
     MemoTest: TMemo;
     procedure actDatabaseConnectExecute(Sender: TObject);
-    procedure ActionList1Update(Action: TBasicAction; var Handled: Boolean);
+    procedure ActionList1Update(
+      Action: TBasicAction;
+      var Handled: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lbxMonthsClick(Sender: TObject);
@@ -40,7 +42,7 @@ type
   private
     fDataModule1: TDataModule1;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
-    procedure ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
+    procedure ShowData(const aScores: IEnumerable<TEmployeeScore>);
   end;
 
 var
@@ -59,7 +61,9 @@ begin
   FillListBoxWithMonths(lbxMonths);
 end;
 
-procedure TForm1.ActionList1Update(Action: TBasicAction; var Handled: Boolean);
+procedure TForm1.ActionList1Update(
+  Action: TBasicAction;
+  var Handled: Boolean);
 begin
   if fDataModule1 = nil then
   begin
@@ -97,35 +101,66 @@ begin
   actDatabaseConnect.Execute;
 end;
 
-procedure TForm1.ShowData(const aEmployeeScores: IReadOnlyCollection<TEmployeeScore>);
+function ValuesToStringPipes(const aValues: TArray<Currency>): string;
 var
-  employeeScore: TEmployeeScore;
+  v: Currency;
+  idx: Integer;
+  s: string;
+begin
+  s := '';
+  for idx := 0 to High(aValues) do
+  begin
+    v := aValues[idx];
+    s := s + '| ' + CurrToStrF(v, ffFixed, 2);
+  end;
+  Result := IfThen(aValues = nil, '', s + ' |');
+end;
+
+procedure TForm1.ShowData(const aScores: IEnumerable<TEmployeeScore>);
+var
+  score: TEmployeeScore;
+  valuesText: string;
 begin
   MemoTest.Clear;
-  for employeeScore in aEmployeeScores do
+  for score in aScores do
   begin
-    MemoTest.Lines.Add(Format('%s (%d) - %d orders - %s', [employeeScore.fEmployeeName,
-        employeeScore.fEmployeeId, employeeScore.fOrderCount,
-        employeeScore.fOrderValues]));
+    valuesText := ValuesToStringPipes(score.OrderValues);
+    MemoTest.Lines.Add(Format('%d:%s - orders:%d - %s', [score.EmployeeId,
+      score.EmployeeName, score.OrderCount, valuesText]));
   end;
+end;
+
+function TryExtractMonthFromItem(
+  const aItem: string;
+  var aYear: word;
+  var aMonth: word): Boolean;
+var
+  sYear, sMonth: string;
+  iYear, iMonth: Integer;
+begin
+  if Length(aItem) <> 7 then
+    Exit(False);
+  sYear := aItem.Substring(0, 4);
+  sMonth := aItem.Substring(5, 2);
+  Result := TryStrToInt(sYear, iYear) and TryStrToInt(sMonth, iMonth);
+  aYear := iYear;
+  aMonth := iMonth;
 end;
 
 procedure TForm1.lbxMonthsClick(Sender: TObject);
 var
-  strMonth: string;
-  aYear: Word;
-  aMonth: Word;
-  aScorecards: TScorecards;
-  aEmployeeScores: IReadOnlyCollection<TEmployeeScore>;
+  item: string;
+  yy: word;
+  mm: word;
+  scores: IEnumerable<TEmployeeScore>;
 begin
   if lbxMonths.ItemIndex < 0 then
     Exit;
-  strMonth := lbxMonths.Items[lbxMonths.ItemIndex];
-  aYear := strMonth.Substring(0, 4).ToInteger();
-  aMonth := strMonth.Substring(5, 2).ToInteger();
-  aScorecards := TScorecards.Create(aYear, aMonth);
-  aEmployeeScores := aScorecards.GenerateData(fDataModule1);
-  ShowData(aEmployeeScores);
+  if TryExtractMonthFromItem(lbxMonths.Items[lbxMonths.ItemIndex], yy, mm) then
+  begin
+    scores := fDataModule1.CalculateMonthlyScorecards(yy, mm);
+    ShowData(scores);
+  end;
 end;
 
 end.

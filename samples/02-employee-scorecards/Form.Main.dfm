@@ -24,7 +24,6 @@ object Form1: TForm1
     Align = alTop
     Caption = 'Database Connect'
     TabOrder = 0
-    ExplicitWidth = 615
     object btnConnect: TButton
       AlignWithMargins = True
       Left = 5
@@ -45,7 +44,6 @@ object Form1: TForm1
     Align = alTop
     Caption = 'Employee Scorecards'
     TabOrder = 1
-    ExplicitWidth = 615
     object Panel1: TPanel
       AlignWithMargins = True
       Left = 5
@@ -77,10 +75,6 @@ object Form1: TForm1
         ItemHeight = 13
         TabOrder = 0
         OnClick = lbxMonthsClick
-        ExplicitLeft = 4
-        ExplicitTop = 4
-        ExplicitWidth = 251
-        ExplicitHeight = 121
       end
     end
     object MemoTest: TMemo
@@ -100,10 +94,6 @@ object Form1: TForm1
       ParentFont = False
       ScrollBars = ssVertical
       TabOrder = 1
-      ExplicitLeft = 132
-      ExplicitTop = 15
-      ExplicitWidth = 505
-      ExplicitHeight = 201
     end
   end
   object ActionList1: TActionList

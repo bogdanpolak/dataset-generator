@@ -9,53 +9,27 @@ object DataModule1: TDataModule1
     Left = 40
     Top = 8
   end
-  object fdqOrdersInMonth: TFDQuery
-    Connection = FDConnection1
-    SQL.Strings = (
-      'SELECT OrderID, EmployeeID, CustomerID, OrderDate,'
-      '  {Year(OrderDate)} OrderYear, {Month(OrderDate)} OrderMonth '
-      'FROM {id Orders}'
-      'WHERE OrderYear = :YEAR and OrderMonth = :MONTH'
-      'ORDER BY EmployeeID')
-    Left = 128
-    Top = 8
-    ParamData = <
-      item
-        Name = 'YEAR'
-        DataType = ftString
-        ParamType = ptInput
-        Value = '1998'
-      end
-      item
-        Name = 'MONTH'
-        DataType = ftString
-        ParamType = ptInput
-        Value = '1'
-      end>
-  end
-  object fdqEmployees: TFDQuery
-    Connection = FDConnection1
-    SQL.Strings = (
-      
-        'select EmployeeId, LastName, FirstName, Title, {CONCAT(FirstName' +
-        ',CONCAT('#39' '#39',LastName))} FullName from Employees')
-    Left = 128
-    Top = 64
-  end
   object fdqDetailsInMonth: TFDQuery
     Connection = FDConnection1
     SQL.Strings = (
       
-        'select OrderDetails.OrderID, EmployeeId, ProductId, UnitPrice, Q' +
-        'uantity, Discount,'
-      '  {Year(OrderDate)} OrderYear, {Month(OrderDate)} OrderMonth'
-      '  from {id Order Details} as OrderDetails'
-      '  inner join Orders on Orders.OrderID = OrderDetails.OrderID'
-      '  WHERE OrderYear = :YEAR and OrderMonth = :MONTH'
-      '  ORDER BY EmployeeId, OrderDetails.OrderID')
-    Left = 128
-    Top = 120
+        'SELECT O.EmployeeId, {Year(O.OrderDate)} Year, {Month(O.OrderDat' +
+        'e)} Month,'
+      
+        '  OD.OrderId, OD.ProductId, P.CategoryId, OD.UnitPrice, OD.Quant' +
+        'ity, OD.Discount'
+      'FROM Orders O'
+      'INNER JOIN {id Order Details} OD ON O.OrderId = OD.OrderId'
+      'INNER JOIN Products P ON P.ProductId = OD.ProductId'
+      'WHERE EmployeeId = :EmployeeId Year = :Year and Month = :Month'
+      'ORDER BY OrderDetails.OrderID')
+    Left = 40
+    Top = 80
     ParamData = <
+      item
+        Name = 'EMPLOYEEID'
+        ParamType = ptInput
+      end
       item
         Name = 'YEAR'
         DataType = ftString
@@ -68,5 +42,10 @@ object DataModule1: TDataModule1
         ParamType = ptInput
         Value = '1'
       end>
+  end
+  object FDQuery1: TFDQuery
+    Connection = FDConnection1
+    Left = 144
+    Top = 136
   end
 end
