@@ -43,9 +43,4 @@ object DataModule1: TDataModule1
         Value = '1'
       end>
   end
-  object FDQuery1: TFDQuery
-    Connection = FDConnection1
-    Left = 144
-    Top = 136
-  end
 end

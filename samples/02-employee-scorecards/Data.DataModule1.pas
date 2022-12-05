@@ -26,7 +26,6 @@ type
   TEmployeeScore = class
     EmployeeId: Integer;
     Month: TDateTime;
-    EmployeeName: String;
     OrderCount: Integer;
     OrderValues: TArray<Currency>;
     MaxScore: Integer;
@@ -48,24 +47,23 @@ type
   TDataModule1 = class(TDataModule)
     FDConnection1: TFDConnection;
     fdqDetailsInMonth: TFDQuery;
-    FDQuery1: TFDQuery;
   public
     constructor Create(aOwner: TComponent); override;
     procedure Connect();
     function IsConnected(): boolean;
-    function GetActiveMonths: IList<String>;
+    function GetActiveMonths: IEnumerable<string>;
     function GetDataSet_DetailsInMonth(
       const aEmployeeId: Integer;
       const aYear: Word;
       const aMonth: Word): TDataSet;
-    function GetEmployees: IList<TEmployee>;
+    function GetEmployees: IEnumerable<TEmployee>;
     function CalculateMonthlyScorecards(
       const aYear: Word;
       const aMonth: Word): IEnumerable<TEmployeeScore>;
     function ReviewScorecardsDeatails(
       const aEmployeeId: Integer;
       const aYear: Word;
-      const aMonth: Word): IList<Currency>;
+      const aMonth: Word): IEnumerable<Currency>;
   private
     function GetDetailsItemTotal(const aDetailsDataSet: TDataSet): Currency;
   end;
@@ -100,14 +98,15 @@ begin
   Result := FDConnection1.Connected;
 end;
 
-function TDataModule1.GetActiveMonths: IList<String>;
+function TDataModule1.GetActiveMonths: IEnumerable<string>;
 var
   varMinDate: Variant;
   varMaxDate: Variant;
   aDate: TDateTime;
   aEndDate: TDateTime;
+  months: IList<string>;
 begin
-  Result := TCollections.CreateList<String>();
+  months := TCollections.CreateList<string>();
   varMinDate := FDConnection1.ExecSQLScalar
     ('SELECT Min(OrderDate) FROM {id Orders}');
   varMaxDate := FDConnection1.ExecSQLScalar
@@ -120,9 +119,11 @@ begin
   aEndDate := VarToDateTime(varMaxDate);
   while aDate <= aEndDate do
   begin
-    Result.Add(FormatDateTime('yyyy-mm', aDate));
+    months.Add(FormatDateTime('yyyy-mm', aDate));
     aDate := IncMonth(aDate, 1);
   end;
+  months.Reverse;
+  Result := months;
 end;
 
 function TDataModule1.GetDataSet_DetailsInMonth(
@@ -144,12 +145,13 @@ begin
   Result := fdqDetailsInMonth;
 end;
 
-function TDataModule1.GetEmployees: IList<TEmployee>;
+function TDataModule1.GetEmployees: IEnumerable<TEmployee>;
 var
   ds: TDataSet;
   employee: TEmployee;
+  employees: IList<TEmployee>;
 begin
-  Result := TCollections.CreateObjectList<TEmployee>;
+  employees := TCollections.CreateObjectList<TEmployee>;
   FDConnection1.ExecSQL('SELECT * FROM Employees', ds);
   try
     while not ds.Eof do
@@ -166,14 +168,13 @@ begin
         Country := ds.FieldByName('Country').AsString;
         City := ds.FieldByName('City').AsString;
       end;
-      Result.Add(employee);
+      employees.Add(employee);
       ds.Next;
     end;
+    Result := employees;
   finally
     ds.Free;
   end;
-
-  // Result.Add()
 end;
 
 function TDataModule1.CalculateMonthlyScorecards(
@@ -183,19 +184,17 @@ var
   employees: IList<TEmployee>;
   scores: IList<TEmployeeScore>;
   score: TEmployeeScore;
-  e: TEmployee;
-  values: IList<Currency>;
+  employee: TEmployee;
+  values: IEnumerable<Currency>;
 begin
-  employees := GetEmployees();
   scores := TCollections.CreateObjectList<TEmployeeScore>();
-  for e in employees do
+  for employee in GetEmployees() do
   begin
-    values := ReviewScorecardsDeatails(e.EmployeeId, aYear, aMonth);
+    values := ReviewScorecardsDeatails(employee.EmployeeId, aYear, aMonth);
     score := TEmployeeScore.Create;
     with score do begin
-      EmployeeId:= e.EmployeeId;
+      EmployeeId:= employee.EmployeeId;
       Month := EncodeDate(aYear,aMonth,1);
-      EmployeeName := e.FullName;
       OrderValues := values.ToArray;
       OrderCount := values.Count;
       // MaxScore: Integer;
@@ -209,18 +208,19 @@ end;
 function TDataModule1.ReviewScorecardsDeatails(
   const aEmployeeId: Integer;
   const aYear: Word;
-  const aMonth: Word): IList<Currency>;
+  const aMonth: Word): IEnumerable<Currency>;
 var
   detailsDataSet: TDataSet;
   totalOrderValue: Currency;
   itemTotal: Currency;
   orderId: Integer;
   currentOrderId: Integer;
+  scores: IList<Currency>;
 begin
   detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
   totalOrderValue := 0;
   currentOrderId := 0;
-  Result := TCollections.CreateList<Currency>();
+  scores := TCollections.CreateList<Currency>();
   while not(detailsDataSet.Eof) do
   begin
     orderId := detailsDataSet.FieldByName('OrderId').AsInteger;
@@ -228,7 +228,7 @@ begin
     begin
       if (totalOrderValue > 0) then
       begin
-        Result.Add(totalOrderValue);
+        scores.Add(totalOrderValue);
         totalOrderValue := 0;
       end;
       currentOrderId := orderId;
@@ -237,6 +237,7 @@ begin
     totalOrderValue := totalOrderValue + itemTotal;
     detailsDataSet.Next;
   end;
+  Result := scores;
 end;
 
 function TDataModule1.GetDetailsItemTotal(const aDetailsDataSet: TDataSet)

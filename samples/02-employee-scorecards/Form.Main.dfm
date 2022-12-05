@@ -40,20 +40,29 @@ object Form1: TForm1
     Left = 3
     Top = 63
     Width = 639
-    Height = 218
+    Height = 234
     Align = alTop
     Caption = 'Employee Scorecards'
     TabOrder = 1
+    object Splitter1: TSplitter
+      Left = 129
+      Top = 15
+      Width = 5
+      Height = 217
+      ExplicitHeight = 305
+    end
     object Panel1: TPanel
       AlignWithMargins = True
       Left = 5
       Top = 18
       Width = 124
-      Height = 195
+      Height = 211
+      Margins.Right = 0
       Align = alLeft
       BevelOuter = bvNone
       Caption = 'Panel1'
       TabOrder = 0
+      ExplicitHeight = 195
       object Label1: TLabel
         AlignWithMargins = True
         Left = 3
@@ -69,31 +78,50 @@ object Form1: TForm1
         AlignWithMargins = True
         Left = 3
         Top = 22
-        Width = 118
-        Height = 170
+        Width = 121
+        Height = 186
+        Margins.Right = 0
         Align = alClient
         ItemHeight = 13
         TabOrder = 0
         OnClick = lbxMonthsClick
+        ExplicitWidth = 118
+        ExplicitHeight = 170
       end
     end
-    object MemoTest: TMemo
+    object scrboxScorecards: TScrollBox
       AlignWithMargins = True
-      Left = 135
+      Left = 134
       Top = 18
-      Width = 499
-      Height = 195
-      Align = alClient
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Consolas'
-      Font.Style = []
-      Lines.Strings = (
-        'MemoTest')
-      ParentFont = False
-      ScrollBars = ssVertical
+      Width = 355
+      Height = 135
+      Margins.Left = 0
+      Margins.Bottom = 6
+      VertScrollBar.Tracking = True
+      BevelInner = bvNone
+      BevelKind = bkFlat
+      BorderStyle = bsNone
       TabOrder = 1
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 421
+    Width = 645
+    Height = 41
+    Align = alBottom
+    Caption = 'lb'
+    TabOrder = 2
+    ExplicitLeft = 240
+    ExplicitTop = 232
+    ExplicitWidth = 185
+    object ProgressBar1: TProgressBar
+      Left = 11
+      Top = 16
+      Width = 265
+      Height = 9
+      Style = pbstMarquee
+      TabOrder = 0
     end
   end
   object ActionList1: TActionList
@@ -104,5 +132,11 @@ object Form1: TForm1
       Caption = 'Connect'
       OnExecute = actDatabaseConnectExecute
     end
+  end
+  object tmrStart: TTimer
+    Interval = 1
+    OnTimer = tmrStartTimer
+    Left = 472
+    Top = 16
   end
 end
