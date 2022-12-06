@@ -10,6 +10,7 @@ uses
   System.Variants,
   System.Classes,
   System.StrUtils,
+  System.Math,
   Spring.Collections,
 
   Vcl.Graphics,
@@ -38,6 +39,7 @@ type
     lblScoreOrders: TLabel;
     lblScoreValues: TLabel;
     tmrLoadingScore: TTimer;
+    ToggleSwitch1: TToggleSwitch;
     procedure actDatabaseConnectExecute(Sender: TObject);
     procedure ActionList1Update(
       Action: TBasicAction;
@@ -206,10 +208,8 @@ end;
 
 procedure TForm1.SetLoadingTimerInterval;
 begin
-  // Loading with delay
-  // tmrLoadingScore.Interval := 200 + 50 * random(4);
-  // Fast Loading
-  tmrLoadingScore.Interval := 20;
+  tmrLoadingScore.Interval := System.Math.IfThen(ToggleSwitch1.State = tssOn,
+    20, 200 + 50 * random(4));
 end;
 
 procedure TForm1.tmrLoadingScoreTimer(Sender: TObject);

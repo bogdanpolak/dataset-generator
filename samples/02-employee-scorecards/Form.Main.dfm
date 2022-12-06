@@ -4,7 +4,7 @@ object Form1: TForm1
   Margins.Bottom = 0
   Caption = 'Form1'
   ClientHeight = 480
-  ClientWidth = 645
+  ClientWidth = 673
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,11 +20,12 @@ object Form1: TForm1
     AlignWithMargins = True
     Left = 3
     Top = 3
-    Width = 639
+    Width = 667
     Height = 54
     Align = alTop
     Caption = 'Database Connect'
     TabOrder = 0
+    ExplicitWidth = 639
     object btnConnect: TButton
       AlignWithMargins = True
       Left = 5
@@ -35,16 +36,26 @@ object Form1: TForm1
       Align = alLeft
       TabOrder = 0
     end
+    object ToggleSwitch1: TToggleSwitch
+      Left = 272
+      Top = 21
+      Width = 144
+      Height = 23
+      StateCaptions.CaptionOn = 'Loading: Fast'
+      StateCaptions.CaptionOff = 'Loading: Standard'
+      TabOrder = 1
+    end
   end
   object gboxScorecards: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 63
-    Width = 639
+    Width = 667
     Height = 234
     Align = alTop
     Caption = 'Employee Scorecards'
     TabOrder = 1
+    ExplicitWidth = 639
     object Splitter1: TSplitter
       Left = 129
       Top = 15

@@ -58,8 +58,6 @@ type
       const aYear: Word;
       const aMonth: Word): TEmployeeScore;
   private
-    function CalculateScoreValue(const detailsDataSet: TDataSet)
-      : IEnumerable<Currency>;
     function GetDetailsItemTotal(const aDetailsDataSet: TDataSet): Currency;
   end;
 
@@ -180,23 +178,13 @@ function TDataModule1.CalculateMonthlyScore(
   const aMonth: Word): TEmployeeScore;
 var
   detailsDataSet: TDataSet;
-  values: IEnumerable<Currency>;
-begin
-  detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
-  values := CalculateScoreValue(detailsDataSet);
-  Result.OrderValues := values.ToArray;
-  Result.OrderCount := values.Count;
-end;
-
-function TDataModule1.CalculateScoreValue(const detailsDataSet: TDataSet)
-  : IEnumerable<Currency>;
-var
   totalOrderValue: Currency;
   itemTotal: Currency;
   orderId: Integer;
   currentOrderId: Integer;
   scores: IList<Currency>;
 begin
+  detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
   totalOrderValue := 0;
   currentOrderId := 0;
   scores := TCollections.CreateList<Currency>();
@@ -216,7 +204,8 @@ begin
     totalOrderValue := totalOrderValue + itemTotal;
     detailsDataSet.Next;
   end;
-  Result := scores;
+  Result.OrderValues := scores.ToArray;
+  Result.OrderCount := scores.Count;
 end;
 
 function TDataModule1.GetDetailsItemTotal(const aDetailsDataSet: TDataSet)
