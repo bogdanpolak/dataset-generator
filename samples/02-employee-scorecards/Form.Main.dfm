@@ -1,8 +1,9 @@
 object Form1: TForm1
   Left = 0
   Top = 0
+  Margins.Bottom = 0
   Caption = 'Form1'
-  ClientHeight = 462
+  ClientHeight = 480
   ClientWidth = 645
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -62,7 +63,6 @@ object Form1: TForm1
       BevelOuter = bvNone
       Caption = 'Panel1'
       TabOrder = 0
-      ExplicitHeight = 195
       object Label1: TLabel
         AlignWithMargins = True
         Left = 3
@@ -79,49 +79,98 @@ object Form1: TForm1
         Left = 3
         Top = 22
         Width = 121
-        Height = 186
+        Height = 189
         Margins.Right = 0
+        Margins.Bottom = 0
         Align = alClient
         ItemHeight = 13
         TabOrder = 0
         OnClick = lbxMonthsClick
-        ExplicitWidth = 118
-        ExplicitHeight = 170
+        ExplicitHeight = 186
       end
     end
-    object scrboxScorecards: TScrollBox
+    object clistScorecards: TControlList
       AlignWithMargins = True
-      Left = 134
-      Top = 18
-      Width = 355
-      Height = 135
-      Margins.Left = 0
-      Margins.Bottom = 6
-      VertScrollBar.Tracking = True
-      BevelInner = bvNone
-      BevelKind = bkFlat
-      BorderStyle = bsNone
+      Left = 148
+      Top = 21
+      Width = 477
+      Height = 167
+      ItemHeight = 38
+      ItemMargins.Left = 0
+      ItemMargins.Top = 0
+      ItemMargins.Right = 0
+      ItemMargins.Bottom = 0
+      ParentColor = False
       TabOrder = 1
-    end
-  end
-  object Panel2: TPanel
-    Left = 0
-    Top = 421
-    Width = 645
-    Height = 41
-    Align = alBottom
-    Caption = 'lb'
-    TabOrder = 2
-    ExplicitLeft = 240
-    ExplicitTop = 232
-    ExplicitWidth = 185
-    object ProgressBar1: TProgressBar
-      Left = 11
-      Top = 16
-      Width = 265
-      Height = 9
-      Style = pbstMarquee
-      TabOrder = 0
+      OnShowControl = clistScorecardsShowControl
+      object lblScorePosition: TLabel
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 34
+        Height = 32
+        Margins.Right = 0
+        Align = alLeft
+        Alignment = taCenter
+        AutoSize = False
+        Caption = '19'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -24
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object lblScoreFullName: TLabel
+        AlignWithMargins = True
+        Left = 37
+        Top = 11
+        Width = 130
+        Height = 24
+        Margins.Left = 0
+        Margins.Top = 11
+        Margins.Right = 0
+        Align = alLeft
+        AutoSize = False
+        Caption = 'lblScoreFullName'
+        ExplicitLeft = 39
+        ExplicitTop = 10
+        ExplicitHeight = 25
+      end
+      object lblScoreOrders: TLabel
+        AlignWithMargins = True
+        Left = 167
+        Top = 6
+        Width = 24
+        Height = 29
+        Margins.Left = 0
+        Margins.Top = 6
+        Margins.Right = 0
+        Align = alLeft
+        AutoSize = False
+        Caption = '7x'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ExplicitLeft = 165
+      end
+      object lblScoreValues: TLabel
+        AlignWithMargins = True
+        Left = 191
+        Top = 11
+        Width = 279
+        Height = 24
+        Margins.Left = 0
+        Margins.Top = 11
+        Align = alClient
+        Caption = 'lblScoreValues'
+        ExplicitTop = 6
+        ExplicitWidth = 68
+        ExplicitHeight = 13
+      end
     end
   end
   object ActionList1: TActionList
@@ -138,5 +187,12 @@ object Form1: TForm1
     OnTimer = tmrStartTimer
     Left = 472
     Top = 16
+  end
+  object tmrLoadingScore: TTimer
+    Enabled = False
+    Interval = 1
+    OnTimer = tmrLoadingScoreTimer
+    Left = 184
+    Top = 152
   end
 end

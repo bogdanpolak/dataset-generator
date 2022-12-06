@@ -16,7 +16,7 @@ uses
   Vcl.Controls,
   Vcl.Forms,
   Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Actions, Vcl.ActnList,
-  Vcl.ComCtrls,
+  Vcl.ComCtrls, Vcl.ControlList, Vcl.WinXCtrls,
   {-}
   Data.DataModule1;
 
@@ -31,26 +31,38 @@ type
     ActionList1: TActionList;
     actDatabaseConnect: TAction;
     Splitter1: TSplitter;
-    scrboxScorecards: TScrollBox;
-    ProgressBar1: TProgressBar;
-    Panel2: TPanel;
     tmrStart: TTimer;
+    clistScorecards: TControlList;
+    lblScorePosition: TLabel;
+    lblScoreFullName: TLabel;
+    lblScoreOrders: TLabel;
+    lblScoreValues: TLabel;
+    tmrLoadingScore: TTimer;
     procedure actDatabaseConnectExecute(Sender: TObject);
     procedure ActionList1Update(
       Action: TBasicAction;
       var Handled: Boolean);
+    procedure clistScorecardsShowControl(
+      const AIndex: Integer;
+      AControl: TControl;
+      var AVisible: Boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure lbxMonthsClick(Sender: TObject);
+    procedure tmrLoadingScoreTimer(Sender: TObject);
     procedure tmrStartTimer(Sender: TObject);
   public const
     Version = '1.5';
   private
     fDataModule1: TDataModule1;
     fEmployees: IEnumerable<TEmployee>;
+    fScoresDictionary: IDictionary<Integer, TEmployeeScore>;
+    fLoadingIndex: Integer;
+    fLoadingYear: Word;
+    fLoadingMonth: Word;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
-    procedure BuildScorecardPanels(const aEmployees: IEnumerable<TEmployee>);
-    procedure UpdateScorecardPanel(const score: TEmployeeScore);
+    procedure StartLoadingScore(const aYear, aMonth: Word);
+    procedure SetLoadingTimerInterval;
   end;
 
 var
@@ -96,10 +108,10 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  fScoresDictionary := TCollections.CreateDictionary<Integer, TEmployeeScore>();
   gboxScorecards.Visible := False;
   gboxScorecards.Align := alClient;
-  scrboxScorecards.Align := alClient;
-  scrboxScorecards.BorderStyle := bsNone;
+  clistScorecards.Align := alClient;
   fDataModule1 := TDataModule1.Create(Application);
 end;
 
@@ -123,99 +135,10 @@ begin
   Result := IfThen(aValues = nil, '', s + ' |');
 end;
 
-procedure TForm1.BuildScorecardPanels(const aEmployees: IEnumerable<TEmployee>);
-var
-  parentControl: TWinControl;
-  employee: TEmployee;
-  rowPanel: TPanel;
-  empIdLablel: TLabel;
-  empFullNameLabel: TLabel;
-  empValuesLabel: TLabel;
-begin
-  parentControl := scrboxScorecards;
-  while parentControl.ControlCount > 0 do
-  begin
-    parentControl.Controls[0].Free;
-  end;
-  for employee in aEmployees do
-  begin
-    rowPanel := TPanel.Create(parentControl);
-    with rowPanel do
-    begin
-      Name := Format('PanelScorecards%d', [employee.EmployeeId]);
-      Parent := parentControl;
-      Height := 35;
-      Align := alTop;
-      BorderStyle := bsSingle;
-      BorderWidth := 1;
-      Caption := '';
-    end;
-    empIdLablel := TLabel.Create(rowPanel);
-    with empIdLablel do
-    begin
-      Name := Format('Score%d_Position', [employee.EmployeeId]);
-      Align := alLeft;
-      Width := 28;
-      AutoSize := false;
-      Font.Size := 17;
-      AlignWithMargins := True;
-      Margins.Left := 8;
-      Margins.Right := 0;
-      Margins.Top := 0;
-      Margins.Bottom := 0;
-      Parent := rowPanel;
-      Caption := employee.EmployeeId.ToString;
-    end;
-    empFullNameLabel := TLabel.Create(rowPanel);
-    with empFullNameLabel do
-    begin
-      Name := Format('Score%d_FullName', [employee.EmployeeId]);
-      Width := 128;
-      AutoSize := false;
-      Alignment := taLeftJustify;
-      Font.Size := 10;
-      Align := alLeft;
-      Parent := rowPanel;
-      AlignWithMargins := True;
-      Margins.Left := 0;
-      Margins.Right := 0;
-      Margins.Top := 5;
-      Margins.Bottom := 0;
-      Caption := employee.FullName;
-    end;
-    empValuesLabel := TLabel.Create(rowPanel);
-    with empValuesLabel do
-    begin
-      Name := Format('Score%d_Values', [employee.EmployeeId]);
-      Parent := rowPanel;
-      Align := alClient;
-      AutoSize := false;
-      Alignment := taLeftJustify;
-      Caption := '';
-    end;
-  end;
-end;
-
-procedure TForm1.UpdateScorecardPanel(const score: TEmployeeScore);
-var
-  valuesText: string;
-  pn: TPanel;
-  lbl: TLabel;
-  panelName: string;
-  labelname: string;
-begin
-  panelName := Format('PanelScorecards%d', [score.EmployeeId]);
-  labelname := Format('Score%d_Values', [score.EmployeeId]);
-  pn := scrboxScorecards.FindComponent(panelName) as TPanel;
-  lbl := pn.FindComponent(labelname) as TLabel;
-  valuesText := ValuesToStringPipes(score.OrderValues);
-  lbl.Caption := Format('%d:  %s', [score.OrderCount, valuesText]);
-end;
-
 function TryExtractMonthFromItem(
   const aItem: string;
-  var aYear: word;
-  var aMonth: word): Boolean;
+  var aYear: Word;
+  var aMonth: Word): Boolean;
 var
   sYear, sMonth: string;
   iYear, iMonth: Integer;
@@ -229,30 +152,91 @@ begin
   aMonth := iMonth;
 end;
 
+procedure TForm1.clistScorecardsShowControl(
+  const AIndex: Integer;
+  AControl: TControl;
+  var AVisible: Boolean);
+var
+  employee: TEmployee;
+  score: TEmployeeScore;
+  hasScore: Boolean;
+begin
+  if AIndex >= fEmployees.Count then
+    Exit;
+  employee := fEmployees.ElementAt(AIndex);
+  lblScorePosition.Caption := employee.EmployeeId.ToString;
+  lblScoreFullName.Caption := employee.FullName;
+  hasScore := fScoresDictionary.TryGetValue(employee.EmployeeId, score);
+  if hasScore then
+  begin
+    lblScoreOrders.Visible := True;
+    lblScoreOrders.Caption := score.OrderCount.ToString;
+    lblScoreValues.Caption := ValuesToStringPipes(score.OrderValues);
+  end
+  else
+  begin
+    lblScoreOrders.Visible := False;
+    lblScoreValues.Caption := 'Calculating score ...';
+  end;
+end;
+
 procedure TForm1.lbxMonthsClick(Sender: TObject);
 var
-  item: string;
-  yy: word;
-  mm: word;
-  scores: IEnumerable<TEmployeeScore>;
-  score: TEmployeeScore;
+  yy: Word;
+  mm: Word;
 begin
   if lbxMonths.ItemIndex < 0 then
     Exit;
   if TryExtractMonthFromItem(lbxMonths.Items[lbxMonths.ItemIndex], yy, mm) then
   begin
-    scores := fDataModule1.CalculateMonthlyScorecards(yy, mm);
-    for score in scores do
-    begin
-      UpdateScorecardPanel(score)
-    end;
+    StartLoadingScore(yy, mm);
   end;
+end;
+
+procedure TForm1.StartLoadingScore(const aYear, aMonth: Word);
+begin
+  fScoresDictionary.Clear;
+  clistScorecards.Repaint;
+  fLoadingIndex := 0;
+  fLoadingYear := aYear;
+  fLoadingMonth := aMonth;
+  SetLoadingTimerInterval();
+  tmrLoadingScore.Enabled := True;
+end;
+
+procedure TForm1.SetLoadingTimerInterval;
+begin
+  // Loading with delay
+  // tmrLoadingScore.Interval := 200 + 50 * random(4);
+  // Fast Loading
+  tmrLoadingScore.Interval := 20;
+end;
+
+procedure TForm1.tmrLoadingScoreTimer(Sender: TObject);
+var
+  hasItem: Boolean;
+  employee: TEmployee;
+  score: TEmployeeScore;
+  id: Integer;
+begin
+  tmrLoadingScore.Enabled := False;
+  SetLoadingTimerInterval();
+  hasItem := (fLoadingIndex >= 0) and (fLoadingIndex < fEmployees.Count);
+  tmrLoadingScore.Enabled := hasItem;
+  if not hasItem then
+    Exit;
+  employee := fEmployees.ElementAt(fLoadingIndex);
+  id := employee.EmployeeId;
+  score := fDataModule1.CalculateMonthlyScore(id, fLoadingYear, fLoadingMonth);
+  fScoresDictionary.AddOrSetValue(id, score);
+  clistScorecards.Repaint;
+  inc(fLoadingIndex);
 end;
 
 procedure TForm1.tmrStartTimer(Sender: TObject);
 begin
   tmrStart.Enabled := False;
-  BuildScorecardPanels(fEmployees);
+  clistScorecards.ItemCount := fEmployees.Count;
 end;
 
 end.

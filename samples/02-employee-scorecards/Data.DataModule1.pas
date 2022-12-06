@@ -23,15 +23,6 @@ uses
   FireDAC.Phys.SQLiteWrapper.Stat;
 
 type
-  TEmployeeScore = class
-    EmployeeId: Integer;
-    Month: TDateTime;
-    OrderCount: Integer;
-    OrderValues: TArray<Currency>;
-    MaxScore: Integer;
-    FinalScore: Integer;
-  end;
-
   TEmployee = class
     EmployeeId: Integer;
     FirstName: string;
@@ -41,6 +32,11 @@ type
     HireDate: TDateTime;
     Country: string;
     City: string;
+  end;
+
+  TEmployeeScore = record
+    OrderCount: Integer;
+    OrderValues: TArray<Currency>;
   end;
 
 type
@@ -57,14 +53,13 @@ type
       const aYear: Word;
       const aMonth: Word): TDataSet;
     function GetEmployees: IEnumerable<TEmployee>;
-    function CalculateMonthlyScorecards(
-      const aYear: Word;
-      const aMonth: Word): IEnumerable<TEmployeeScore>;
-    function ReviewScorecardsDeatails(
+    function CalculateMonthlyScore(
       const aEmployeeId: Integer;
       const aYear: Word;
-      const aMonth: Word): IEnumerable<Currency>;
+      const aMonth: Word): TEmployeeScore;
   private
+    function CalculateScoreValue(const detailsDataSet: TDataSet)
+      : IEnumerable<Currency>;
     function GetDetailsItemTotal(const aDetailsDataSet: TDataSet): Currency;
   end;
 
@@ -85,7 +80,9 @@ begin
   FDConnection1.Open();
 end;
 
-function IffString(condition: boolean; const textTrue, textFalse: string): string;
+function IffString(
+  condition: boolean;
+  const textTrue, textFalse: string): string;
 begin
   if condition then
     Result := textTrue
@@ -177,47 +174,29 @@ begin
   end;
 end;
 
-function TDataModule1.CalculateMonthlyScorecards(
-  const aYear: Word;
-  const aMonth: Word): IEnumerable<TEmployeeScore>;
-var
-  employees: IList<TEmployee>;
-  scores: IList<TEmployeeScore>;
-  score: TEmployeeScore;
-  employee: TEmployee;
-  values: IEnumerable<Currency>;
-begin
-  scores := TCollections.CreateObjectList<TEmployeeScore>();
-  for employee in GetEmployees() do
-  begin
-    values := ReviewScorecardsDeatails(employee.EmployeeId, aYear, aMonth);
-    score := TEmployeeScore.Create;
-    with score do begin
-      EmployeeId:= employee.EmployeeId;
-      Month := EncodeDate(aYear,aMonth,1);
-      OrderValues := values.ToArray;
-      OrderCount := values.Count;
-      // MaxScore: Integer;
-      // FinalScore: Integer;
-    end;
-    scores.Add(score);
-  end;
-  Result := scores;
-end;
-
-function TDataModule1.ReviewScorecardsDeatails(
+function TDataModule1.CalculateMonthlyScore(
   const aEmployeeId: Integer;
   const aYear: Word;
-  const aMonth: Word): IEnumerable<Currency>;
+  const aMonth: Word): TEmployeeScore;
 var
   detailsDataSet: TDataSet;
+  values: IEnumerable<Currency>;
+begin
+  detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
+  values := CalculateScoreValue(detailsDataSet);
+  Result.OrderValues := values.ToArray;
+  Result.OrderCount := values.Count;
+end;
+
+function TDataModule1.CalculateScoreValue(const detailsDataSet: TDataSet)
+  : IEnumerable<Currency>;
+var
   totalOrderValue: Currency;
   itemTotal: Currency;
   orderId: Integer;
   currentOrderId: Integer;
   scores: IList<Currency>;
 begin
-  detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
   totalOrderValue := 0;
   currentOrderId := 0;
   scores := TCollections.CreateList<Currency>();
