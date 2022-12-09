@@ -36,7 +36,8 @@ type
 
   TEmployeeScore = record
     OrderCount: Integer;
-    OrderValues: TArray<Currency>;
+    TotalOrdersSum: Currency;
+    ScoreValue: Currency;
   end;
 
 type
@@ -59,6 +60,9 @@ type
       const aMonth: Word): TEmployeeScore;
   private
     function GetDetailsItemTotal(const aDetailsDataSet: TDataSet): Currency;
+    function PromotionModifier(
+      const aYear, aMonth: Word;
+      const aDetailsDataSet: TDataSet): double;
   end;
 
 implementation
@@ -178,34 +182,38 @@ function TDataModule1.CalculateMonthlyScore(
   const aMonth: Word): TEmployeeScore;
 var
   detailsDataSet: TDataSet;
-  totalOrderValue: Currency;
-  itemTotal: Currency;
   orderId: Integer;
-  currentOrderId: Integer;
-  scores: IList<Currency>;
+  orderTotal: Currency;
+  orderScore: Currency;
+  modifier: double;
+  total: Currency;
+  score: Currency;
+  orders: Integer;
 begin
   detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
-  totalOrderValue := 0;
-  currentOrderId := 0;
-  scores := TCollections.CreateList<Currency>();
+  orders := 0;
+  total := 0;
+  score := 0;
   while not(detailsDataSet.Eof) do
   begin
     orderId := detailsDataSet.FieldByName('OrderId').AsInteger;
-    if orderId <> currentOrderId then
+    orderTotal := 0;
+    orderScore := 0;
+    while not(detailsDataSet.Eof) and
+      (orderId = detailsDataSet.FieldByName('OrderId').AsInteger) do
     begin
-      if (totalOrderValue > 0) then
-      begin
-        scores.Add(totalOrderValue);
-        totalOrderValue := 0;
-      end;
-      currentOrderId := orderId;
+      modifier := PromotionModifier(aYear, aMonth, detailsDataSet);
+      orderTotal := orderTotal + GetDetailsItemTotal(detailsDataSet);
+      orderScore := orderScore + modifier * GetDetailsItemTotal(detailsDataSet);
+      detailsDataSet.Next;
     end;
-    itemTotal := GetDetailsItemTotal(detailsDataSet);
-    totalOrderValue := totalOrderValue + itemTotal;
-    detailsDataSet.Next;
+    inc(orders);
+    total := total + orderTotal;
+    score := score + orderScore;
   end;
-  Result.OrderValues := scores.ToArray;
-  Result.OrderCount := scores.Count;
+  Result.OrderCount := orders;
+  Result.TotalOrdersSum := total;
+  Result.ScoreValue := score;
 end;
 
 function TDataModule1.GetDetailsItemTotal(const aDetailsDataSet: TDataSet)
@@ -213,12 +221,26 @@ function TDataModule1.GetDetailsItemTotal(const aDetailsDataSet: TDataSet)
 var
   unitPrice: Currency;
   quantity: Integer;
-  discount: Double;
+  discount: double;
 begin
   unitPrice := aDetailsDataSet.FieldByName('UnitPrice').AsCurrency;
   quantity := aDetailsDataSet.FieldByName('Quantity').AsInteger;
   discount := aDetailsDataSet.FieldByName('Discount').AsFloat;
   Result := RoundTo(unitPrice * quantity * (1 - discount), -2);
+end;
+
+function TDataModule1.PromotionModifier(
+  const aYear: Word;
+  const aMonth: Word;
+  const aDetailsDataSet: TDataSet): double;
+var
+  categoryId: Integer;
+begin
+  categoryId := aDetailsDataSet.FieldByName('CategoryId').AsInteger;
+  if (categoryId = 1) and (aYear= 2022) and (aMonth = 12) then
+    Result := 2
+  else
+    Result := 1;
 end;
 
 end.

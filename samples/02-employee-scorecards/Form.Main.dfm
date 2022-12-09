@@ -25,7 +25,6 @@ object Form1: TForm1
     Align = alTop
     Caption = 'Database Connect'
     TabOrder = 0
-    ExplicitWidth = 639
     object btnConnect: TButton
       AlignWithMargins = True
       Left = 5
@@ -40,7 +39,7 @@ object Form1: TForm1
       Left = 272
       Top = 21
       Width = 144
-      Height = 23
+      Height = 20
       StateCaptions.CaptionOn = 'Loading: Fast'
       StateCaptions.CaptionOff = 'Loading: Standard'
       TabOrder = 1
@@ -55,7 +54,6 @@ object Form1: TForm1
     Align = alTop
     Caption = 'Employee Scorecards'
     TabOrder = 1
-    ExplicitWidth = 639
     object Splitter1: TSplitter
       Left = 129
       Top = 15
@@ -97,13 +95,12 @@ object Form1: TForm1
         ItemHeight = 13
         TabOrder = 0
         OnClick = lbxMonthsClick
-        ExplicitHeight = 186
       end
     end
     object clistScorecards: TControlList
       AlignWithMargins = True
-      Left = 148
-      Top = 21
+      Left = 140
+      Top = 18
       Width = 477
       Height = 167
       ItemHeight = 38
@@ -170,17 +167,36 @@ object Form1: TForm1
       end
       object lblScoreValues: TLabel
         AlignWithMargins = True
-        Left = 191
+        Left = 283
         Top = 11
-        Width = 279
+        Width = 187
         Height = 24
-        Margins.Left = 0
+        Margins.Left = 6
         Margins.Top = 11
         Align = alClient
         Caption = 'lblScoreValues'
-        ExplicitTop = 6
+        ExplicitLeft = 191
         ExplicitWidth = 68
         ExplicitHeight = 13
+      end
+      object lblTotal: TLabel
+        AlignWithMargins = True
+        Left = 191
+        Top = 8
+        Width = 83
+        Height = 27
+        Margins.Left = 0
+        Margins.Top = 8
+        Align = alLeft
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'lblTotal'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -15
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
       end
     end
   end

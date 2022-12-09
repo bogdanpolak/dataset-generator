@@ -40,6 +40,7 @@ type
     lblScoreValues: TLabel;
     tmrLoadingScore: TTimer;
     ToggleSwitch1: TToggleSwitch;
+    lblTotal: TLabel;
     procedure actDatabaseConnectExecute(Sender: TObject);
     procedure ActionList1Update(
       Action: TBasicAction;
@@ -62,6 +63,7 @@ type
     fLoadingIndex: Integer;
     fLoadingYear: Word;
     fLoadingMonth: Word;
+    fIsCalculating: Boolean;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
     procedure StartLoadingScore(const aYear, aMonth: Word);
     procedure SetLoadingTimerInterval;
@@ -122,21 +124,6 @@ begin
   actDatabaseConnect.Execute;
 end;
 
-function ValuesToStringPipes(const aValues: TArray<Currency>): string;
-var
-  v: Currency;
-  idx: Integer;
-  s: string;
-begin
-  s := '';
-  for idx := 0 to High(aValues) do
-  begin
-    v := aValues[idx];
-    s := s + '| ' + CurrToStrF(v, ffFixed, 2);
-  end;
-  Result := IfThen(aValues = nil, '', s + ' |');
-end;
-
 function TryExtractMonthFromItem(
   const aItem: string;
   var aYear: Word;
@@ -171,14 +158,17 @@ begin
   hasScore := fScoresDictionary.TryGetValue(employee.EmployeeId, score);
   if hasScore then
   begin
-    lblScoreOrders.Visible := True;
     lblScoreOrders.Caption := score.OrderCount.ToString;
-    lblScoreValues.Caption := ValuesToStringPipes(score.OrderValues);
+    lblTotal.Caption := IfThen(score.OrderCount = 0, '',
+      FormatFloat('#,###.##', score.TotalOrdersSum));
+    lblScoreValues.Caption := IfThen(score.OrderCount = 0, '',
+      Format('%.0f', [score.ScoreValue]));
   end
   else
   begin
-    lblScoreOrders.Visible := False;
-    lblScoreValues.Caption := 'Calculating score ...';
+    lblScoreOrders.Caption := '';
+    lblTotal.Caption := IfThen(fIsCalculating, '...', '');
+    lblScoreValues.Caption := IfThen(fIsCalculating, ' ★★ ☆☆ calculating ...', '');
   end;
 end;
 
@@ -198,6 +188,7 @@ end;
 procedure TForm1.StartLoadingScore(const aYear, aMonth: Word);
 begin
   fScoresDictionary.Clear;
+  fIsCalculating := True;
   clistScorecards.Repaint;
   fLoadingIndex := 0;
   fLoadingYear := aYear;
@@ -223,6 +214,7 @@ begin
   SetLoadingTimerInterval();
   hasItem := (fLoadingIndex >= 0) and (fLoadingIndex < fEmployees.Count);
   tmrLoadingScore.Enabled := hasItem;
+  fIsCalculating := hasItem;
   if not hasItem then
     Exit;
   employee := fEmployees.ElementAt(fLoadingIndex);
