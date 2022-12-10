@@ -11,6 +11,8 @@ uses
   System.Classes,
   System.StrUtils,
   System.Math,
+  System.Generics.Collections,
+  System.Generics.Defaults,
   Spring.Collections,
 
   Vcl.Graphics,
@@ -59,14 +61,14 @@ type
   private
     fDataModule1: TDataModule1;
     fEmployees: IEnumerable<TEmployee>;
-    fScoresDictionary: IDictionary<Integer, TEmployeeScore>;
+    fScores: IList<TEmployeeScore>;
     fLoadingIndex: Integer;
     fLoadingYear: Word;
     fLoadingMonth: Word;
     fIsCalculating: Boolean;
     procedure FillListBoxWithMonths(const aListBox: TListBox);
-    procedure StartLoadingScore(const aYear, aMonth: Word);
-    procedure SetLoadingTimerInterval;
+    procedure OnStartLoadingScore(const aYear, aMonth: Word);
+    procedure OnCompletedLoading;
   end;
 
 var
@@ -75,6 +77,9 @@ var
 implementation
 
 {$R *.dfm}
+
+uses
+  Scorecards.Utils;
 
 procedure TForm1.actDatabaseConnectExecute(Sender: TObject);
 begin
@@ -112,7 +117,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  fScoresDictionary := TCollections.CreateDictionary<Integer, TEmployeeScore>();
+  fScores := TCollections.CreateObjectList<TEmployeeScore>();
   gboxScorecards.Visible := False;
   gboxScorecards.Align := alClient;
   clistScorecards.Align := alClient;
@@ -148,27 +153,30 @@ procedure TForm1.clistScorecardsShowControl(
 var
   employee: TEmployee;
   score: TEmployeeScore;
-  hasScore: Boolean;
 begin
   if AIndex >= fEmployees.Count then
     Exit;
   employee := fEmployees.ElementAt(AIndex);
   lblScorePosition.Caption := employee.EmployeeId.ToString;
   lblScoreFullName.Caption := employee.FullName;
-  hasScore := fScoresDictionary.TryGetValue(employee.EmployeeId, score);
-  if hasScore then
+  score := fScores.FirstOrDefault(
+    function(const aScore: TEmployeeScore): Boolean
+    begin
+      Result := aScore.EmployeeId = employee.EmployeeId
+    end);
+  if score <> nil then
   begin
     lblScoreOrders.Caption := score.OrderCount.ToString;
     lblTotal.Caption := IfThen(score.OrderCount = 0, '',
       FormatFloat('#,###.##', score.TotalOrdersSum));
-    lblScoreValues.Caption := IfThen(score.OrderCount = 0, '',
-      Format('%.0f', [score.ScoreValue]));
+    lblScoreValues.Caption := Iff(score.Stars < 0, '',
+      DupeString('★', score.Stars)); // ★☆
   end
   else
   begin
     lblScoreOrders.Caption := '';
     lblTotal.Caption := IfThen(fIsCalculating, '...', '');
-    lblScoreValues.Caption := IfThen(fIsCalculating, ' ★★ ☆☆ calculating ...', '');
+    lblScoreValues.Caption := IfThen(fIsCalculating, 'calculating ...', '');
   end;
 end;
 
@@ -181,46 +189,68 @@ begin
     Exit;
   if TryExtractMonthFromItem(lbxMonths.Items[lbxMonths.ItemIndex], yy, mm) then
   begin
-    StartLoadingScore(yy, mm);
+    OnStartLoadingScore(yy, mm);
   end;
 end;
 
-procedure TForm1.StartLoadingScore(const aYear, aMonth: Word);
+procedure TForm1.OnStartLoadingScore(const aYear, aMonth: Word);
 begin
-  fScoresDictionary.Clear;
+  fScores.Clear;
   fIsCalculating := True;
   clistScorecards.Repaint;
   fLoadingIndex := 0;
   fLoadingYear := aYear;
   fLoadingMonth := aMonth;
-  SetLoadingTimerInterval();
+  tmrLoadingScore.Interval := Iff(ToggleSwitch1.State = tssOn, 20,
+    200 + 50 * random(4));
   tmrLoadingScore.Enabled := True;
 end;
 
-procedure TForm1.SetLoadingTimerInterval;
+procedure TForm1.OnCompletedLoading();
+var
+  Stars: Integer;
 begin
-  tmrLoadingScore.Interval := System.Math.IfThen(ToggleSwitch1.State = tssOn,
-    20, 200 + 50 * random(4));
+  fScores.Sort(TComparer<TEmployeeScore>.Construct(
+    function(const L, R: TEmployeeScore): Integer
+    begin
+      Result := Iff(L.ScoreValue > R.ScoreValue, -1,
+        Iff(L.ScoreValue = R.ScoreValue, 0, +1));
+    end));
+  Stars := 5;
+  fScores.ForEach(
+    procedure(const score: TEmployeeScore)
+    begin
+      score.Stars := Iff(score.OrderCount > 0, Stars, 0);
+      if Stars > 0 then
+        dec(Stars);
+    end);
+  clistScorecards.Repaint;
 end;
 
 procedure TForm1.tmrLoadingScoreTimer(Sender: TObject);
 var
-  hasItem: Boolean;
+  hasItemToCalculate: Boolean;
   employee: TEmployee;
   score: TEmployeeScore;
   id: Integer;
 begin
   tmrLoadingScore.Enabled := False;
-  SetLoadingTimerInterval();
-  hasItem := (fLoadingIndex >= 0) and (fLoadingIndex < fEmployees.Count);
-  tmrLoadingScore.Enabled := hasItem;
-  fIsCalculating := hasItem;
-  if not hasItem then
+  hasItemToCalculate := (fLoadingIndex >= 0) and
+    (fLoadingIndex < fEmployees.Count);
+  fIsCalculating := hasItemToCalculate;
+  if not hasItemToCalculate then
+  begin
+    OnCompletedLoading();
     Exit;
+  end;
+  tmrLoadingScore.Interval := Iff(ToggleSwitch1.State = tssOn, 20,
+    200 + 50 * random(4));
+  tmrLoadingScore.Enabled := True;
   employee := fEmployees.ElementAt(fLoadingIndex);
   id := employee.EmployeeId;
-  score := fDataModule1.CalculateMonthlyScore(id, fLoadingYear, fLoadingMonth);
-  fScoresDictionary.AddOrSetValue(id, score);
+  score := TEmployeeScore.Create;
+  fScores.Add(score);
+  fDataModule1.CalculateMonthlyScore(id, fLoadingYear, fLoadingMonth, score);
   clistScorecards.Repaint;
   inc(fLoadingIndex);
 end;

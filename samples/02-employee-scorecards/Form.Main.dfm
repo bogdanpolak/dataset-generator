@@ -168,16 +168,21 @@ object Form1: TForm1
       object lblScoreValues: TLabel
         AlignWithMargins = True
         Left = 283
-        Top = 11
+        Top = 3
         Width = 187
-        Height = 24
+        Height = 32
         Margins.Left = 6
-        Margins.Top = 11
         Align = alClient
         Caption = 'lblScoreValues'
-        ExplicitLeft = 191
-        ExplicitWidth = 68
-        ExplicitHeight = 13
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -24
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ExplicitTop = 6
+        ExplicitWidth = 151
+        ExplicitHeight = 29
       end
       object lblTotal: TLabel
         AlignWithMargins = True

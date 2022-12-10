@@ -34,10 +34,13 @@ type
     City: string;
   end;
 
-  TEmployeeScore = record
+  TEmployeeScore = class
+    EmployeeId: Integer;
     OrderCount: Integer;
     TotalOrdersSum: Currency;
     ScoreValue: Currency;
+    Stars: Integer;
+    constructor Create();
   end;
 
 type
@@ -54,11 +57,13 @@ type
       const aYear: Word;
       const aMonth: Word): TDataSet;
     function GetEmployees: IEnumerable<TEmployee>;
-    function CalculateMonthlyScore(
+    procedure CalculateMonthlyScore(
       const aEmployeeId: Integer;
       const aYear: Word;
-      const aMonth: Word): TEmployeeScore;
+      const aMonth: Word;
+      const score: TEmployeeScore);
   private
+    dsPromotions: TDataSet;
     function GetDetailsItemTotal(const aDetailsDataSet: TDataSet): Currency;
     function PromotionModifier(
       const aYear, aMonth: Word;
@@ -70,26 +75,21 @@ implementation
 {%CLASSGROUP 'Vcl.Controls.TControl'}
 {$R *.dfm}
 
+uses
+  DataSet.Promotions,
+  Scorecards.Utils;
+
 constructor TDataModule1.Create(aOwner: TComponent);
 begin
   inherited;
   Assert(FDConnection1.Connected = False,
     'Error! Connection to database was active before opening');
+  dsPromotions := CreatePromotionsDataSet(self);
 end;
 
 procedure TDataModule1.Connect();
 begin
   FDConnection1.Open();
-end;
-
-function IffString(
-  condition: boolean;
-  const textTrue, textFalse: string): string;
-begin
-  if condition then
-    Result := textTrue
-  else
-    Result := textFalse;
 end;
 
 function TDataModule1.IsConnected: boolean;
@@ -176,10 +176,11 @@ begin
   end;
 end;
 
-function TDataModule1.CalculateMonthlyScore(
+procedure TDataModule1.CalculateMonthlyScore(
   const aEmployeeId: Integer;
   const aYear: Word;
-  const aMonth: Word): TEmployeeScore;
+  const aMonth: Word;
+  const score: TEmployeeScore);
 var
   detailsDataSet: TDataSet;
   orderId: Integer;
@@ -187,13 +188,13 @@ var
   orderScore: Currency;
   modifier: double;
   total: Currency;
-  score: Currency;
+  totalScore: Currency;
   orders: Integer;
 begin
   detailsDataSet := GetDataSet_DetailsInMonth(aEmployeeId, aYear, aMonth);
   orders := 0;
   total := 0;
-  score := 0;
+  totalScore := 0;
   while not(detailsDataSet.Eof) do
   begin
     orderId := detailsDataSet.FieldByName('OrderId').AsInteger;
@@ -209,11 +210,15 @@ begin
     end;
     inc(orders);
     total := total + orderTotal;
-    score := score + orderScore;
+    totalScore := totalScore + orderScore;
   end;
-  Result.OrderCount := orders;
-  Result.TotalOrdersSum := total;
-  Result.ScoreValue := score;
+  with score do begin
+    EmployeeId := aEmployeeId;
+    OrderCount := orders;
+    TotalOrdersSum := total;
+    ScoreValue := totalScore;
+    Stars := -1;
+  end;
 end;
 
 function TDataModule1.GetDetailsItemTotal(const aDetailsDataSet: TDataSet)
@@ -229,18 +234,50 @@ begin
   Result := RoundTo(unitPrice * quantity * (1 - discount), -2);
 end;
 
+function ExtractCategoryIds(const aPromotedCategories: string): TArray<Integer>;
+var
+  arr: TArray<string>;
+  idx: Integer;
+begin
+  if aPromotedCategories = '' then
+    Exit(nil);
+  arr := aPromotedCategories.Split([',']);
+  SetLength(Result, Length(arr));
+  for idx := 0 to High(arr) do
+    Result[idx] := StrToInt(arr[idx]);
+end;
+
 function TDataModule1.PromotionModifier(
   const aYear: Word;
   const aMonth: Word;
   const aDetailsDataSet: TDataSet): double;
 var
   categoryId: Integer;
+  hasPromotion: boolean;
+  promotedCategories: string;
+  promoCategoryIds: TArray<Integer>;
 begin
+  hasPromotion := dsPromotions.Locate('Year;Month',
+    VarArrayOf([aYear, aMonth]), []);
+  if hasPromotion then
+  begin
+    promotedCategories := dsPromotions.FieldByName('CategoryIds').AsString;
+    promoCategoryIds := ExtractCategoryIds(promotedCategories)
+  end
+  else
+    promoCategoryIds := nil;
   categoryId := aDetailsDataSet.FieldByName('CategoryId').AsInteger;
-  if (categoryId = 1) and (aYear= 2022) and (aMonth = 12) then
+  if TUtils.IsIntArrayContains(promoCategoryIds,categoryId) then
     Result := 2
   else
     Result := 1;
+end;
+
+{ TEmployeeScore }
+
+constructor TEmployeeScore.Create;
+begin
+  Stars := -1;
 end;
 
 end.
