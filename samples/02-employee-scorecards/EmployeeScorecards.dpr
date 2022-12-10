@@ -3,8 +3,9 @@ program EmployeeScorecards;
 uses
   Vcl.Forms,
   Form.Main in 'Form.Main.pas' {Form1},
-  Logic.Scorecards in 'Logic.Scorecards.pas',
-  Data.DataModule1 in 'Data.DataModule1.pas' {DataModule1: TDataModule};
+  Data.DataModule1 in 'Data.DataModule1.pas' {DataModule1: TDataModule},
+  DataSet.Promotions in 'DataSet.Promotions.pas',
+  Scorecards.Utils in 'Scorecards.Utils.pas';
 
 {$R *.res}
 
