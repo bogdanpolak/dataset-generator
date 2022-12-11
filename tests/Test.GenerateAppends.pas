@@ -6,6 +6,7 @@ uses
   DUnitX.TestFramework,
   System.Classes,
   System.SysUtils,
+  System.StrUtils,
   Data.DB,
   FireDAC.Comp.Client,
   MemoryDataSetGenerator,
@@ -29,12 +30,15 @@ type
     procedure TearDown;
   published
     // -------------
-    procedure GenFieldByName_Integer;
-    procedure GenFieldByName_WideString;
-    procedure GenFieldByName_Date;
-    procedure GenFieldByName_DateTime;
-    procedure GenFieldByName_BCDField;
-    procedure GenFieldByName_WithLongLitteral;
+    procedure GenDataWith_1xInteger;
+    procedure GenDataWith_1xWideString;
+    procedure GenDataWith_1xDate;
+    procedure GenDataWith_1xDateTime;
+    procedure GenDataWith_1xBCDField;
+    procedure GenDataWith_1xWithLongLitteral;
+    procedure GenDataWith_1xBlob;
+    procedure GenDataWith_1x40BytesBlob;
+    procedure GenDataWith_1x50BytesBlob;
     // -------------
     // -------------
     procedure Iss002_GenLongStringLiterals_NewLines;
@@ -191,11 +195,39 @@ begin
   Result := ds;
 end;
 
+procedure SetBlobFieldValue(
+  const aBlobField: TBlobField;
+  const aHexValues: string);
+var
+  isEditable: Boolean;
+  idx: Integer;
+  bytes: TBytes;
+  size: Integer;
+begin
+  if (((aHexValues.Length + 1) mod 3) > 0) then
+    raise Exception.Create(Format('Hex Valuse have to be in format' +
+      ' `00 00 00`, and actual is %s', [aHexValues]));
+  size := (aHexValues.Length + 1) div 3;
+  SetLength(bytes, size);
+  for idx := 0 to size-1 do
+  begin
+    bytes[idx] := StrToInt('$' + aHexValues.Substring(idx * 3, 2));
+  end;
+  isEditable := aBlobField.DataSet.State in [dsEdit, dsInsert];
+  if not isEditable then
+  begin
+    aBlobField.DataSet.Edit;
+  end;
+  aBlobField.Value := bytes;
+  if not isEditable then
+    aBlobField.DataSet.Post;
+end;
+
 // -----------------------------------------------------------------------
 // Tests for: Generation of one FieldByName
 // -----------------------------------------------------------------------
 
-procedure TestGenerateAppends.GenFieldByName_Integer;
+procedure TestGenerateAppends.GenDataWith_1xInteger;
 var
   ds: TDataSet;
   code: string;
@@ -213,7 +245,7 @@ begin
     { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_Date;
+procedure TestGenerateAppends.GenDataWith_1xDate;
 var
   ds: TDataSet;
   code: string;
@@ -231,7 +263,7 @@ begin
     { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_DateTime;
+procedure TestGenerateAppends.GenDataWith_1xDateTime;
 var
   ds: TDataSet;
   code: string;
@@ -250,7 +282,7 @@ begin
     { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_WideString;
+procedure TestGenerateAppends.GenDataWith_1xWideString;
 var
   ds: TDataSet;
   code: string;
@@ -268,7 +300,7 @@ begin
     { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_BCDField;
+procedure TestGenerateAppends.GenDataWith_1xBCDField;
 var
   ds: TFDMemTable;
   code: string;
@@ -294,7 +326,72 @@ begin
     { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_WithLongLitteral;
+procedure TestGenerateAppends.GenDataWith_1xBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  // https://cryptii.com/pipes/binary-to-base64
+  // Bytes: A0 01 02 03 04 05 06 07
+  // Base64: oAECAwQFBgc=
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    'A0 01 02 03 04 05 06 07');
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
+
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''BinaryData'').Value := ''oAECAwQFBgc='';'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1x40BytesBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  // https://cryptii.com/pipes/binary-to-base64
+  // Bytes: A0 (39x..) 01
+  // Base64: oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    'A0'+DupeString(' 01',39));
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends, 70, '·');
+
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·(ds.FieldByName(''BinaryData'') as TBlobField).Value := '#13+
+    { } '··Base64Decode('#13 +
+    { } '···''oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=='');'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1x50BytesBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    '02'+DupeString(' 02',49));
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends, 60, '  ');
+
+  Assert.AreMemosEqual(
+    { } '  ds.Append;'#13 +
+    { } '  ds.FieldByName(''BinaryData'').Value := '#13 +
+    { } '    ''AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC'' +'#13 +
+    { } '    ''AgICAgICAgICAgI='';'#13 +
+    { } '  ds.Post;'#13 +
+    { } '  ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1xWithLongLitteral;
 var
   ds: TDataSet;
   code: string;

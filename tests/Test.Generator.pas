@@ -7,6 +7,7 @@ uses
   System.Classes,
   System.SysUtils,
   System.Math,
+  System.NetEncoding,
   Data.DB,
   FireDAC.Comp.Client,
   MemoryDataSetGenerator,
@@ -40,6 +41,7 @@ type
     procedure GenerateUnit_Footer;
     procedure GenerateFunction_FDMemTable_WithCyrlicText;
     procedure GenerateFunction_ClientDataSet;
+    procedure GenerateFunction_WithBlobs;
   end;
 
 implementation
@@ -149,6 +151,43 @@ begin
     First;
   end;
   Result := ds;
+end;
+
+procedure SetBlobFromBase64(
+  const aBlobField: TBlobField;
+  const aBase64: string);
+begin
+  aBlobField.DataSet.Edit;
+  aBlobField.Value := System.NetEncoding.TNetEncoding.Base64.
+    DecodeStringToBytes(aBase64);
+  aBlobField.DataSet.Post;
+end;
+
+function GivenDataSet_Teams(aOwner: TComponent): TDataSet;
+var
+  memTable: TFDMemTable;
+begin
+  memTable := TFDMemTable.Create(aOwner);
+  with memTable do
+  begin
+    FieldDefs.Add('TeamID', ftInteger);
+    FieldDefs.Add('Name', ftWideString, 50);
+    FieldDefs.Add('Logo', ftBlob);
+    FieldDefs.Add('CreatedDate', ftDateTime);
+    CreateDataSet;
+    AppendRecord([1, 'Sartans', Null, EncodeDate(2019, 06, 04)]);
+    AppendRecord([2, 'Dragons', Null, EncodeDate(2017, 11, 12)]);
+    AppendRecord([3, 'Atlantis', Null, EncodeDate(2021, 04, 24)]);
+    AppendRecord([4, 'Vikings', Null, EncodeDate(2021, 08, 09)]);
+    RecNo := 1;
+    SetBlobFromBase64(FieldByName('Logo') as TBlobField,
+      'AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=');
+    RecNo := 3;
+    SetBlobFromBase64(FieldByName('Logo') as TBlobField,
+      'oAECAwQFBgc=');
+    First;
+  end;
+  Result := memTable;
 end;
 
 // -----------------------------------------------------------------------
@@ -408,5 +447,39 @@ begin
     {} + '  Result := ds;'#13
     {} + 'end;'#13, code);
 end;
+
+procedure TestDSGenerator.GenerateFunction_WithBlobs;
+var
+  dataSet: TDataSet;
+  code: string;
+begin
+  dataSet := GivenDataSet_Teams(fOwner);
+
+  code := TCodeSegmentsGenerator.GenerateFunction(dataSet, dstClientDataSet,
+    amSinglelineAppends, DefaultRightMargin, '·');
+
+  Assert.AreMemosEqual_FullReport(
+    {} 'function GivenDataSet (aOwner: TComponent): TDataSet;'#13
+    {} + 'var'#13
+    {} + '·ds: TClientDataSet;'#13
+    {} + 'begin'#13
+    {} + '·ds := TClientDataSet.Create(aOwner);'#13
+    {} + '·with ds do'#13
+    {} + '·begin'#13
+    {} + '··FieldDefs.Add(''TeamID'', ftInteger);'#13
+    {} + '··FieldDefs.Add(''Name'', ftWideString, 50);'#13
+    {} + '··FieldDefs.Add(''Logo'', ftBlob);'#13
+    {} + '··FieldDefs.Add(''CreatedDate'', ftDateTime);'#13
+    {} + '··CreateDataSet;'#13
+    {} + '·end;'#13
+    {} + '·ds.AppendRecord([1, ''Sartans'', Null, EncodeDate(2019,6,4)]);'#13
+    {} + '·ds.AppendRecord([2, ''Dragons'', Null, EncodeDate(2017,11,12)]);'#13
+    {} + '·ds.AppendRecord([3, ''Atlantis'', Null, EncodeDate(2021,4,24)]);'#13
+    {} + '·ds.AppendRecord([4, ''Vikings'', Null, EncodeDate(2021,8,9)]);'#13
+    {} + '·ds.First;'#13
+    {} + '·Result := ds;'#13
+    {} + 'end;'#13, code);
+end;
+
 
 end.

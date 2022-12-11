@@ -12,7 +12,10 @@ unit MemoryDataSetGenerator;
 interface
 
 uses
-  System.Classes, System.Types, System.SysUtils,
+  System.Classes,
+  System.Types,
+  System.SysUtils,
+  System.NetEncoding,
   Data.DB,
   FireDAC.Comp.Client;
 
@@ -122,6 +125,9 @@ type
     function FormatLongStringLiteral(
       const aLiteral: string;
       const aFistLineStartAt: integer): string;
+    function BlobFieldToCode(
+      const aField: TBlobField;
+      const aFistLineStartsAt: integer): string;
     function GenerateArrayWithValues(const aFields: TFields): string;
   end;
 
@@ -300,7 +306,6 @@ begin
   end;
 end;
 
-
 { TCodeSegmentsGenerator }
 
 class function TCodeSegmentsGenerator.GenerateUnitHeader(
@@ -367,7 +372,6 @@ begin
   Result := sLineBreak + 'end.' + sLineBreak;
 end;
 
-
 { TFieldGeneratorUtils }
 
 function FieldTypeToString(ft: TFieldType): string;
@@ -403,7 +407,6 @@ begin
   if Frac(dt) > 0 then
     Result := Result + '+' + TimeToCode(dt);
 end;
-
 
 { TStructureBlockGenerator }
 
@@ -460,6 +463,13 @@ begin
   else if (fld.DataType in [ftString, ftWideString]) then
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');'
+    (* ---- All binary fields -----------
+      ftBytes, ftVarBytes, ftBlob, ftMemo, ftGraphic, ftTypedBinary,
+      ftArray, ftDataSet, ftOraBlob, ftOraClob, ftWideMemo
+    *)
+  else if (fld.DataType in [ftBlob, ftGraphic]) then
+    Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
+      FieldTypeToString(fld.DataType) + ');'
   else
     Result := 'FieldDefs.Add(' + QuotedStr(fld.FieldName) + ', ' +
       FieldTypeToString(fld.DataType) + ', ' + fld.Size.ToString + ');';
@@ -618,6 +628,7 @@ function TDataBlockGenerator.TryGenerateFieldByName(
 var
   linePattern: string;
   value: string;
+  lineStartsAt: integer;
 begin
   Result := False;
   line := '';
@@ -625,6 +636,7 @@ begin
     exit;
   linePattern := fIndentation + 'ds.FieldByName(' + QuotedStr(fld.FieldName) +
     ').Value := %s;';
+  lineStartsAt := Length(linePattern) - 2;
   case fld.DataType of
     ftAutoInc, ftInteger, ftWord, ftSmallint, ftLargeint:
       value := fld.AsString;
@@ -639,7 +651,9 @@ begin
     ftDateTime:
       value := DateTimeToCode(fld.AsDateTime);
     ftString, ftWideString:
-      value := FormatLongStringLiteral(fld.value, Length(linePattern) - 2);
+      value := FormatLongStringLiteral(fld.value, lineStartsAt);
+    ftBlob, ftGraphic:
+      value := BlobFieldToCode(fld as TBlobField, lineStartsAt);
   else
     value := '';
   end;
@@ -678,6 +692,61 @@ begin
       sb.Free;
     end;
   end
+end;
+
+function TDataBlockGenerator.BlobFieldToCode(
+  const aField: TBlobField;
+  const aFistLineStartsAt: integer): string;
+const
+  MaxSupportedBlob = 2 * 1024 * 1024;
+var
+  ms: TMemoryStream;
+  bytes: TBytes;
+  s: string;
+  base64: string;
+  lineLen: integer;
+  sb: TStringBuilder;
+  idx: Integer;
+begin
+  if aField.BlobSize > MaxSupportedBlob then
+    raise Exception.Create(Format('BLOB field is too big and has' +
+      ' %.1f MB. Maximal supported size is %.1f MB.',
+      [aField.BlobSize / 1024 / 1024, MaxSupportedBlob / 1024 / 1024]));
+  ms := TMemoryStream.Create;
+  try
+    aField.SaveToStream(ms);
+    ms.Position := 0;
+    SetLength(bytes, ms.Size);
+    ms.Read(bytes[0], ms.Size);
+  finally
+    ms.Free;
+  end;
+  s := TNetEncoding.base64.EncodeBytesToString(bytes);
+  base64 := StringReplace(s, sLineBreak, '', [rfReplaceAll]);
+  if aFistLineStartsAt + Length(base64) + 3 <= fRightMargin then
+  begin
+    Result := QuotedStr(base64);
+  end
+  else
+  begin
+    lineLen := fRightMargin - 2 * Length(fIndentation) - 4;
+    sb := TStringBuilder.Create;
+    sb.AppendLine();
+    idx := 0;
+    try
+      while idx < base64.Length do
+      begin
+        sb.Append(DupeString(fIndentation, 2));
+        sb.Append(QuotedStr(base64.Substring(idx, lineLen)));
+        inc(idx,lineLen);
+        if idx < base64.Length then
+          sb.AppendLine(' +');
+      end;
+      Result := sb.ToString();
+    finally
+      sb.Free;
+    end;
+  end;
 end;
 
 function TDataBlockGenerator.GenerateArrayWithValues(const aFields
