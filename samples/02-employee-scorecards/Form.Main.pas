@@ -57,7 +57,7 @@ type
     procedure tmrLoadingScoreTimer(Sender: TObject);
     procedure tmrStartTimer(Sender: TObject);
   public const
-    Version = '1.5';
+    Version = '1.6';
   private
     fDataModule1: TDataModule1;
     fEmployees: IEnumerable<TEmployee>;

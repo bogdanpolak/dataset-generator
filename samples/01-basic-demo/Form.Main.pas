@@ -49,7 +49,7 @@ type
     procedure rgrAppendModeClick(Sender: TObject);
     procedure edtRightMarginKeyPress(Sender: TObject; var Key: Char);
   private const
-    Version = '1.5';
+    Version = '1.6';
   private
     fDSGenerator: TDSGenerator;
     LabelIndentation: string;
