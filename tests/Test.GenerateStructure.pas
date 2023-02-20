@@ -32,6 +32,7 @@ type
     procedure GenFieldDef_Date;
     procedure GenFieldDef_DateTime;
     procedure GenFieldDef_BCD;
+    procedure GenFieldDef_Blob;
     // -------------
     procedure Execute_DataSetType_CDS;
     procedure Execute_WithMultipleFields;
@@ -237,6 +238,23 @@ begin
     { } '···Name := ''Price'';  DataType := ftBCD;  Precision := 10;  Size := 4;'#13
     +
     { } '··end;'#13 +
+    { } '··CreateDataSet;'#13 +
+    { } '·end;', code);
+end;
+
+procedure TestGenerateStructure.GenFieldDef_Blob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  ds := GivenDataSet_WithField(fOwner, 'Photo', ftBlob);
+
+  code := TStructureBlockGenerator.Generate(ds,'·');
+
+  Assert.AreMemosEqual(
+    { } '·with ds do'#13 +
+    { } '·begin'#13 +
+    { } '··FieldDefs.Add(''Photo'', ftBlob);'#13 +
     { } '··CreateDataSet;'#13 +
     { } '·end;', code);
 end;
