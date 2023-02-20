@@ -6,10 +6,10 @@ uses
   DUnitX.TestFramework,
   System.Classes,
   System.SysUtils,
+  System.StrUtils,
   Data.DB,
   FireDAC.Comp.Client,
-  Comp.Generator.DataSetCode,
-  GeneratorForTests,
+  MemoryDataSetGenerator,
   Helper.DUnitAssert;
 
 {$M+}
@@ -18,8 +18,10 @@ type
 
   [TestFixture]
   TestGenerateAppends = class(TObject)
+  private const
+    DefaultRightMargin = 101;
   private
-    fGenerator: TDSGeneratorUnderTest;
+    fGenerator: TDSGenerator;
     fOwner: TComponent;
   public
     [Setup]
@@ -28,11 +30,15 @@ type
     procedure TearDown;
   published
     // -------------
-    procedure GenFieldByName_Integer;
-    procedure GenFieldByName_WideString;
-    procedure GenFieldByName_Date;
-    procedure GenFieldByName_DateTime;
-    procedure GenFieldByName_BCDField;
+    procedure GenDataWith_1xInteger;
+    procedure GenDataWith_1xWideString;
+    procedure GenDataWith_1xDate;
+    procedure GenDataWith_1xDateTime;
+    procedure GenDataWith_1xBCDField;
+    procedure GenDataWith_1xWithLongLitteral;
+    procedure GenDataWith_1xBlob;
+    procedure GenDataWith_1x40BytesBlob;
+    procedure GenDataWith_1x50BytesBlob;
     // -------------
     // -------------
     procedure Iss002_GenLongStringLiterals_NewLines;
@@ -69,7 +75,7 @@ uses
 
 procedure TestGenerateAppends.Setup;
 begin
-  fGenerator := TDSGeneratorUnderTest.Create(nil);
+  fGenerator := TDSGenerator.Create(nil);
   fOwner := TComponent.Create(nil);
 end;
 
@@ -88,15 +94,18 @@ const
     ' Constructor Injection, Property Injection, and Method Injection' +
     ' and about the right and wrong way to use it';
 
-function GivenField(aOwner: TComponent; const fieldName: string;
-  fieldType: TFieldType; size: integer = 0): TField;
+function GivenDataSetWithField(
+  const aOwner: TComponent;
+  const aFieldName: string;
+  aFieldType: TFieldType;
+  aFieldSize: integer = 0): TDataSet;
 var
   ds: TFDMemTable;
 begin
   ds := TFDMemTable.Create(aOwner);
-  ds.FieldDefs.Add(fieldName, fieldType, size);
+  ds.FieldDefs.Add(aFieldName, aFieldType, aFieldSize);
   ds.CreateDataSet;
-  Result := ds.Fields[0];
+  Result := ds;
 end;
 
 function GivenDataSet_WithString(aOwner: TComponent; const aFieldName: string;
@@ -186,82 +195,115 @@ begin
   Result := ds;
 end;
 
+procedure SetBlobFieldValue(
+  const aBlobField: TBlobField;
+  const aHexValues: string);
+var
+  isEditable: Boolean;
+  idx: Integer;
+  bytes: TBytes;
+  size: Integer;
+begin
+  if (((aHexValues.Length + 1) mod 3) > 0) then
+    raise Exception.Create(Format('Hex Valuse have to be in format' +
+      ' `00 00 00`, and actual is %s', [aHexValues]));
+  size := (aHexValues.Length + 1) div 3;
+  SetLength(bytes, size);
+  for idx := 0 to size-1 do
+  begin
+    bytes[idx] := StrToInt('$' + aHexValues.Substring(idx * 3, 2));
+  end;
+  isEditable := aBlobField.DataSet.State in [dsEdit, dsInsert];
+  if not isEditable then
+  begin
+    aBlobField.DataSet.Edit;
+  end;
+  aBlobField.Value := bytes;
+  if not isEditable then
+    aBlobField.DataSet.Post;
+end;
+
 // -----------------------------------------------------------------------
 // Tests for: Generation of one FieldByName
 // -----------------------------------------------------------------------
 
-procedure TestGenerateAppends.GenFieldByName_Integer;
+procedure TestGenerateAppends.GenDataWith_1xInteger;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Level', ftInteger);
-  fld.DataSet.AppendRecord([1]);
+  ds := GivenDataSetWithField(fOwner, 'Level', ftInteger);
+  ds.AppendRecord([1]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    70, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''Level'').Value := 1;', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Level'').Value := 1;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_Date;
+procedure TestGenerateAppends.GenDataWith_1xDate;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'Birthday', ftDate);
-  fld.DataSet.AppendRecord([EncodeDate(2019, 07, 01)]);
+  ds := GivenDataSetWithField(fOwner, 'Birthday', ftDate);
+  ds.AppendRecord([EncodeDate(2019, 07, 01)]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual
-    ('  ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);',
-    actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Birthday'').Value := EncodeDate(2019,7,1);'#13+
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_DateTime;
+procedure TestGenerateAppends.GenDataWith_1xDateTime;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'ChangeDate', ftDateTime);
-  fld.DataSet.AppendRecord( //.
-    [EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
+  ds := GivenDataSetWithField(fOwner, 'ChangeDate', ftDateTime);
+  ds.AppendRecord([EncodeDate(2019, 07, 01) + EncodeTime(15, 07, 30, 500)]);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''ChangeDate'').Value := ' +
-    'EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''ChangeDate'').Value := EncodeDate(2019,7,1)+EncodeTime(15,7,30,500);'#13
+    +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_WideString;
+procedure TestGenerateAppends.GenDataWith_1xWideString;
 var
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  ds: TDataSet;
+  code: string;
 begin
-  fld := GivenField(fOwner, 'ChangeDate', ftWideString, 30);
-  fld.DataSet.AppendRecord(['Alice has a cat']);
+  ds := GivenDataSetWithField(fOwner, 'MessageText', ftWideString, 30);
+  ds.AppendRecord(['Alice has a ♥ cat']);
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual
-    ('  ds.FieldByName(''ChangeDate'').Value := ''Alice has a cat'';',
-    actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''MessageText'').Value := ''Alice has a ♥ cat'';'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
-procedure TestGenerateAppends.GenFieldByName_BCDField;
+procedure TestGenerateAppends.GenDataWith_1xBCDField;
 var
   ds: TFDMemTable;
-  fld: TField;
-  actualCode: string;
-  isGenerated: Boolean;
+  code: string;
 begin
   ds := TFDMemTable.Create(fOwner);
   with ds.FieldDefs.AddFieldDef do
@@ -273,12 +315,105 @@ begin
   end;
   ds.CreateDataSet;
   ds.AppendRecord([1.01]);
-  fld := ds.Fields[0];
 
-  isGenerated := fGenerator._GenerateFieldByName(fld, actualCode);
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
 
-  Assert.IsTrue(isGenerated,'FieldByName not generated');
-  Assert.AreEqual('  ds.FieldByName(''abc123'').Value := 1.01;', actualCode);
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''abc123'').Value := 1.01;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1xBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  // https://cryptii.com/pipes/binary-to-base64
+  // Bytes: A0 01 02 03 04 05 06 07
+  // Base64: oAECAwQFBgc=
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    'A0 01 02 03 04 05 06 07');
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    DefaultRightMargin, '·');
+
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.RecNo := 1;'#13+
+    { } '·ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '·''oAECAwQFBgc='';'#13 +
+    { } '·ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1x40BytesBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  // https://cryptii.com/pipes/binary-to-base64
+  // Bytes: A0 (39x..) 01
+  // Base64: oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    'A0'+DupeString(' 01',39));
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends, 70, '·');
+
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.RecNo := 1;'#13+
+    { } '·ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '·''oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=='';'#13 +
+    { } '·ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1x50BytesBlob;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  ds := GivenDataSetWithField(fOwner, 'BinaryData', ftBlob);
+  SetBlobFieldValue(ds.FieldByName('BinaryData') as TBlobField,
+    '02'+DupeString(' 02',49));
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends, 60, '  ');
+
+  Assert.AreMemosEqual(
+    { } '  ds.Append;'#13 +
+    { } '  ds.Post;'#13 +
+    { } '  ds.RecNo := 1;'#13+
+    { } '  ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '  ''AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg'' +'#13 +
+    { } '  ''ICAgICAgICAgI='';'#13 +
+    { } '  ds.First;'#13, code);
+end;
+
+procedure TestGenerateAppends.GenDataWith_1xWithLongLitteral;
+var
+  ds: TDataSet;
+  code: string;
+begin
+  ds := GivenDataSetWithField(fOwner, 'Quotation', ftWideString, 1000);
+  ds.AppendRecord([
+  'Here we have very long text: Lorem ipsum dolor sit amet, consectetur adipiscing elit.']);
+
+  code := TDataBlockGenerator.Generate(ds, amMultilineAppends,
+    45, '·');
+
+  Assert.AreMemosEqual(
+    { } '·ds.Append;'#13 +
+    { } '·ds.FieldByName(''Quotation'').Value := '#13 +
+    { } '··''Here we have very long text: Lorem ipsum ''+'#13 +
+    { } '··''dolor sit amet, consectetur adipiscing ''+'#13 +
+    { } '··''elit.'';'#13 +
+    { } '·ds.Post;'#13 +
+    { } '·ds.First;'#13, code);
 end;
 
 // -----------------------------------------------------------------------
@@ -496,7 +631,6 @@ begin
   fGenerator.AppendMode := amSinglelineAppends;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(
@@ -538,7 +672,7 @@ begin
     [[1, 'FirstRow'], [2, 'MiddleRow'], [3, 'aRow'], [4, 'LastRow']]);
   fGenerator.DataSet.RecNo := 3;
 
-  fGenerator._GenerateAppendsBlock;
+  fGenerator.Execute;
 
   Assert.AreEqual(3, fGenerator.DataSet.RecNo);
 end;
@@ -553,7 +687,6 @@ begin
   fGenerator.AppendMode := amAppendRows;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(
@@ -570,7 +703,6 @@ begin
   fGenerator.AppendMode := amAppendRows;
   fGenerator.GeneratorMode := genAppend;
 
-  fGenerator.MaxRows := 0;
   fGenerator.Execute;
 
   Assert.AreMemosEqual(

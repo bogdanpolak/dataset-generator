@@ -11,13 +11,13 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-  Comp.Generator.DataSetCode in '..\src\Comp.Generator.DataSetCode.pas',
+  MemoryDataSetGenerator in '..\src\MemoryDataSetGenerator.pas',
   Test.GenerateStructure in 'Test.GenerateStructure.pas',
   Test.GenerateAppends in 'Test.GenerateAppends.pas',
-  GeneratorForTests in 'GeneratorForTests.pas',
   Helper.DUnitAssert in 'Helper.DUnitAssert.pas',
   Test.Generator in 'Test.Generator.pas',
-  Test.TextWrapper in 'Test.TextWrapper.pas';
+  Test.TextWrapper in 'Test.TextWrapper.pas',
+  Helper.TField in '..\src\Helper.TField.pas';
 
 var
   runner : ITestRunner;

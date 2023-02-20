@@ -36,7 +36,7 @@ type
 implementation
 
 uses
-  Comp.Generator.DataSetCode;
+  MemoryDataSetGenerator;
 
 procedure AssertStringArrays(const expected: TArray<string>;
   const actual: TArray<string>);

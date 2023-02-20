@@ -1,9 +1,10 @@
 object Form1: TForm1
   Left = 0
   Top = 0
+  Margins.Bottom = 0
   Caption = 'Form1'
-  ClientHeight = 462
-  ClientWidth = 645
+  ClientHeight = 480
+  ClientWidth = 673
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,12 +20,11 @@ object Form1: TForm1
     AlignWithMargins = True
     Left = 3
     Top = 3
-    Width = 639
+    Width = 667
     Height = 54
     Align = alTop
     Caption = 'Database Connect'
     TabOrder = 0
-    ExplicitWidth = 615
     object btnConnect: TButton
       AlignWithMargins = True
       Left = 5
@@ -35,23 +35,39 @@ object Form1: TForm1
       Align = alLeft
       TabOrder = 0
     end
+    object ToggleSwitch1: TToggleSwitch
+      Left = 272
+      Top = 21
+      Width = 144
+      Height = 20
+      StateCaptions.CaptionOn = 'Loading: Fast'
+      StateCaptions.CaptionOff = 'Loading: Standard'
+      TabOrder = 1
+    end
   end
   object gboxScorecards: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 63
-    Width = 639
-    Height = 218
+    Width = 667
+    Height = 234
     Align = alTop
     Caption = 'Employee Scorecards'
     TabOrder = 1
-    ExplicitWidth = 615
+    object Splitter1: TSplitter
+      Left = 129
+      Top = 15
+      Width = 5
+      Height = 217
+      ExplicitHeight = 305
+    end
     object Panel1: TPanel
       AlignWithMargins = True
       Left = 5
       Top = 18
       Width = 124
-      Height = 195
+      Height = 211
+      Margins.Right = 0
       Align = alLeft
       BevelOuter = bvNone
       Caption = 'Panel1'
@@ -71,39 +87,122 @@ object Form1: TForm1
         AlignWithMargins = True
         Left = 3
         Top = 22
-        Width = 118
-        Height = 170
+        Width = 121
+        Height = 189
+        Margins.Right = 0
+        Margins.Bottom = 0
         Align = alClient
         ItemHeight = 13
         TabOrder = 0
         OnClick = lbxMonthsClick
-        ExplicitLeft = 4
-        ExplicitTop = 4
-        ExplicitWidth = 251
-        ExplicitHeight = 121
       end
     end
-    object MemoTest: TMemo
+    object clistScorecards: TControlList
       AlignWithMargins = True
-      Left = 135
+      Left = 140
       Top = 18
-      Width = 499
-      Height = 195
-      Align = alClient
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Consolas'
-      Font.Style = []
-      Lines.Strings = (
-        'MemoTest')
-      ParentFont = False
-      ScrollBars = ssVertical
+      Width = 477
+      Height = 167
+      ItemHeight = 38
+      ItemMargins.Left = 0
+      ItemMargins.Top = 0
+      ItemMargins.Right = 0
+      ItemMargins.Bottom = 0
+      ParentColor = False
       TabOrder = 1
-      ExplicitLeft = 132
-      ExplicitTop = 15
-      ExplicitWidth = 505
-      ExplicitHeight = 201
+      OnShowControl = clistScorecardsShowControl
+      object lblScorePosition: TLabel
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 34
+        Height = 32
+        Margins.Right = 0
+        Align = alLeft
+        Alignment = taCenter
+        AutoSize = False
+        Caption = '19'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -24
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object lblScoreFullName: TLabel
+        AlignWithMargins = True
+        Left = 37
+        Top = 11
+        Width = 130
+        Height = 24
+        Margins.Left = 0
+        Margins.Top = 11
+        Margins.Right = 0
+        Align = alLeft
+        AutoSize = False
+        Caption = 'lblScoreFullName'
+        ExplicitLeft = 39
+        ExplicitTop = 10
+        ExplicitHeight = 25
+      end
+      object lblScoreOrders: TLabel
+        AlignWithMargins = True
+        Left = 167
+        Top = 6
+        Width = 24
+        Height = 29
+        Margins.Left = 0
+        Margins.Top = 6
+        Margins.Right = 0
+        Align = alLeft
+        AutoSize = False
+        Caption = '7x'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ExplicitLeft = 165
+      end
+      object lblScoreValues: TLabel
+        AlignWithMargins = True
+        Left = 283
+        Top = 3
+        Width = 187
+        Height = 32
+        Margins.Left = 6
+        Align = alClient
+        Caption = 'lblScoreValues'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -24
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ExplicitTop = 6
+        ExplicitWidth = 151
+        ExplicitHeight = 29
+      end
+      object lblTotal: TLabel
+        AlignWithMargins = True
+        Left = 191
+        Top = 8
+        Width = 83
+        Height = 27
+        Margins.Left = 0
+        Margins.Top = 8
+        Align = alLeft
+        Alignment = taRightJustify
+        AutoSize = False
+        Caption = 'lblTotal'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -15
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
     end
   end
   object ActionList1: TActionList
@@ -114,5 +213,18 @@ object Form1: TForm1
       Caption = 'Connect'
       OnExecute = actDatabaseConnectExecute
     end
+  end
+  object tmrStart: TTimer
+    Interval = 1
+    OnTimer = tmrStartTimer
+    Left = 472
+    Top = 16
+  end
+  object tmrLoadingScore: TTimer
+    Enabled = False
+    Interval = 1
+    OnTimer = tmrLoadingScoreTimer
+    Left = 184
+    Top = 152
   end
 end
