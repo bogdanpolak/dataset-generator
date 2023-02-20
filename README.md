@@ -168,6 +168,40 @@ ds.AppendRows([
 );
 ```
 
+## Generating dataset with Blobs - new in ver. 1.6
+
+The dataset factory code generated DataSet Generator will contain all data values and if referencing data set contains any BLOB fields which are not nulls each of them will be persisted as Base64 encoded strings. Blob fields generator is limited to 2MB data streams in BLOB field, larger binary data will be ignored.
+
+Sample code generated for the data set with the BLOB fields:
+
+```pas
+function GivenDataSet (aOwner: TComponent): TDataSet;
+var
+  ds: TClientDataSet;
+begin
+  ds := TClientDataSet.Create(aOwner);
+  with ds do
+  begin
+    FieldDefs.Add('TeamID', ftInteger);
+    FieldDefs.Add('Name', ftWideString, 50);
+    FieldDefs.Add('Logo', ftBlob);
+    FieldDefs.Add('CreatedDate', ftDateTime);
+    CreateDataSet;
+  end;
+  ds.AppendRecord([1, 'Sartans', Null, EncodeDate(2019,6,4)]);
+  ds.AppendRecord([2, 'Dragons', Null, EncodeDate(2017,11,12)]);
+  ds.AppendRecord([3, 'Atlantis', Null, EncodeDate(2021,4,24)]);
+  ds.AppendRecord([4, 'Vikings', Null, EncodeDate(2021,8,9)]);
+  ds.RecNo := 1;
+  ds.FieldByName('Logo').Base64 :=
+    'AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=';
+  ds.RecNo := 3;
+  ds.FieldByName('Logo').Base64 := 'oAECAwQFBgc=';
+  ds.First;
+  Result := ds;
+end;
+```
+
 ## Fakes vs mocks
 
 Testing objects which using datasets internally is challenging. Many teams gave up with introduction unit tests to their projects because of such dependencies.
