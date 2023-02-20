@@ -16,7 +16,8 @@ uses
   Test.GenerateAppends in 'Test.GenerateAppends.pas',
   Helper.DUnitAssert in 'Helper.DUnitAssert.pas',
   Test.Generator in 'Test.Generator.pas',
-  Test.TextWrapper in 'Test.TextWrapper.pas';
+  Test.TextWrapper in 'Test.TextWrapper.pas',
+  Helper.TField in '..\src\Helper.TField.pas';
 
 var
   runner : ITestRunner;

@@ -343,8 +343,10 @@ begin
 
   Assert.AreMemosEqual(
     { } '·ds.Append;'#13 +
-    { } '·ds.FieldByName(''BinaryData'').Value := ''oAECAwQFBgc='';'#13 +
     { } '·ds.Post;'#13 +
+    { } '·ds.RecNo := 1;'#13+
+    { } '·ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '·''oAECAwQFBgc='';'#13 +
     { } '·ds.First;'#13, code);
 end;
 
@@ -364,10 +366,10 @@ begin
 
   Assert.AreMemosEqual(
     { } '·ds.Append;'#13 +
-    { } '·(ds.FieldByName(''BinaryData'') as TBlobField).Value := '#13+
-    { } '··Base64Decode('#13 +
-    { } '···''oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=='');'#13 +
     { } '·ds.Post;'#13 +
+    { } '·ds.RecNo := 1;'#13+
+    { } '·ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '·''oAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=='';'#13 +
     { } '·ds.First;'#13, code);
 end;
 
@@ -384,10 +386,11 @@ begin
 
   Assert.AreMemosEqual(
     { } '  ds.Append;'#13 +
-    { } '  ds.FieldByName(''BinaryData'').Value := '#13 +
-    { } '    ''AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC'' +'#13 +
-    { } '    ''AgICAgICAgICAgI='';'#13 +
     { } '  ds.Post;'#13 +
+    { } '  ds.RecNo := 1;'#13+
+    { } '  ds.FieldByName(''BinaryData'').Base64 :='#13+
+    { } '  ''AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg'' +'#13 +
+    { } '  ''ICAgICAgICAgI='';'#13 +
     { } '  ds.First;'#13, code);
 end;
 
